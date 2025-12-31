@@ -1,0 +1,46 @@
+{
+  "name": "inline-i18n-multi",
+  "version": "0.1.0",
+  "description": "Inline i18n - write translations inline, support multiple languages",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "i18n",
+    "internationalization",
+    "translation",
+    "inline",
+    "multi-language"
+  ],
+  "author": "exiivy98",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/exiivy98/inline-i18n-multi.git",
+    "directory": "packages/core"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
