@@ -1,0 +1,54 @@
+{
+  "name": "inline-i18n-multi-react",
+  "version": "0.1.0",
+  "description": "React integration for inline-i18n-multi",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "i18n",
+    "react",
+    "internationalization",
+    "translation",
+    "inline"
+  ],
+  "author": "exiivy98",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/exiivy98/inline-i18n-multi.git",
+    "directory": "packages/react"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "dependencies": {
+    "inline-i18n-multi": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.2",
+    "react": "^19.0.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
