@@ -1,0 +1,49 @@
+{
+  "name": "@inline-i18n-multi/cli",
+  "version": "0.1.0",
+  "description": "CLI tools for inline-i18n-multi",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "inline-i18n": "./dist/bin.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "i18n",
+    "cli",
+    "internationalization",
+    "translation"
+  ],
+  "author": "exiivy98",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/exiivy98/inline-i18n-multi.git",
+    "directory": "packages/cli"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.26.3",
+    "@babel/traverse": "^7.26.4",
+    "chalk": "^5.4.1",
+    "commander": "^13.0.0",
+    "fast-glob": "^3.3.3"
+  },
+  "devDependencies": {
+    "@babel/types": "^7.26.3",
+    "@types/babel__traverse": "^7.20.6",
+    "@types/node": "^22.10.2",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "name": "inline-i18n-multi-vscode",
+  "displayName": "Inline i18n Multi",
+  "description": "Smart search and tooling for inline-i18n-multi",
+  "version": "0.1.0",
+  "publisher": "exiivy98",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/exiivy98/inline-i18n-multi.git",
+    "directory": "packages/vscode"
+  },
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:typescript",
+    "onLanguage:typescriptreact",
+    "onLanguage:javascript",
+    "onLanguage:javascriptreact"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "inlineI18n.findTranslation",
+        "title": "Find Translation Uses",
+        "category": "Inline i18n"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "inlineI18n.findTranslation",
+        "key": "ctrl+shift+t",
+        "mac": "cmd+shift+t",
+        "when": "editorTextFocus"
+      }
+    ],
+    "configuration": {
+      "title": "Inline i18n Multi",
+      "properties": {
+        "inlineI18n.locales": {
+          "type": "array",
+          "default": ["ko", "en"],
+          "description": "Supported locales for this project"
+        },
+        "inlineI18n.showUsageCount": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show usage count in hover information"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "package": "vsce package",
+    "publish": "vsce publish",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.26.3",
+    "@babel/traverse": "^7.26.4"
+  },
+  "devDependencies": {
+    "@babel/types": "^7.26.3",
+    "@types/babel__traverse": "^7.20.6",
+    "@types/vscode": "^1.96.0",
+    "@vscode/vsce": "^3.2.1",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2"
+  }
+}
