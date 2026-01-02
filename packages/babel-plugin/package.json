@@ -1,0 +1,44 @@
+{
+  "name": "@inline-i18n-multi/babel-plugin",
+  "version": "0.1.0",
+  "description": "Babel plugin for inline-i18n-multi build-time optimization",
+  "keywords": ["babel-plugin", "i18n", "inline", "translation"],
+  "license": "MIT",
+  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/user/inline-i18n-multi.git",
+    "directory": "packages/babel-plugin"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@babel/helper-plugin-utils": "^7.25.9"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/types": "^7.26.3",
+    "@types/babel__core": "^7.20.5",
+    "@types/babel__helper-plugin-utils": "^7.10.3",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2"
+  },
+  "peerDependencies": {
+    "@babel/core": "^7.0.0"
+  }
+}

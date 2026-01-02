@@ -1,5 +1,6 @@
 export { it } from './translate'
 export { setLocale, getLocale } from './context'
+export { __i18n_lookup } from './runtime'
 export {
   it_ja,
   it_zh,
