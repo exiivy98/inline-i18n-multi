@@ -286,6 +286,60 @@ export const config = {
 }
 ```
 
+### SEO 최적화 (App Router)
+
+Next.js App Router에서 완전한 SEO 지원을 위한 서버 유틸리티:
+
+```tsx
+// app/[locale]/layout.tsx
+import { configureI18n, generateLocaleParams, createMetadata, getAlternates } from 'inline-i18n-multi-next/server'
+
+// i18n 설정
+configureI18n({
+  locales: ['ko', 'en', 'ja'],
+  defaultLocale: 'ko',
+  baseUrl: 'https://example.com'
+})
+
+// SSG: 모든 로케일 사전 렌더링
+export function generateStaticParams() {
+  return generateLocaleParams()  // → [{ locale: 'ko' }, { locale: 'en' }, { locale: 'ja' }]
+}
+
+// 동적 메타데이터
+export async function generateMetadata({ params }) {
+  const { locale } = await params
+
+  return createMetadata(
+    {
+      title: { ko: '홈', en: 'Home', ja: 'ホーム' },
+      description: { ko: '환영합니다', en: 'Welcome', ja: 'ようこそ' },
+    },
+    locale,
+    ''  // 현재 경로
+  )
+}
+
+// Hreflang 링크 (SEO용)
+const alternates = getAlternates('/about', 'ko')
+// → {
+//   canonical: 'https://example.com/ko/about',
+//   languages: {
+//     ko: 'https://example.com/ko/about',
+//     en: 'https://example.com/en/about',
+//     ja: 'https://example.com/ja/about',
+//     'x-default': 'https://example.com/ko/about'
+//   }
+// }
+```
+
+**SEO 기능:**
+- **SSG/SSR** - `generateStaticParams()`로 모든 로케일 사전 렌더링
+- **동적 메타데이터** - `createMetadata()`로 로케일별 title/description
+- **Hreflang** - `getAlternates()`로 검색 엔진용 언어 대체 링크
+- **쿠키 저장** - `setLocale()` 호출 시 자동 저장
+- **URL 라우팅** - `/[locale]/...` 패턴으로 SEO 친화적 URL
+
 ---
 
 ## 언어 쌍 헬퍼

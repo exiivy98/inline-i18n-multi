@@ -287,6 +287,60 @@ export const config = {
 }
 ```
 
+### SEO优化（App Router）
+
+在Next.js App Router中实现完整SEO支持的服务器工具：
+
+```tsx
+// app/[locale]/layout.tsx
+import { configureI18n, generateLocaleParams, createMetadata, getAlternates } from 'inline-i18n-multi-next/server'
+
+// 配置i18n
+configureI18n({
+  locales: ['ko', 'en', 'zh'],
+  defaultLocale: 'ko',
+  baseUrl: 'https://example.com'
+})
+
+// SSG：预渲染所有语言环境
+export function generateStaticParams() {
+  return generateLocaleParams()  // → [{ locale: 'ko' }, { locale: 'en' }, { locale: 'zh' }]
+}
+
+// 动态元数据
+export async function generateMetadata({ params }) {
+  const { locale } = await params
+
+  return createMetadata(
+    {
+      title: { ko: '홈', en: 'Home', zh: '首页' },
+      description: { ko: '환영합니다', en: 'Welcome', zh: '欢迎' },
+    },
+    locale,
+    ''  // 当前路径
+  )
+}
+
+// Hreflang链接（用于SEO）
+const alternates = getAlternates('/about', 'ko')
+// → {
+//   canonical: 'https://example.com/ko/about',
+//   languages: {
+//     ko: 'https://example.com/ko/about',
+//     en: 'https://example.com/en/about',
+//     zh: 'https://example.com/zh/about',
+//     'x-default': 'https://example.com/ko/about'
+//   }
+// }
+```
+
+**SEO功能：**
+- **SSG/SSR** - 使用`generateStaticParams()`预渲染所有语言环境
+- **动态元数据** - 使用`createMetadata()`实现每个语言环境的title/description
+- **Hreflang** - 使用`getAlternates()`为搜索引擎提供语言替代链接
+- **Cookie持久化** - 调用`setLocale()`时自动保存
+- **URL路由** - 使用`/[locale]/...`模式实现SEO友好的URL
+
 ---
 
 ## 语言对辅助函数

@@ -286,6 +286,60 @@ export const config = {
 }
 ```
 
+### SEO Optimization (App Router)
+
+Server utilities for full SEO support in Next.js App Router:
+
+```tsx
+// app/[locale]/layout.tsx
+import { configureI18n, generateLocaleParams, createMetadata, getAlternates } from 'inline-i18n-multi-next/server'
+
+// Configure i18n
+configureI18n({
+  locales: ['ko', 'en', 'ja'],
+  defaultLocale: 'ko',
+  baseUrl: 'https://example.com'
+})
+
+// SSG: Pre-render all locales
+export function generateStaticParams() {
+  return generateLocaleParams()  // → [{ locale: 'ko' }, { locale: 'en' }, { locale: 'ja' }]
+}
+
+// Dynamic metadata
+export async function generateMetadata({ params }) {
+  const { locale } = await params
+
+  return createMetadata(
+    {
+      title: { ko: '홈', en: 'Home', ja: 'ホーム' },
+      description: { ko: '환영합니다', en: 'Welcome', ja: 'ようこそ' },
+    },
+    locale,
+    ''  // current pathname
+  )
+}
+
+// Hreflang links (for SEO)
+const alternates = getAlternates('/about', 'ko')
+// → {
+//   canonical: 'https://example.com/ko/about',
+//   languages: {
+//     ko: 'https://example.com/ko/about',
+//     en: 'https://example.com/en/about',
+//     ja: 'https://example.com/ja/about',
+//     'x-default': 'https://example.com/ko/about'
+//   }
+// }
+```
+
+**SEO Features:**
+- **SSG/SSR** - Pre-render all locales with `generateStaticParams()`
+- **Dynamic Metadata** - Per-locale title/description with `createMetadata()`
+- **Hreflang** - Language alternate links for search engines with `getAlternates()`
+- **Cookie Persistence** - Automatically saved when `setLocale()` is called
+- **URL Routing** - SEO-friendly URLs with `/[locale]/...` pattern
+
 ---
 
 ## Language Pair Helpers

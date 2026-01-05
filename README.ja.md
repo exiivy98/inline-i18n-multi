@@ -287,6 +287,60 @@ export const config = {
 }
 ```
 
+### SEO最適化（App Router）
+
+Next.js App Routerで完全なSEOサポートのためのサーバーユーティリティ：
+
+```tsx
+// app/[locale]/layout.tsx
+import { configureI18n, generateLocaleParams, createMetadata, getAlternates } from 'inline-i18n-multi-next/server'
+
+// i18n設定
+configureI18n({
+  locales: ['ko', 'en', 'ja'],
+  defaultLocale: 'ko',
+  baseUrl: 'https://example.com'
+})
+
+// SSG: 全ロケールを事前レンダリング
+export function generateStaticParams() {
+  return generateLocaleParams()  // → [{ locale: 'ko' }, { locale: 'en' }, { locale: 'ja' }]
+}
+
+// 動的メタデータ
+export async function generateMetadata({ params }) {
+  const { locale } = await params
+
+  return createMetadata(
+    {
+      title: { ko: '홈', en: 'Home', ja: 'ホーム' },
+      description: { ko: '환영합니다', en: 'Welcome', ja: 'ようこそ' },
+    },
+    locale,
+    ''  // 現在のパス
+  )
+}
+
+// Hreflangリンク（SEO用）
+const alternates = getAlternates('/about', 'ko')
+// → {
+//   canonical: 'https://example.com/ko/about',
+//   languages: {
+//     ko: 'https://example.com/ko/about',
+//     en: 'https://example.com/en/about',
+//     ja: 'https://example.com/ja/about',
+//     'x-default': 'https://example.com/ko/about'
+//   }
+// }
+```
+
+**SEO機能：**
+- **SSG/SSR** - `generateStaticParams()`で全ロケールを事前レンダリング
+- **動的メタデータ** - `createMetadata()`でロケール別title/description
+- **Hreflang** - `getAlternates()`で検索エンジン用の言語代替リンク
+- **Cookie保存** - `setLocale()`呼び出し時に自動保存
+- **URLルーティング** - `/[locale]/...`パターンでSEOフレンドリーなURL
+
 ---
 
 ## 言語ペアヘルパー
