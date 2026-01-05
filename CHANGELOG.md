@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.3] - 2025-01-05
+
+### Changed
+
+- Expanded core package README to comprehensive documentation level
+- Added detailed descriptions for React, Next.js, Babel, SWC, CLI packages in core README
+
 ## [0.1.2] - 2025-01-05
 
 ### Added

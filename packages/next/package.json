@@ -1,6 +1,6 @@
 {
   "name": "inline-i18n-multi-next",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Next.js integration for inline-i18n-multi",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
