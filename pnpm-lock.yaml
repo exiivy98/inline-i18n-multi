@@ -36,6 +36,9 @@ importers:
 
   examples/nextjs:
     dependencies:
+      inline-i18n-multi:
+        specifier: workspace:*
+        version: link:../../packages/core
       inline-i18n-multi-next:
         specifier: workspace:*
         version: link:../../packages/next

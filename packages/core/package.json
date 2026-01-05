@@ -1,6 +1,6 @@
 {
   "name": "inline-i18n-multi",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Inline i18n - write translations inline, support multiple languages",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

@@ -1,6 +1,6 @@
 {
   "name": "inline-i18n-multi-nextjs-example",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "inline-i18n-multi": "workspace:*",
     "inline-i18n-multi-next": "workspace:*",
     "next": "^15.1.3",
     "react": "^18.3.1",

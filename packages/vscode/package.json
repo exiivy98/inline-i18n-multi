@@ -1,8 +1,9 @@
 {
   "name": "inline-i18n-multi-vscode",
+  "private": true,
   "displayName": "Inline i18n Multi",
   "description": "Smart search and tooling for inline-i18n-multi",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "exiivy98",
   "repository": {
     "type": "git",
@@ -44,7 +45,10 @@
       "properties": {
         "inlineI18n.locales": {
           "type": "array",
-          "default": ["ko", "en"],
+          "default": [
+            "ko",
+            "en"
+          ],
           "description": "Supported locales for this project"
         },
         "inlineI18n.showUsageCount": {

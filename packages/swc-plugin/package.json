@@ -1,17 +1,24 @@
 {
   "name": "@inline-i18n-multi/swc-plugin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "SWC plugin for inline-i18n-multi build-time optimization",
-  "keywords": ["swc-plugin", "i18n", "inline", "translation"],
+  "keywords": [
+    "swc-plugin",
+    "i18n",
+    "inline",
+    "translation"
+  ],
   "license": "MIT",
   "author": "",
   "repository": {
     "type": "git",
-    "url": "https://github.com/user/inline-i18n-multi.git",
+    "url": "https://github.com/exiivy98/inline-i18n-multi.git",
     "directory": "packages/swc-plugin"
   },
   "main": "./target/wasm32-wasip1/release/inline_i18n_multi_swc.wasm",
-  "files": ["target/wasm32-wasip1/release/*.wasm"],
+  "files": [
+    "target/wasm32-wasip1/release/*.wasm"
+  ],
   "scripts": {
     "build": "[ -f target/wasm32-wasip1/release/inline_i18n_multi_swc.wasm ] && echo 'WASM already built, skipping' || (command -v cargo >/dev/null 2>&1 && cargo build --release --target wasm32-wasip1 || echo 'Cargo not found, skipping build')",
     "build:force": "cargo build --release --target wasm32-wasip1",

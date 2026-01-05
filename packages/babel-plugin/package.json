@@ -1,13 +1,18 @@
 {
   "name": "@inline-i18n-multi/babel-plugin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Babel plugin for inline-i18n-multi build-time optimization",
-  "keywords": ["babel-plugin", "i18n", "inline", "translation"],
+  "keywords": [
+    "babel-plugin",
+    "i18n",
+    "inline",
+    "translation"
+  ],
   "license": "MIT",
   "author": "",
   "repository": {
     "type": "git",
-    "url": "https://github.com/user/inline-i18n-multi.git",
+    "url": "https://github.com/exiivy98/inline-i18n-multi.git",
     "directory": "packages/babel-plugin"
   },
   "main": "./dist/index.js",
@@ -20,7 +25,9 @@
       "require": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
