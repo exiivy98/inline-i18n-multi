@@ -1,3 +1,4 @@
 packages:
   - "packages/*"
   - "examples/*"
+  # playground is excluded from workspace - test it separately

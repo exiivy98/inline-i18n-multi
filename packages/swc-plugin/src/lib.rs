@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use swc_core::common::SyntaxContext;
 use swc_core::ecma::{
     ast::*,
     visit::{VisitMut, VisitMutWith},
@@ -56,19 +57,9 @@ fn generate_hash(content: &str) -> String {
         hash = hash.wrapping_mul(33) ^ (byte as u32);
     }
 
-    // Convert to base36 and take first 8 characters
+    // Convert to hex and take first 8 characters
     let hash_str = format!("{:x}", hash);
     hash_str.chars().take(8).collect()
-}
-
-/// Convert Atom to String
-fn atom_to_string(atom: &swc_core::atoms::Atom) -> String {
-    atom.as_str().to_string()
-}
-
-/// Convert Wtf8Atom to String
-fn wtf8_atom_to_string(atom: &swc_core::atoms::Wtf8Atom) -> String {
-    atom.as_str().unwrap_or("").to_string()
 }
 
 pub struct TransformVisitor {
@@ -83,7 +74,7 @@ impl TransformVisitor {
     /// Extract string value from a Lit node
     fn get_string_value(&self, expr: &Expr) -> Option<String> {
         match expr {
-            Expr::Lit(Lit::Str(s)) => Some(wtf8_atom_to_string(&s.value)),
+            Expr::Lit(Lit::Str(s)) => Some(s.value.to_string()),
             _ => None,
         }
     }
@@ -96,8 +87,8 @@ impl TransformVisitor {
             if let PropOrSpread::Prop(prop) = prop {
                 if let Prop::KeyValue(kv) = prop.as_ref() {
                     let key = match &kv.key {
-                        PropName::Ident(ident) => atom_to_string(&ident.sym),
-                        PropName::Str(s) => wtf8_atom_to_string(&s.value),
+                        PropName::Ident(ident) => ident.sym.to_string(),
+                        PropName::Str(s) => s.value.to_string(),
                         _ => continue,
                     };
 
@@ -148,7 +139,7 @@ impl TransformVisitor {
             _ => return None,
         };
 
-        let func_name = atom_to_string(&callee_ident.sym);
+        let func_name = callee_ident.sym.to_string();
 
         // Check if it's a translation function
         if !IT_FUNCTION_NAMES.contains(&func_name.as_str()) {
@@ -221,11 +212,11 @@ impl TransformVisitor {
         // Create new call expression
         Some(CallExpr {
             span: call.span,
-            ctxt: call.ctxt,
+            ctxt: SyntaxContext::empty(),
             callee: Callee::Expr(Box::new(Expr::Ident(Ident::new(
                 self.config.runtime_function.clone().into(),
                 Default::default(),
-                Default::default(),
+                SyntaxContext::empty(),
             )))),
             args: new_args,
             type_args: None,

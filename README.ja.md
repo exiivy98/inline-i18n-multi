@@ -55,6 +55,7 @@
 - **多言語対応** - 任意の数のロケールをサポート
 - **フレームワーク対応** - React、Next.js（App Router & Pages Router）
 - **開発者ツール** - 検証用CLI、ナビゲーション用VSCode拡張機能
+- **i18n互換** - JSON辞書と複数形をサポートする従来のキーベース翻訳対応
 
 ---
 
@@ -68,6 +69,7 @@
 | [`@inline-i18n-multi/cli`](./packages/cli) | CLIツール |
 | [`@inline-i18n-multi/babel-plugin`](./packages/babel-plugin) | Babelプラグイン |
 | [`@inline-i18n-multi/swc-plugin`](./packages/swc-plugin) | SWCプラグイン |
+| [`inline-i18n-multi-vscode`](./packages/vscode) | VSCode拡張機能 |
 
 ---
 
@@ -102,6 +104,59 @@ it({ ko: '안녕하세요', en: 'Hello', ja: 'こんにちは' })  // → "こ�
 
 // 変数を使用
 it('안녕, {name}님', 'Hello, {name}', { name: 'John' })  // → "Hello, John"
+```
+
+---
+
+## キーベース翻訳（i18n互換）
+
+JSON翻訳ファイルを既に使用しているプロジェクトや、従来のキーベース翻訳が必要な場合：
+
+```typescript
+import { t, loadDictionaries } from 'inline-i18n-multi'
+
+// 翻訳辞書をロード
+loadDictionaries({
+  en: {
+    greeting: { hello: 'Hello', goodbye: 'Goodbye' },
+    items: { count_one: '{count} item', count_other: '{count} items' },
+    welcome: 'Welcome, {name}!'
+  },
+  ja: {
+    greeting: { hello: 'こんにちは', goodbye: 'さようなら' },
+    items: { count_other: '{count}件のアイテム' },
+    welcome: 'ようこそ、{name}さん！'
+  }
+})
+
+// 基本的なキーベース翻訳
+t('greeting.hello')  // → "Hello"（ロケールが'en'の時）
+
+// 変数を使用
+t('welcome', { name: 'John' })  // → "Welcome, John!"
+
+// 複数形サポート（Intl.PluralRulesを使用）
+t('items.count', { count: 1 })  // → "1 item"
+t('items.count', { count: 5 })  // → "5 items"
+
+// ロケールをオーバーライド
+t('greeting.hello', undefined, 'ja')  // → "こんにちは"
+```
+
+### ユーティリティ関数
+
+```typescript
+import { hasTranslation, getLoadedLocales, getDictionary } from 'inline-i18n-multi'
+
+// 翻訳の存在確認
+hasTranslation('greeting.hello')  // → true
+hasTranslation('missing.key')     // → false
+
+// ロードされたロケールを取得
+getLoadedLocales()  // → ['en', 'ja']
+
+// 特定ロケールの辞書を取得
+getDictionary('en')  // → { greeting: { hello: 'Hello', ... }, ... }
 ```
 
 ---
@@ -146,6 +201,29 @@ function MyComponent() {
 }
 ```
 
+### useTフック（キーベース）
+
+```tsx
+import { useT, loadDictionaries } from 'inline-i18n-multi-react'
+
+// 辞書をロード（通常はアプリのエントリーポイントで）
+loadDictionaries({
+  en: { greeting: 'Hello', items: { count_one: '{count} item', count_other: '{count} items' } },
+  ja: { greeting: 'こんにちは', items: { count_other: '{count}件のアイテム' } }
+})
+
+function MyComponent() {
+  const t = useT()
+
+  return (
+    <div>
+      <p>{t('greeting')}</p>
+      <p>{t('items.count', { count: 5 })}</p>
+    </div>
+  )
+}
+```
+
 ---
 
 ## Next.js統合
@@ -173,6 +251,23 @@ import { it, LocaleProvider } from 'inline-i18n-multi-next/client'
 
 export default function ClientComponent() {
   return <p>{it('클라이언트', 'Client')}</p>
+}
+```
+
+### クライアントコンポーネントでキーベース翻訳
+
+```tsx
+'use client'
+import { useT, loadDictionaries } from 'inline-i18n-multi-next/client'
+
+loadDictionaries({
+  en: { nav: { home: 'Home', about: 'About' } },
+  ja: { nav: { home: 'ホーム', about: '紹介' } }
+})
+
+export default function NavMenu() {
+  const t = useT()
+  return <nav><a href="/">{t('nav.home')}</a></nav>
 }
 ```
 
@@ -336,6 +431,12 @@ VSCodeマーケットプレイスから`inline-i18n-multi-vscode`をインスト
 | `it(translations, vars?)` | オブジェクト構文で翻訳 |
 | `setLocale(locale)` | 現在のロケールを設定 |
 | `getLocale()` | 現在のロケールを取得 |
+| `t(key, vars?, locale?)` | ロケールオーバーライド可能なキーベース翻訳 |
+| `loadDictionaries(dicts)` | 複数ロケールの翻訳辞書をロード |
+| `loadDictionary(locale, dict)` | 単一ロケールの辞書をロード |
+| `hasTranslation(key, locale?)` | 翻訳キーの存在確認 |
+| `getLoadedLocales()` | ロードされたロケールコードの配列を返す |
+| `getDictionary(locale)` | 特定ロケールの辞書を返す |
 
 ### Reactフック＆コンポーネント
 
@@ -343,6 +444,7 @@ VSCodeマーケットプレイスから`inline-i18n-multi-vscode`をインスト
 |-------------|------|
 | `LocaleProvider` | ロケール用コンテキストプロバイダー |
 | `useLocale()` | `[locale, setLocale]`を返すフック |
+| `useT()` | 現在のロケールにバインドされた`t`関数を返すフック |
 | `T` | 翻訳コンポーネント |
 
 ### 型
@@ -407,6 +509,12 @@ pnpm build
 # テストを実行
 pnpm test
 ```
+
+---
+
+## 免責事項
+
+本ソフトウェアは「現状のまま」提供され、いかなる保証もありません。著者は、本パッケージの使用により生じるいかなる損害や問題についても責任を負いません。ご利用は自己責任でお願いします。
 
 ---
 

@@ -13,10 +13,11 @@
   "main": "./target/wasm32-wasip1/release/inline_i18n_multi_swc.wasm",
   "files": ["target/wasm32-wasip1/release/*.wasm"],
   "scripts": {
-    "build": "cargo build --release --target wasm32-wasip1",
+    "build": "[ -f target/wasm32-wasip1/release/inline_i18n_multi_swc.wasm ] && echo 'WASM already built, skipping' || (command -v cargo >/dev/null 2>&1 && cargo build --release --target wasm32-wasip1 || echo 'Cargo not found, skipping build')",
+    "build:force": "cargo build --release --target wasm32-wasip1",
     "build:debug": "cargo build --target wasm32-wasip1",
-    "clean": "cargo clean",
-    "prepublishOnly": "npm run build"
+    "clean": "cargo clean 2>/dev/null || rm -rf target",
+    "prepublishOnly": "npm run build:force"
   },
   "peerDependencies": {
     "@swc/core": "^1.3.0"

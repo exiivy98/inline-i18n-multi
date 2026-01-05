@@ -1,3 +1,4 @@
+// Inline translations
 export { it } from './translate'
 export { setLocale, getLocale } from './context'
 export { __i18n_lookup } from './runtime'
@@ -17,9 +18,26 @@ export {
   zh_es,
 } from './pairs'
 
+// Key-based translations (i18n compatible)
+export {
+  t,
+  loadDictionaries,
+  loadDictionary,
+  clearDictionaries,
+  hasTranslation,
+  getLoadedLocales,
+  getDictionary,
+} from './dictionary'
+
 export type {
   Locale,
   Translations,
   TranslationVars,
   Config,
 } from './types'
+
+export type {
+  Dictionary,
+  Dictionaries,
+  PluralRules,
+} from './dictionary'

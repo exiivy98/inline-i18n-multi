@@ -55,6 +55,7 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Multiple languages** - Support for any number of locales
 - **Framework support** - React, Next.js (App Router & Pages Router)
 - **Developer tools** - CLI for validation, VSCode extension for navigation
+- **i18n compatible** - Support for traditional key-based translations with JSON dictionaries and plural forms
 
 ---
 
@@ -68,6 +69,7 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 | [`@inline-i18n-multi/cli`](./packages/cli) | CLI tools |
 | [`@inline-i18n-multi/babel-plugin`](./packages/babel-plugin) | Babel plugin |
 | [`@inline-i18n-multi/swc-plugin`](./packages/swc-plugin) | SWC plugin |
+| [`inline-i18n-multi-vscode`](./packages/vscode) | VSCode extension |
 
 ---
 
@@ -102,6 +104,59 @@ it({ ko: '안녕하세요', en: 'Hello', ja: 'こんにちは' })  // → "Hello
 
 // With variables
 it('안녕, {name}님', 'Hello, {name}', { name: 'John' })  // → "Hello, John"
+```
+
+---
+
+## Key-Based Translations (i18n Compatible)
+
+For projects that already use JSON translation files, or when you need traditional key-based translations:
+
+```typescript
+import { t, loadDictionaries } from 'inline-i18n-multi'
+
+// Load translation dictionaries
+loadDictionaries({
+  en: {
+    greeting: { hello: 'Hello', goodbye: 'Goodbye' },
+    items: { count_one: '{count} item', count_other: '{count} items' },
+    welcome: 'Welcome, {name}!'
+  },
+  ko: {
+    greeting: { hello: '안녕하세요', goodbye: '안녕히 가세요' },
+    items: { count_other: '{count}개 항목' },
+    welcome: '환영합니다, {name}님!'
+  }
+})
+
+// Basic key-based translation
+t('greeting.hello')  // → "Hello" (when locale is 'en')
+
+// With variables
+t('welcome', { name: 'John' })  // → "Welcome, John!"
+
+// Plural support (uses Intl.PluralRules)
+t('items.count', { count: 1 })  // → "1 item"
+t('items.count', { count: 5 })  // → "5 items"
+
+// Override locale
+t('greeting.hello', undefined, 'ko')  // → "안녕하세요"
+```
+
+### Utility Functions
+
+```typescript
+import { hasTranslation, getLoadedLocales, getDictionary } from 'inline-i18n-multi'
+
+// Check if translation exists
+hasTranslation('greeting.hello')  // → true
+hasTranslation('missing.key')     // → false
+
+// Get loaded locales
+getLoadedLocales()  // → ['en', 'ko']
+
+// Get dictionary for a locale
+getDictionary('en')  // → { greeting: { hello: 'Hello', ... }, ... }
 ```
 
 ---
@@ -145,6 +200,29 @@ function MyComponent() {
 }
 ```
 
+### useT Hook (Key-Based)
+
+```tsx
+import { useT, loadDictionaries } from 'inline-i18n-multi-react'
+
+// Load dictionaries (typically in app entry)
+loadDictionaries({
+  en: { greeting: 'Hello', items: { count_one: '{count} item', count_other: '{count} items' } },
+  ko: { greeting: '안녕하세요', items: { count_other: '{count}개 항목' } }
+})
+
+function MyComponent() {
+  const t = useT()
+
+  return (
+    <div>
+      <p>{t('greeting')}</p>
+      <p>{t('items.count', { count: 5 })}</p>
+    </div>
+  )
+}
+```
+
 ---
 
 ## Next.js Integration
@@ -172,6 +250,23 @@ import { it, LocaleProvider } from 'inline-i18n-multi-next/client'
 
 export default function ClientComponent() {
   return <p>{it('클라이언트', 'Client')}</p>
+}
+```
+
+### Client Components with Key-Based Translations
+
+```tsx
+'use client'
+import { useT, loadDictionaries } from 'inline-i18n-multi-next/client'
+
+loadDictionaries({
+  en: { nav: { home: 'Home', about: 'About' } },
+  ko: { nav: { home: '홈', about: '소개' } }
+})
+
+export default function NavMenu() {
+  const t = useT()
+  return <nav><a href="/">{t('nav.home')}</a></nav>
 }
 ```
 
@@ -335,6 +430,12 @@ Install `inline-i18n-multi-vscode` from the VSCode Marketplace.
 | `it(translations, vars?)` | Translate with object syntax |
 | `setLocale(locale)` | Set current locale |
 | `getLocale()` | Get current locale |
+| `t(key, vars?, locale?)` | Key-based translation with optional locale override |
+| `loadDictionaries(dicts)` | Load translation dictionaries for multiple locales |
+| `loadDictionary(locale, dict)` | Load dictionary for a single locale |
+| `hasTranslation(key, locale?)` | Check if translation key exists |
+| `getLoadedLocales()` | Get array of loaded locale codes |
+| `getDictionary(locale)` | Get dictionary for a specific locale |
 
 ### React Hooks & Components
 
@@ -342,6 +443,7 @@ Install `inline-i18n-multi-vscode` from the VSCode Marketplace.
 |--------|-------------|
 | `LocaleProvider` | Context provider for locale |
 | `useLocale()` | Hook returning `[locale, setLocale]` |
+| `useT()` | Hook returning `t` function bound to current locale |
 | `T` | Translation component |
 
 ### Types
@@ -406,6 +508,12 @@ pnpm build
 # Run tests
 pnpm test
 ```
+
+---
+
+## Disclaimer
+
+This software is provided "as is", without warranty of any kind. The authors are not responsible for any damages or issues arising from the use of this package. Use at your own risk.
 
 ---
 

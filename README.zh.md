@@ -55,6 +55,7 @@
 - **多语言支持** - 支持任意数量的语言环境
 - **框架支持** - React、Next.js（App Router和Pages Router）
 - **开发者工具** - 用于验证的CLI，用于导航的VSCode扩展
+- **i18n兼容** - 支持带有JSON字典和复数形式的传统基于键的翻译
 
 ---
 
@@ -68,6 +69,7 @@
 | [`@inline-i18n-multi/cli`](./packages/cli) | CLI工具 |
 | [`@inline-i18n-multi/babel-plugin`](./packages/babel-plugin) | Babel插件 |
 | [`@inline-i18n-multi/swc-plugin`](./packages/swc-plugin) | SWC插件 |
+| [`inline-i18n-multi-vscode`](./packages/vscode) | VSCode扩展 |
 
 ---
 
@@ -102,6 +104,59 @@ it({ ko: '안녕하세요', en: 'Hello', zh: '你好' })  // → "你好"
 
 // 使用变量
 it('안녕, {name}님', 'Hello, {name}', { name: 'John' })  // → "Hello, John"
+```
+
+---
+
+## 基于键的翻译（i18n兼容）
+
+对于已经使用JSON翻译文件的项目，或者需要传统基于键的翻译时：
+
+```typescript
+import { t, loadDictionaries } from 'inline-i18n-multi'
+
+// 加载翻译字典
+loadDictionaries({
+  en: {
+    greeting: { hello: 'Hello', goodbye: 'Goodbye' },
+    items: { count_one: '{count} item', count_other: '{count} items' },
+    welcome: 'Welcome, {name}!'
+  },
+  zh: {
+    greeting: { hello: '你好', goodbye: '再见' },
+    items: { count_other: '{count}个项目' },
+    welcome: '欢迎，{name}！'
+  }
+})
+
+// 基本的基于键的翻译
+t('greeting.hello')  // → "Hello"（当locale为'en'时）
+
+// 使用变量
+t('welcome', { name: 'John' })  // → "Welcome, John!"
+
+// 复数支持（使用Intl.PluralRules）
+t('items.count', { count: 1 })  // → "1 item"
+t('items.count', { count: 5 })  // → "5 items"
+
+// 覆盖语言环境
+t('greeting.hello', undefined, 'zh')  // → "你好"
+```
+
+### 工具函数
+
+```typescript
+import { hasTranslation, getLoadedLocales, getDictionary } from 'inline-i18n-multi'
+
+// 检查翻译是否存在
+hasTranslation('greeting.hello')  // → true
+hasTranslation('missing.key')     // → false
+
+// 获取已加载的语言环境
+getLoadedLocales()  // → ['en', 'zh']
+
+// 获取特定语言环境的字典
+getDictionary('en')  // → { greeting: { hello: 'Hello', ... }, ... }
 ```
 
 ---
@@ -146,6 +201,29 @@ function MyComponent() {
 }
 ```
 
+### useT钩子（基于键）
+
+```tsx
+import { useT, loadDictionaries } from 'inline-i18n-multi-react'
+
+// 加载字典（通常在应用入口处）
+loadDictionaries({
+  en: { greeting: 'Hello', items: { count_one: '{count} item', count_other: '{count} items' } },
+  zh: { greeting: '你好', items: { count_other: '{count}个项目' } }
+})
+
+function MyComponent() {
+  const t = useT()
+
+  return (
+    <div>
+      <p>{t('greeting')}</p>
+      <p>{t('items.count', { count: 5 })}</p>
+    </div>
+  )
+}
+```
+
 ---
 
 ## Next.js集成
@@ -173,6 +251,23 @@ import { it, LocaleProvider } from 'inline-i18n-multi-next/client'
 
 export default function ClientComponent() {
   return <p>{it('클라이언트', 'Client')}</p>
+}
+```
+
+### 客户端组件中的基于键翻译
+
+```tsx
+'use client'
+import { useT, loadDictionaries } from 'inline-i18n-multi-next/client'
+
+loadDictionaries({
+  en: { nav: { home: 'Home', about: 'About' } },
+  zh: { nav: { home: '首页', about: '关于' } }
+})
+
+export default function NavMenu() {
+  const t = useT()
+  return <nav><a href="/">{t('nav.home')}</a></nav>
 }
 ```
 
@@ -336,6 +431,12 @@ npx inline-i18n coverage --locales ko,en,zh
 | `it(translations, vars?)` | 使用对象语法翻译 |
 | `setLocale(locale)` | 设置当前语言环境 |
 | `getLocale()` | 获取当前语言环境 |
+| `t(key, vars?, locale?)` | 可覆盖语言环境的基于键的翻译 |
+| `loadDictionaries(dicts)` | 加载多个语言环境的翻译字典 |
+| `loadDictionary(locale, dict)` | 加载单个语言环境的字典 |
+| `hasTranslation(key, locale?)` | 检查翻译键是否存在 |
+| `getLoadedLocales()` | 返回已加载的语言环境代码数组 |
+| `getDictionary(locale)` | 返回特定语言环境的字典 |
 
 ### React钩子和组件
 
@@ -343,6 +444,7 @@ npx inline-i18n coverage --locales ko,en,zh
 |------|------|
 | `LocaleProvider` | 语言环境上下文提供者 |
 | `useLocale()` | 返回`[locale, setLocale]`的钩子 |
+| `useT()` | 返回绑定到当前语言环境的`t`函数的钩子 |
 | `T` | 翻译组件 |
 
 ### 类型
@@ -407,6 +509,12 @@ pnpm build
 # 运行测试
 pnpm test
 ```
+
+---
+
+## 免责声明
+
+本软件按"原样"提供，不附带任何形式的保证。作者不对因使用本软件包而产生的任何损害或问题承担责任。使用风险由用户自行承担。
 
 ---
 

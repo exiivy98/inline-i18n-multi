@@ -1,8 +1,11 @@
 // re-export everything from react package for client components
 export {
+  // React components & hooks
   LocaleProvider,
   useLocale,
+  useT,
   T,
+  // inline translations
   it,
   it_ja,
   it_zh,
@@ -19,7 +22,19 @@ export {
   zh_es,
   getLocale,
   setLocale,
+  // key-based translations (i18n compatible)
+  t,
+  loadDictionaries,
+  loadDictionary,
+  clearDictionaries,
+  hasTranslation,
+  getLoadedLocales,
+  getDictionary,
+  // types
   type Locale,
   type Translations,
   type TranslationVars,
+  type Dictionary,
+  type Dictionaries,
+  type PluralRules,
 } from 'inline-i18n-multi-react'

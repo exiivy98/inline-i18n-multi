@@ -55,6 +55,7 @@
 - **다국어 지원** - 원하는 만큼의 로케일 지원
 - **프레임워크 지원** - React, Next.js (App Router & Pages Router)
 - **개발자 도구** - 검증용 CLI, 탐색용 VSCode 확장
+- **i18n 호환** - JSON 딕셔너리와 복수형을 지원하는 전통적인 키 기반 번역 지원
 
 ---
 
@@ -68,6 +69,7 @@
 | [`@inline-i18n-multi/cli`](./packages/cli) | CLI 도구 |
 | [`@inline-i18n-multi/babel-plugin`](./packages/babel-plugin) | Babel 플러그인 |
 | [`@inline-i18n-multi/swc-plugin`](./packages/swc-plugin) | SWC 플러그인 |
+| [`inline-i18n-multi-vscode`](./packages/vscode) | VSCode 확장 |
 
 ---
 
@@ -102,6 +104,59 @@ it({ ko: '안녕하세요', en: 'Hello', ja: 'こんにちは' })  // → "Hello
 
 // 변수 사용
 it('안녕, {name}님', 'Hello, {name}', { name: 'John' })  // → "Hello, John"
+```
+
+---
+
+## 키 기반 번역 (i18n 호환)
+
+JSON 번역 파일을 이미 사용하는 프로젝트나, 전통적인 키 기반 번역이 필요한 경우:
+
+```typescript
+import { t, loadDictionaries } from 'inline-i18n-multi'
+
+// 번역 딕셔너리 로드
+loadDictionaries({
+  en: {
+    greeting: { hello: 'Hello', goodbye: 'Goodbye' },
+    items: { count_one: '{count} item', count_other: '{count} items' },
+    welcome: 'Welcome, {name}!'
+  },
+  ko: {
+    greeting: { hello: '안녕하세요', goodbye: '안녕히 가세요' },
+    items: { count_other: '{count}개 항목' },
+    welcome: '환영합니다, {name}님!'
+  }
+})
+
+// 기본 키 기반 번역
+t('greeting.hello')  // → "Hello" (로케일이 'en'일 때)
+
+// 변수 사용
+t('welcome', { name: 'John' })  // → "Welcome, John!"
+
+// 복수형 지원 (Intl.PluralRules 사용)
+t('items.count', { count: 1 })  // → "1 item"
+t('items.count', { count: 5 })  // → "5 items"
+
+// 로케일 오버라이드
+t('greeting.hello', undefined, 'ko')  // → "안녕하세요"
+```
+
+### 유틸리티 함수
+
+```typescript
+import { hasTranslation, getLoadedLocales, getDictionary } from 'inline-i18n-multi'
+
+// 번역 존재 여부 확인
+hasTranslation('greeting.hello')  // → true
+hasTranslation('missing.key')     // → false
+
+// 로드된 로케일 목록 조회
+getLoadedLocales()  // → ['en', 'ko']
+
+// 특정 로케일의 딕셔너리 조회
+getDictionary('en')  // → { greeting: { hello: 'Hello', ... }, ... }
 ```
 
 ---
@@ -145,6 +200,29 @@ function MyComponent() {
 }
 ```
 
+### useT 훅 (키 기반)
+
+```tsx
+import { useT, loadDictionaries } from 'inline-i18n-multi-react'
+
+// 딕셔너리 로드 (보통 앱 진입점에서)
+loadDictionaries({
+  en: { greeting: 'Hello', items: { count_one: '{count} item', count_other: '{count} items' } },
+  ko: { greeting: '안녕하세요', items: { count_other: '{count}개 항목' } }
+})
+
+function MyComponent() {
+  const t = useT()
+
+  return (
+    <div>
+      <p>{t('greeting')}</p>
+      <p>{t('items.count', { count: 5 })}</p>
+    </div>
+  )
+}
+```
+
 ---
 
 ## Next.js 통합
@@ -172,6 +250,23 @@ import { it, LocaleProvider } from 'inline-i18n-multi-next/client'
 
 export default function ClientComponent() {
   return <p>{it('클라이언트', 'Client')}</p>
+}
+```
+
+### 클라이언트 컴포넌트에서 키 기반 번역
+
+```tsx
+'use client'
+import { useT, loadDictionaries } from 'inline-i18n-multi-next/client'
+
+loadDictionaries({
+  en: { nav: { home: 'Home', about: 'About' } },
+  ko: { nav: { home: '홈', about: '소개' } }
+})
+
+export default function NavMenu() {
+  const t = useT()
+  return <nav><a href="/">{t('nav.home')}</a></nav>
 }
 ```
 
@@ -335,6 +430,12 @@ VSCode 마켓플레이스에서 `inline-i18n-multi-vscode`를 설치하세요.
 | `it(translations, vars?)` | 객체 문법으로 번역 |
 | `setLocale(locale)` | 현재 로케일 설정 |
 | `getLocale()` | 현재 로케일 가져오기 |
+| `t(key, vars?, locale?)` | 로케일 오버라이드가 가능한 키 기반 번역 |
+| `loadDictionaries(dicts)` | 여러 로케일의 번역 딕셔너리 로드 |
+| `loadDictionary(locale, dict)` | 단일 로케일 딕셔너리 로드 |
+| `hasTranslation(key, locale?)` | 번역 키 존재 여부 확인 |
+| `getLoadedLocales()` | 로드된 로케일 코드 배열 반환 |
+| `getDictionary(locale)` | 특정 로케일의 딕셔너리 반환 |
 
 ### React 훅 & 컴포넌트
 
@@ -342,6 +443,7 @@ VSCode 마켓플레이스에서 `inline-i18n-multi-vscode`를 설치하세요.
 |----------|------|
 | `LocaleProvider` | 로케일용 컨텍스트 프로바이더 |
 | `useLocale()` | `[locale, setLocale]`을 반환하는 훅 |
+| `useT()` | 현재 로케일에 바인딩된 `t` 함수를 반환하는 훅 |
 | `T` | 번역 컴포넌트 |
 
 ### 타입
@@ -406,6 +508,12 @@ pnpm build
 # 테스트 실행
 pnpm test
 ```
+
+---
+
+## 면책 조항
+
+이 소프트웨어는 어떠한 보증도 없이 "있는 그대로" 제공됩니다. 저자는 이 패키지의 사용으로 인해 발생하는 어떠한 손해나 문제에 대해서도 책임을 지지 않습니다. 사용에 따른 위험은 사용자 본인에게 있습니다.
 
 ---
 

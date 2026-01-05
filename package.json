@@ -22,6 +22,8 @@
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
+    "@swc/cli": "^0.7.9",
+    "@swc/core": "^1.15.8",
     "turbo": "^2.3.3",
     "typescript": "^5.7.2"
   }
