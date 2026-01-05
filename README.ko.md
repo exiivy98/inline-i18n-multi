@@ -541,6 +541,8 @@ pnpm --filter inline-i18n-multi-nextjs-example dev
 
 ## VSCode 확장
 
+> **참고:** VSCode 확장은 추후 마켓플레이스에 배포될 예정입니다.
+
 VSCode 마켓플레이스에서 `inline-i18n-multi-vscode`를 설치하세요.
 
 ### 기능

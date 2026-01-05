@@ -518,6 +518,8 @@ pnpm --filter inline-i18n-multi-nextjs-example dev
 
 ## VSCode Extension
 
+> **Note:** The VSCode extension will be available on the Marketplace soon.
+
 Install `inline-i18n-multi-vscode` from the VSCode Marketplace.
 
 ### Features
