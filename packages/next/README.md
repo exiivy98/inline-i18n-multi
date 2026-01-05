@@ -1,3 +1,5 @@
+> **Important:** For complete documentation, examples, and best practices, please read the [full documentation on GitHub](https://github.com/exiivy98/inline-i18n-multi).
+
 # inline-i18n-multi-next
 
 Next.js App Router integration for inline-i18n-multi. Full SSR/SSG support with SEO utilities.
@@ -106,7 +108,7 @@ export async function generateMetadata({ params }) {
 
 ## Documentation
 
-Full documentation: [GitHub](https://github.com/jaesukpark/inline-i18n-multi)
+**Please read the [full documentation on GitHub](https://github.com/exiivy98/inline-i18n-multi)** for complete API reference, SEO best practices, and advanced patterns.
 
 ## License
 

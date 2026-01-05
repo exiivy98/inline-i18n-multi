@@ -1,3 +1,5 @@
+> **Important:** For complete documentation, examples, and best practices, please read the [full documentation on GitHub](https://github.com/exiivy98/inline-i18n-multi).
+
 # inline-i18n-multi-react
 
 React bindings for inline-i18n-multi. Write translations inline in your components.
@@ -69,7 +71,7 @@ function Nav() {
 
 ## Documentation
 
-Full documentation: [GitHub](https://github.com/jaesukpark/inline-i18n-multi)
+**Please read the [full documentation on GitHub](https://github.com/exiivy98/inline-i18n-multi)** for complete API reference, advanced patterns, and best practices.
 
 ## License
 

@@ -1,3 +1,5 @@
+> **Important:** For complete documentation, examples, and best practices, please read the [full documentation on GitHub](https://github.com/exiivy98/inline-i18n-multi).
+
 # inline-i18n-multi
 
 Inline i18n for JavaScript/TypeScript. Write translations where you use them.
@@ -47,7 +49,7 @@ t('items.count', { count: 5 })  // → '5 items'
 
 ## Documentation
 
-Full documentation: [GitHub](https://github.com/jaesukpark/inline-i18n-multi)
+**Please read the [full documentation on GitHub](https://github.com/exiivy98/inline-i18n-multi)** for complete API reference, framework integrations, and best practices.
 
 ## License
 
