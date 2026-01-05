@@ -34,7 +34,7 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
-  examples/with-nextjs:
+  examples/nextjs:
     dependencies:
       inline-i18n-multi-next:
         specifier: workspace:*
@@ -62,7 +62,7 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
-  examples/with-react:
+  examples/react:
     dependencies:
       inline-i18n-multi-react:
         specifier: workspace:*
