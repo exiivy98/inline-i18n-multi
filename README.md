@@ -504,6 +504,33 @@ Install `inline-i18n-multi-vscode` from the VSCode Marketplace.
 
 ---
 
+## Testing
+
+Tests are run using Vitest.
+
+```bash
+# Run all package tests
+pnpm test
+
+# Run specific package tests
+pnpm --filter inline-i18n-multi test        # core
+pnpm --filter inline-i18n-multi-next test   # next
+
+# For CI (run once)
+pnpm test -- --run
+```
+
+### Test Coverage
+
+| Package | Tests | Status |
+|---------|-------|--------|
+| `inline-i18n-multi` (core) | 26 | ✅ |
+| `inline-i18n-multi-next` (server) | 16 | ✅ |
+
+See [Testing Documentation](./docs/test.md) for more details.
+
+---
+
 ## API Reference
 
 ### Core Functions

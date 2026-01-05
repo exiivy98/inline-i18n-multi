@@ -505,6 +505,33 @@ pnpm --filter inline-i18n-multi-nextjs-example dev
 
 ---
 
+## 测试
+
+使用Vitest运行测试。
+
+```bash
+# 运行所有包的测试
+pnpm test
+
+# 运行特定包的测试
+pnpm --filter inline-i18n-multi test        # core
+pnpm --filter inline-i18n-multi-next test   # next
+
+# CI用（只运行一次）
+pnpm test -- --run
+```
+
+### 测试覆盖率
+
+| 包 | 测试数 | 状态 |
+|---|--------|------|
+| `inline-i18n-multi` (core) | 26 | ✅ |
+| `inline-i18n-multi-next` (server) | 16 | ✅ |
+
+详情请参阅[测试文档](./docs/test.md)。
+
+---
+
 ## API参考
 
 ### 核心函数

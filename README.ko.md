@@ -504,6 +504,33 @@ VSCode 마켓플레이스에서 `inline-i18n-multi-vscode`를 설치하세요.
 
 ---
 
+## 테스트
+
+Vitest를 사용하여 테스트합니다.
+
+```bash
+# 모든 패키지 테스트
+pnpm test
+
+# 특정 패키지만 테스트
+pnpm --filter inline-i18n-multi test        # core
+pnpm --filter inline-i18n-multi-next test   # next
+
+# CI용 (한 번만 실행)
+pnpm test -- --run
+```
+
+### 테스트 커버리지
+
+| 패키지 | 테스트 수 | 상태 |
+|--------|----------|------|
+| `inline-i18n-multi` (core) | 26 | ✅ |
+| `inline-i18n-multi-next` (server) | 16 | ✅ |
+
+자세한 내용은 [테스트 문서](./docs/test.md)를 참조하세요.
+
+---
+
 ## API 레퍼런스
 
 ### 핵심 함수
