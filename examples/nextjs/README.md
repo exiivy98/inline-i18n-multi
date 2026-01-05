@@ -23,7 +23,7 @@ Then open http://localhost:3000
 ## Project Structure
 
 ```
-with-nextjs/
+nextjs/
 ├── src/
 │   ├── app/
 │   │   └── [locale]/

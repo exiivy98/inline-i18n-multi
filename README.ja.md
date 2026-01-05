@@ -470,8 +470,8 @@ npx inline-i18n coverage --locales ko,en,ja
 | サンプル | 説明 |
 |----------|------|
 | [`basic`](./examples/basic) | 基本的なTypeScriptの使い方 |
-| [`with-react`](./examples/with-react) | ViteベースのReactアプリ |
-| [`with-nextjs`](./examples/with-nextjs) | Next.js 15 App Router |
+| [`react`](./examples/react) | ViteベースのReactアプリ |
+| [`nextjs`](./examples/nextjs) | Next.js 15 App Router |
 
 ### サンプルの実行
 

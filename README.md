@@ -469,8 +469,8 @@ Check out the example projects in the [`examples/`](./examples) directory:
 | Example | Description |
 |---------|-------------|
 | [`basic`](./examples/basic) | Basic TypeScript usage |
-| [`with-react`](./examples/with-react) | React app with Vite |
-| [`with-nextjs`](./examples/with-nextjs) | Next.js 15 App Router |
+| [`react`](./examples/react) | React app with Vite |
+| [`nextjs`](./examples/nextjs) | Next.js 15 App Router |
 
 ### Run Examples
 

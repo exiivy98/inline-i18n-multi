@@ -25,7 +25,7 @@ Then open http://localhost:5173
 ## Project Structure
 
 ```
-with-react/
+react/
 ├── src/
 │   ├── main.tsx      # Entry point with LocaleProvider
 │   └── App.tsx       # Main component with all examples

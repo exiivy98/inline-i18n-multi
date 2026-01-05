@@ -470,8 +470,8 @@ npx inline-i18n coverage --locales ko,en,zh
 | 示例 | 描述 |
 |------|------|
 | [`basic`](./examples/basic) | 基本TypeScript用法 |
-| [`with-react`](./examples/with-react) | 基于Vite的React应用 |
-| [`with-nextjs`](./examples/with-nextjs) | Next.js 15 App Router |
+| [`react`](./examples/react) | 基于Vite的React应用 |
+| [`nextjs`](./examples/nextjs) | Next.js 15 App Router |
 
 ### 运行示例
 

@@ -25,6 +25,7 @@
 ```
 
 앱에서 "Hello"를 보고 코드에서 찾으려면:
+
 1. JSON 파일에서 "Hello" 검색
 2. `greeting.hello` 키 찾기
 3. 코드에서 해당 키 검색
@@ -39,7 +40,7 @@
 `inline-i18n-multi`를 사용하면 번역이 코드 안에 있습니다:
 
 ```tsx
-<p>{it('안녕하세요', 'Hello')}</p>
+<p>{it("안녕하세요", "Hello")}</p>
 ```
 
 앱에서 "Hello"가 보이면? 코드베이스에서 "Hello"를 검색하면 됩니다. **끝.**
@@ -61,15 +62,15 @@
 
 ## 패키지
 
-| 패키지 | 설명 |
-|--------|------|
-| [`inline-i18n-multi`](./packages/core) | 핵심 번역 함수 |
-| [`inline-i18n-multi-react`](./packages/react) | React 훅 & 컴포넌트 |
-| [`inline-i18n-multi-next`](./packages/next) | Next.js 통합 |
-| [`@inline-i18n-multi/cli`](./packages/cli) | CLI 도구 |
-| [`@inline-i18n-multi/babel-plugin`](./packages/babel-plugin) | Babel 플러그인 |
-| [`@inline-i18n-multi/swc-plugin`](./packages/swc-plugin) | SWC 플러그인 |
-| [`inline-i18n-multi-vscode`](./packages/vscode) | VSCode 확장 |
+| 패키지                                                       | 설명                |
+| ------------------------------------------------------------ | ------------------- |
+| [`inline-i18n-multi`](./packages/core)                       | 핵심 번역 함수      |
+| [`inline-i18n-multi-react`](./packages/react)                | React 훅 & 컴포넌트 |
+| [`inline-i18n-multi-next`](./packages/next)                  | Next.js 통합        |
+| [`@inline-i18n-multi/cli`](./packages/cli)                   | CLI 도구            |
+| [`@inline-i18n-multi/babel-plugin`](./packages/babel-plugin) | Babel 플러그인      |
+| [`@inline-i18n-multi/swc-plugin`](./packages/swc-plugin)     | SWC 플러그인        |
+| [`inline-i18n-multi-vscode`](./packages/vscode)              | VSCode 확장         |
 
 ---
 
@@ -91,19 +92,19 @@ pnpm add inline-i18n-multi
 ### 기본 사용법
 
 ```typescript
-import { it, setLocale } from 'inline-i18n-multi'
+import { it, setLocale } from "inline-i18n-multi";
 
 // 현재 로케일 설정
-setLocale('en')
+setLocale("en");
 
 // 단축 문법 (한국어 + 영어)
-it('안녕하세요', 'Hello')  // → "Hello"
+it("안녕하세요", "Hello"); // → "Hello"
 
 // 객체 문법 (여러 언어)
-it({ ko: '안녕하세요', en: 'Hello', ja: 'こんにちは' })  // → "Hello"
+it({ ko: "안녕하세요", en: "Hello", ja: "こんにちは" }); // → "Hello"
 
 // 변수 사용
-it('안녕, {name}님', 'Hello, {name}', { name: 'John' })  // → "Hello, John"
+it("안녕, {name}님", "Hello, {name}", { name: "John" }); // → "Hello, John"
 ```
 
 ---
@@ -113,50 +114,54 @@ it('안녕, {name}님', 'Hello, {name}', { name: 'John' })  // → "Hello, John"
 JSON 번역 파일을 이미 사용하는 프로젝트나, 전통적인 키 기반 번역이 필요한 경우:
 
 ```typescript
-import { t, loadDictionaries } from 'inline-i18n-multi'
+import { t, loadDictionaries } from "inline-i18n-multi";
 
 // 번역 딕셔너리 로드
 loadDictionaries({
   en: {
-    greeting: { hello: 'Hello', goodbye: 'Goodbye' },
-    items: { count_one: '{count} item', count_other: '{count} items' },
-    welcome: 'Welcome, {name}!'
+    greeting: { hello: "Hello", goodbye: "Goodbye" },
+    items: { count_one: "{count} item", count_other: "{count} items" },
+    welcome: "Welcome, {name}!",
   },
   ko: {
-    greeting: { hello: '안녕하세요', goodbye: '안녕히 가세요' },
-    items: { count_other: '{count}개 항목' },
-    welcome: '환영합니다, {name}님!'
-  }
-})
+    greeting: { hello: "안녕하세요", goodbye: "안녕히 가세요" },
+    items: { count_other: "{count}개 항목" },
+    welcome: "환영합니다, {name}님!",
+  },
+});
 
 // 기본 키 기반 번역
-t('greeting.hello')  // → "Hello" (로케일이 'en'일 때)
+t("greeting.hello"); // → "Hello" (로케일이 'en'일 때)
 
 // 변수 사용
-t('welcome', { name: 'John' })  // → "Welcome, John!"
+t("welcome", { name: "John" }); // → "Welcome, John!"
 
 // 복수형 지원 (Intl.PluralRules 사용)
-t('items.count', { count: 1 })  // → "1 item"
-t('items.count', { count: 5 })  // → "5 items"
+t("items.count", { count: 1 }); // → "1 item"
+t("items.count", { count: 5 }); // → "5 items"
 
 // 로케일 오버라이드
-t('greeting.hello', undefined, 'ko')  // → "안녕하세요"
+t("greeting.hello", undefined, "ko"); // → "안녕하세요"
 ```
 
 ### 유틸리티 함수
 
 ```typescript
-import { hasTranslation, getLoadedLocales, getDictionary } from 'inline-i18n-multi'
+import {
+  hasTranslation,
+  getLoadedLocales,
+  getDictionary,
+} from "inline-i18n-multi";
 
 // 번역 존재 여부 확인
-hasTranslation('greeting.hello')  // → true
-hasTranslation('missing.key')     // → false
+hasTranslation("greeting.hello"); // → true
+hasTranslation("missing.key"); // → false
 
 // 로드된 로케일 목록 조회
-getLoadedLocales()  // → ['en', 'ko']
+getLoadedLocales(); // → ['en', 'ko']
 
 // 특정 로케일의 딕셔너리 조회
-getDictionary('en')  // → { greeting: { hello: 'Hello', ... }, ... }
+getDictionary("en"); // → { greeting: { hello: 'Hello', ... }, ... }
 ```
 
 ---
@@ -168,23 +173,23 @@ npm install inline-i18n-multi-react
 ```
 
 ```tsx
-import { LocaleProvider, useLocale, it, T } from 'inline-i18n-multi-react'
+import { LocaleProvider, useLocale, it, T } from "inline-i18n-multi-react";
 
 function App() {
   return (
     <LocaleProvider locale="en">
       <MyComponent />
     </LocaleProvider>
-  )
+  );
 }
 
 function MyComponent() {
-  const [locale, setLocale] = useLocale()
+  const [locale, setLocale] = useLocale();
 
   return (
     <div>
       {/* 함수 문법 */}
-      <h1>{it('제목', 'Title')}</h1>
+      <h1>{it("제목", "Title")}</h1>
 
       {/* 컴포넌트 문법 */}
       <T ko="환영합니다" en="Welcome" />
@@ -193,33 +198,36 @@ function MyComponent() {
       <T ko="{count}개의 항목" en="{count} items" count={5} />
 
       {/* 로케일 전환 */}
-      <button onClick={() => setLocale('ko')}>한국어</button>
-      <button onClick={() => setLocale('en')}>English</button>
+      <button onClick={() => setLocale("ko")}>한국어</button>
+      <button onClick={() => setLocale("en")}>English</button>
     </div>
-  )
+  );
 }
 ```
 
 ### useT 훅 (키 기반)
 
 ```tsx
-import { useT, loadDictionaries } from 'inline-i18n-multi-react'
+import { useT, loadDictionaries } from "inline-i18n-multi-react";
 
 // 딕셔너리 로드 (보통 앱 진입점에서)
 loadDictionaries({
-  en: { greeting: 'Hello', items: { count_one: '{count} item', count_other: '{count} items' } },
-  ko: { greeting: '안녕하세요', items: { count_other: '{count}개 항목' } }
-})
+  en: {
+    greeting: "Hello",
+    items: { count_one: "{count} item", count_other: "{count} items" },
+  },
+  ko: { greeting: "안녕하세요", items: { count_other: "{count}개 항목" } },
+});
 
 function MyComponent() {
-  const t = useT()
+  const t = useT();
 
   return (
     <div>
-      <p>{t('greeting')}</p>
-      <p>{t('items.count', { count: 5 })}</p>
+      <p>{t("greeting")}</p>
+      <p>{t("items.count", { count: 5 })}</p>
     </div>
-  )
+  );
 }
 ```
 
@@ -235,38 +243,42 @@ npm install inline-i18n-multi-next
 
 ```tsx
 // app/page.tsx
-import { it } from 'inline-i18n-multi-next/server'
+import { it } from "inline-i18n-multi-next/server";
 
 export default async function Page() {
-  return <h1>{await it('안녕하세요', 'Hello')}</h1>
+  return <h1>{await it("안녕하세요", "Hello")}</h1>;
 }
 ```
 
 ### App Router (클라이언트 컴포넌트)
 
 ```tsx
-'use client'
-import { it, LocaleProvider } from 'inline-i18n-multi-next/client'
+"use client";
+import { it, LocaleProvider } from "inline-i18n-multi-next/client";
 
 export default function ClientComponent() {
-  return <p>{it('클라이언트', 'Client')}</p>
+  return <p>{it("클라이언트", "Client")}</p>;
 }
 ```
 
 ### 클라이언트 컴포넌트에서 키 기반 번역
 
 ```tsx
-'use client'
-import { useT, loadDictionaries } from 'inline-i18n-multi-next/client'
+"use client";
+import { useT, loadDictionaries } from "inline-i18n-multi-next/client";
 
 loadDictionaries({
-  en: { nav: { home: 'Home', about: 'About' } },
-  ko: { nav: { home: '홈', about: '소개' } }
-})
+  en: { nav: { home: "Home", about: "About" } },
+  ko: { nav: { home: "홈", about: "소개" } },
+});
 
 export default function NavMenu() {
-  const t = useT()
-  return <nav><a href="/">{t('nav.home')}</a></nav>
+  const t = useT();
+  return (
+    <nav>
+      <a href="/">{t("nav.home")}</a>
+    </nav>
+  );
 }
 ```
 
@@ -274,16 +286,16 @@ export default function NavMenu() {
 
 ```typescript
 // middleware.ts
-import { createI18nMiddleware } from 'inline-i18n-multi-next/middleware'
+import { createI18nMiddleware } from "inline-i18n-multi-next/middleware";
 
 export default createI18nMiddleware({
-  locales: ['ko', 'en', 'ja'],
-  defaultLocale: 'ko',
-})
+  locales: ["ko", "en", "ja"],
+  defaultLocale: "ko",
+});
 
 export const config = {
-  matcher: ['/((?!api|_next|.*\\..*).*)'],
-}
+  matcher: ["/((?!api|_next|.*\\..*).*)"],
+};
 ```
 
 ### SEO 최적화 (App Router)
@@ -292,36 +304,41 @@ Next.js App Router에서 완전한 SEO 지원을 위한 서버 유틸리티:
 
 ```tsx
 // app/[locale]/layout.tsx
-import { configureI18n, generateLocaleParams, createMetadata, getAlternates } from 'inline-i18n-multi-next/server'
+import {
+  configureI18n,
+  generateLocaleParams,
+  createMetadata,
+  getAlternates,
+} from "inline-i18n-multi-next/server";
 
 // i18n 설정
 configureI18n({
-  locales: ['ko', 'en', 'ja'],
-  defaultLocale: 'ko',
-  baseUrl: 'https://example.com'
-})
+  locales: ["ko", "en", "ja"],
+  defaultLocale: "ko",
+  baseUrl: "https://example.com",
+});
 
 // SSG: 모든 로케일 사전 렌더링
 export function generateStaticParams() {
-  return generateLocaleParams()  // → [{ locale: 'ko' }, { locale: 'en' }, { locale: 'ja' }]
+  return generateLocaleParams(); // → [{ locale: 'ko' }, { locale: 'en' }, { locale: 'ja' }]
 }
 
 // 동적 메타데이터
 export async function generateMetadata({ params }) {
-  const { locale } = await params
+  const { locale } = await params;
 
   return createMetadata(
     {
-      title: { ko: '홈', en: 'Home', ja: 'ホーム' },
-      description: { ko: '환영합니다', en: 'Welcome', ja: 'ようこそ' },
+      title: { ko: "홈", en: "Home", ja: "ホーム" },
+      description: { ko: "환영합니다", en: "Welcome", ja: "ようこそ" },
     },
     locale,
-    ''  // 현재 경로
-  )
+    "" // 현재 경로
+  );
 }
 
 // Hreflang 링크 (SEO용)
-const alternates = getAlternates('/about', 'ko')
+const alternates = getAlternates("/about", "ko");
 // → {
 //   canonical: 'https://example.com/ko/about',
 //   languages: {
@@ -334,6 +351,7 @@ const alternates = getAlternates('/about', 'ko')
 ```
 
 **SEO 기능:**
+
 - **SSG/SSR** - `generateStaticParams()`로 모든 로케일 사전 렌더링
 - **동적 메타데이터** - `createMetadata()`로 로케일별 title/description
 - **Hreflang** - `getAlternates()`로 검색 엔진용 언어 대체 링크
@@ -347,19 +365,20 @@ const alternates = getAlternates('/about', 'ko')
 자주 사용하는 언어 조합을 위한 단축 헬퍼:
 
 ```typescript
-import { it_ja, en_zh, ja_es } from 'inline-i18n-multi'
+import { it_ja, en_zh, ja_es } from "inline-i18n-multi";
 
 // 한국어 ↔ 일본어
-it_ja('안녕하세요', 'こんにちは')
+it_ja("안녕하세요", "こんにちは");
 
 // 영어 ↔ 중국어
-en_zh('Hello', '你好')
+en_zh("Hello", "你好");
 
 // 일본어 ↔ 스페인어
-ja_es('こんにちは', 'Hola')
+ja_es("こんにちは", "Hola");
 ```
 
 사용 가능한 헬퍼:
+
 - `it` (ko↔en), `it_ja`, `it_zh`, `it_es`, `it_fr`, `it_de`
 - `en_ja`, `en_zh`, `en_es`, `en_fr`, `en_de`
 - `ja_zh`, `ja_es`, `zh_es`
@@ -379,8 +398,8 @@ npm install -D @inline-i18n-multi/babel-plugin
 ```javascript
 // babel.config.js
 module.exports = {
-  plugins: ['@inline-i18n-multi/babel-plugin'],
-}
+  plugins: ["@inline-i18n-multi/babel-plugin"],
+};
 ```
 
 ### SWC 플러그인 (Next.js 13+)
@@ -393,19 +412,21 @@ npm install -D @inline-i18n-multi/swc-plugin
 // next.config.js
 module.exports = {
   experimental: {
-    swcPlugins: [['@inline-i18n-multi/swc-plugin', {}]],
+    swcPlugins: [["@inline-i18n-multi/swc-plugin", {}]],
   },
-}
+};
 ```
 
 **변환 전 (소스):**
+
 ```typescript
-it('안녕하세요', 'Hello')
+it("안녕하세요", "Hello");
 ```
 
 **변환 후 (빌드 출력):**
+
 ```typescript
-__i18n_lookup('a1b2c3d4', { ko: '안녕하세요', en: 'Hello' })
+__i18n_lookup("a1b2c3d4", { ko: "안녕하세요", en: "Hello" });
 ```
 
 ---
@@ -466,11 +487,11 @@ npx inline-i18n coverage --locales ko,en,ja
 
 [`examples/`](./examples) 디렉토리에서 예시 프로젝트를 확인하세요:
 
-| 예시 | 설명 |
-|------|------|
-| [`basic`](./examples/basic) | 기본 TypeScript 사용법 |
-| [`with-react`](./examples/with-react) | Vite 기반 React 앱 |
-| [`with-nextjs`](./examples/with-nextjs) | Next.js 15 App Router |
+| 예시                          | 설명                   |
+| ----------------------------- | ---------------------- |
+| [`basic`](./examples/basic)   | 기본 TypeScript 사용법 |
+| [`react`](./examples/react)   | Vite 기반 React 앱     |
+| [`nextjs`](./examples/nextjs) | Next.js 15 App Router  |
 
 ### 예시 실행
 
@@ -522,10 +543,10 @@ pnpm test -- --run
 
 ### 테스트 커버리지
 
-| 패키지 | 테스트 수 | 상태 |
-|--------|----------|------|
-| `inline-i18n-multi` (core) | 26 | ✅ |
-| `inline-i18n-multi-next` (server) | 16 | ✅ |
+| 패키지                            | 테스트 수 | 상태 |
+| --------------------------------- | --------- | ---- |
+| `inline-i18n-multi` (core)        | 26        | ✅   |
+| `inline-i18n-multi-next` (server) | 16        | ✅   |
 
 자세한 내용은 [테스트 문서](./docs/test.md)를 참조하세요.
 
@@ -535,34 +556,34 @@ pnpm test -- --run
 
 ### 핵심 함수
 
-| 함수 | 설명 |
-|------|------|
-| `it(ko, en, vars?)` | 한국어와 영어로 번역 |
-| `it(translations, vars?)` | 객체 문법으로 번역 |
-| `setLocale(locale)` | 현재 로케일 설정 |
-| `getLocale()` | 현재 로케일 가져오기 |
-| `t(key, vars?, locale?)` | 로케일 오버라이드가 가능한 키 기반 번역 |
-| `loadDictionaries(dicts)` | 여러 로케일의 번역 딕셔너리 로드 |
-| `loadDictionary(locale, dict)` | 단일 로케일 딕셔너리 로드 |
-| `hasTranslation(key, locale?)` | 번역 키 존재 여부 확인 |
-| `getLoadedLocales()` | 로드된 로케일 코드 배열 반환 |
-| `getDictionary(locale)` | 특정 로케일의 딕셔너리 반환 |
+| 함수                           | 설명                                    |
+| ------------------------------ | --------------------------------------- |
+| `it(ko, en, vars?)`            | 한국어와 영어로 번역                    |
+| `it(translations, vars?)`      | 객체 문법으로 번역                      |
+| `setLocale(locale)`            | 현재 로케일 설정                        |
+| `getLocale()`                  | 현재 로케일 가져오기                    |
+| `t(key, vars?, locale?)`       | 로케일 오버라이드가 가능한 키 기반 번역 |
+| `loadDictionaries(dicts)`      | 여러 로케일의 번역 딕셔너리 로드        |
+| `loadDictionary(locale, dict)` | 단일 로케일 딕셔너리 로드               |
+| `hasTranslation(key, locale?)` | 번역 키 존재 여부 확인                  |
+| `getLoadedLocales()`           | 로드된 로케일 코드 배열 반환            |
+| `getDictionary(locale)`        | 특정 로케일의 딕셔너리 반환             |
 
 ### React 훅 & 컴포넌트
 
-| 내보내기 | 설명 |
-|----------|------|
-| `LocaleProvider` | 로케일용 컨텍스트 프로바이더 |
-| `useLocale()` | `[locale, setLocale]`을 반환하는 훅 |
-| `useT()` | 현재 로케일에 바인딩된 `t` 함수를 반환하는 훅 |
-| `T` | 번역 컴포넌트 |
+| 내보내기         | 설명                                          |
+| ---------------- | --------------------------------------------- |
+| `LocaleProvider` | 로케일용 컨텍스트 프로바이더                  |
+| `useLocale()`    | `[locale, setLocale]`을 반환하는 훅           |
+| `useT()`         | 현재 로케일에 바인딩된 `t` 함수를 반환하는 훅 |
+| `T`              | 번역 컴포넌트                                 |
 
 ### 타입
 
 ```typescript
-type Locale = string
-type Translations = Record<Locale, string>
-type TranslationVars = Record<string, string | number>
+type Locale = string;
+type Translations = Record<Locale, string>;
+type TranslationVars = Record<string, string | number>;
 ```
 
 ---
@@ -583,13 +604,13 @@ type TranslationVars = Record<string, string | number>
 코드 ← 번역 (같은 곳!)
 ```
 
-| 측면 | 기존 방식 | 인라인 방식 |
-|------|-----------|-------------|
-| 코드에서 텍스트 찾기 | 어려움 (키 조회) | 쉬움 (직접 검색) |
-| 번역 추가 | 키 생성, JSON에 추가 | 인라인으로 작성 |
-| 리팩토링 | 키 참조 업데이트 | 자동 |
-| 코드 리뷰 | JSON 별도 확인 | 모두 diff에서 확인 가능 |
-| 타입 안전성 | 제한적 | 완벽 지원 |
+| 측면                 | 기존 방식            | 인라인 방식             |
+| -------------------- | -------------------- | ----------------------- |
+| 코드에서 텍스트 찾기 | 어려움 (키 조회)     | 쉬움 (직접 검색)        |
+| 번역 추가            | 키 생성, JSON에 추가 | 인라인으로 작성         |
+| 리팩토링             | 키 참조 업데이트     | 자동                    |
+| 코드 리뷰            | JSON 별도 확인       | 모두 diff에서 확인 가능 |
+| 타입 안전성          | 제한적               | 완벽 지원               |
 
 ---
 
@@ -624,7 +645,7 @@ pnpm test
 
 ## 면책 조항
 
-이 소프트웨어는 어떠한 보증도 없이 "있는 그대로" 제공됩니다. 저자는 이 패키지의 사용으로 인해 발생하는 어떠한 손해나 문제에 대해서도 책임을 지지 않습니다. 사용에 따른 위험은 사용자 본인에게 있습니다.
+이 소프트웨어는 이 패키지는 별도의 보증 없이 제공됩니다. 저자는 이 패키지의 사용으로 인해 발생하는 어떠한 손해나 문제에 대해서도 책임을 지지 않습니다. 사용에 따른 위험은 사용자 본인에게 있습니다.
 
 ---
 
