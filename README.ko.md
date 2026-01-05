@@ -408,6 +408,36 @@ npx inline-i18n coverage --locales ko,en,ja
 
 ---
 
+## 예시
+
+[`examples/`](./examples) 디렉토리에서 예시 프로젝트를 확인하세요:
+
+| 예시 | 설명 |
+|------|------|
+| [`basic`](./examples/basic) | 기본 TypeScript 사용법 |
+| [`with-react`](./examples/with-react) | Vite 기반 React 앱 |
+| [`with-nextjs`](./examples/with-nextjs) | Next.js 15 App Router |
+
+### 예시 실행
+
+```bash
+# 클론 및 설치
+git clone https://github.com/exiivy98/inline-i18n-multi.git
+cd inline-i18n-multi
+pnpm install
+
+# 기본 예시 실행
+pnpm --filter inline-i18n-multi-basic-example start
+
+# React 예시 실행
+pnpm --filter inline-i18n-multi-react-example dev
+
+# Next.js 예시 실행
+pnpm --filter inline-i18n-multi-nextjs-example dev
+```
+
+---
+
 ## VSCode 확장
 
 VSCode 마켓플레이스에서 `inline-i18n-multi-vscode`를 설치하세요.

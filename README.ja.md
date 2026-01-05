@@ -409,6 +409,36 @@ npx inline-i18n coverage --locales ko,en,ja
 
 ---
 
+## サンプル
+
+[`examples/`](./examples)ディレクトリでサンプルプロジェクトをご確認ください：
+
+| サンプル | 説明 |
+|----------|------|
+| [`basic`](./examples/basic) | 基本的なTypeScriptの使い方 |
+| [`with-react`](./examples/with-react) | ViteベースのReactアプリ |
+| [`with-nextjs`](./examples/with-nextjs) | Next.js 15 App Router |
+
+### サンプルの実行
+
+```bash
+# クローンとインストール
+git clone https://github.com/exiivy98/inline-i18n-multi.git
+cd inline-i18n-multi
+pnpm install
+
+# 基本サンプルを実行
+pnpm --filter inline-i18n-multi-basic-example start
+
+# Reactサンプルを実行
+pnpm --filter inline-i18n-multi-react-example dev
+
+# Next.jsサンプルを実行
+pnpm --filter inline-i18n-multi-nextjs-example dev
+```
+
+---
+
 ## VSCode拡張機能
 
 VSCodeマーケットプレイスから`inline-i18n-multi-vscode`をインストールしてください。

@@ -409,6 +409,36 @@ npx inline-i18n coverage --locales ko,en,zh
 
 ---
 
+## 示例
+
+请查看[`examples/`](./examples)目录中的示例项目：
+
+| 示例 | 描述 |
+|------|------|
+| [`basic`](./examples/basic) | 基本TypeScript用法 |
+| [`with-react`](./examples/with-react) | 基于Vite的React应用 |
+| [`with-nextjs`](./examples/with-nextjs) | Next.js 15 App Router |
+
+### 运行示例
+
+```bash
+# 克隆并安装
+git clone https://github.com/exiivy98/inline-i18n-multi.git
+cd inline-i18n-multi
+pnpm install
+
+# 运行基本示例
+pnpm --filter inline-i18n-multi-basic-example start
+
+# 运行React示例
+pnpm --filter inline-i18n-multi-react-example dev
+
+# 运行Next.js示例
+pnpm --filter inline-i18n-multi-nextjs-example dev
+```
+
+---
+
 ## VSCode扩展
 
 从VSCode市场安装`inline-i18n-multi-vscode`。

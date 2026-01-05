@@ -408,6 +408,36 @@ npx inline-i18n coverage --locales ko,en,ja
 
 ---
 
+## Examples
+
+Check out the example projects in the [`examples/`](./examples) directory:
+
+| Example | Description |
+|---------|-------------|
+| [`basic`](./examples/basic) | Basic TypeScript usage |
+| [`with-react`](./examples/with-react) | React app with Vite |
+| [`with-nextjs`](./examples/with-nextjs) | Next.js 15 App Router |
+
+### Run Examples
+
+```bash
+# Clone and install
+git clone https://github.com/exiivy98/inline-i18n-multi.git
+cd inline-i18n-multi
+pnpm install
+
+# Run basic example
+pnpm --filter inline-i18n-multi-basic-example start
+
+# Run React example
+pnpm --filter inline-i18n-multi-react-example dev
+
+# Run Next.js example
+pnpm --filter inline-i18n-multi-nextjs-example dev
+```
+
+---
+
 ## VSCode Extension
 
 Install `inline-i18n-multi-vscode` from the VSCode Marketplace.
