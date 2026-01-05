@@ -7,6 +7,11 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   minify: false,
-  treeshake: true,
+  treeshake: false, // disable to prevent 'use client' removal
   external: ['react', 'inline-i18n-multi'],
+  esbuildOptions(options) {
+    options.banner = {
+      js: '"use client";',
+    }
+  },
 })

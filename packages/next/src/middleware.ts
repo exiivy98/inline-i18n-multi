@@ -5,7 +5,7 @@ interface I18nMiddlewareConfig {
   /**
    * Supported locales
    */
-  locales: Locale[]
+  locales: readonly Locale[] | Locale[]
   /**
    * Default locale when no match found
    */

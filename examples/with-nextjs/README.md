@@ -1,14 +1,14 @@
-# Next.js App Router Example
+# Next.js App Router Example (SEO Optimized)
 
-Next.js 15 App Router example using `inline-i18n-multi-next`.
+Next.js 15 App Router example with full SEO support using `inline-i18n-multi-next`.
 
-## Features Demonstrated
+## SEO Features
 
-- Server Components with `it()` from `/server`
-- Client Components with `it()`, `T`, `useT` from `/client`
-- Middleware for locale detection
-- `LocaleProvider` for client-side locale management
-- Key-based translations with `loadDictionaries()` and `useT()`
+- **SSG/SSR Support** - `generateStaticParams()` pre-renders all locales
+- **Dynamic Metadata** - `generateMetadata()` with per-locale title/description
+- **Hreflang Links** - `getAlternates()` for proper language alternates
+- **Cookie Persistence** - Locale preference saved automatically
+- **URL-Based Routing** - `/[locale]/...` pattern for SEO-friendly URLs
 
 ## Run
 
@@ -26,95 +26,109 @@ Then open http://localhost:3000
 with-nextjs/
 ├── src/
 │   ├── app/
-│   │   ├── layout.tsx    # Root layout with LocaleProvider
-│   │   └── page.tsx      # Home page (Server Component)
+│   │   └── [locale]/
+│   │       ├── layout.tsx    # Root layout with SEO metadata
+│   │       └── page.tsx      # Home page with SEO info
 │   ├── components/
-│   │   ├── LanguageSwitcher.tsx  # Client Component
-│   │   ├── ClientSection.tsx     # Client Component with T
-│   │   └── NavMenu.tsx           # Client Component with useT
-│   └── middleware.ts     # i18n middleware
-├── next.config.ts
-├── package.json
-└── tsconfig.json
+│   │   ├── LanguageSwitcher.tsx  # URL-based locale switching
+│   │   ├── ClientSection.tsx     # T component examples
+│   │   └── NavMenu.tsx           # useT hook examples
+│   ├── middleware.ts     # i18n routing middleware
+│   └── i18n.config.ts    # Shared locale configuration
+└── next.config.ts
 ```
 
-## Key Concepts
+## Key SEO Patterns
 
-### 1. Server Components
+### 1. Configure i18n
+
+```typescript
+// src/i18n.config.ts
+export const locales = ['ko', 'en', 'ja'] as const
+export type Locale = (typeof locales)[number]
+export const defaultLocale: Locale = 'ko'
+export const baseUrl = 'https://example.com'
+```
+
+### 2. Static Generation (SSG)
 
 ```tsx
-// app/page.tsx
-import { it } from 'inline-i18n-multi-next/server'
+// app/[locale]/layout.tsx
+import { configureI18n, generateLocaleParams } from 'inline-i18n-multi-next/server'
 
-export default async function Page() {
-  return <h1>{await it('안녕하세요', 'Hello')}</h1>
+configureI18n({ locales, defaultLocale, baseUrl })
+
+export function generateStaticParams() {
+  return generateLocaleParams()
 }
 ```
 
-### 2. Client Components
+### 3. Dynamic Metadata
 
 ```tsx
-// components/Example.tsx
-'use client'
+import { createMetadata } from 'inline-i18n-multi-next/server'
 
-import { it, T, useLocale } from 'inline-i18n-multi-next/client'
+export async function generateMetadata({ params }) {
+  const { locale } = await params
 
-export function Example() {
-  const [locale, setLocale] = useLocale()
-
-  return (
-    <div>
-      <p>{it('안녕하세요', 'Hello')}</p>
-      <T ko="반갑습니다" en="Nice to meet you" />
-      <button onClick={() => setLocale('ko')}>한국어</button>
-    </div>
+  return createMetadata(
+    {
+      title: { ko: '홈', en: 'Home', ja: 'ホーム' },
+      description: { ko: '환영합니다', en: 'Welcome', ja: 'ようこそ' },
+    },
+    locale,
+    '' // pathname for hreflang
   )
 }
 ```
 
-### 3. Key-Based Translations
+### 4. Hreflang Alternates
+
+```tsx
+import { getAlternates } from 'inline-i18n-multi-next/server'
+
+const alternates = getAlternates('/about', locale)
+// {
+//   canonical: 'https://example.com/en/about',
+//   languages: {
+//     ko: 'https://example.com/ko/about',
+//     en: 'https://example.com/en/about',
+//     ja: 'https://example.com/ja/about',
+//     'x-default': 'https://example.com/ko/about'
+//   }
+// }
+```
+
+### 5. URL-Based Language Switching
 
 ```tsx
 'use client'
+import { useRouter, usePathname } from 'next/navigation'
+import { useLocale } from 'inline-i18n-multi-next/client'
 
-import { useT, loadDictionaries } from 'inline-i18n-multi-next/client'
+function LanguageSwitcher() {
+  const [locale, setLocale] = useLocale()
+  const router = useRouter()
+  const pathname = usePathname()
 
-loadDictionaries({
-  en: { nav: { home: 'Home' } },
-  ko: { nav: { home: '홈' } },
-})
-
-export function NavMenu() {
-  const t = useT()
-  return <nav><a href="/">{t('nav.home')}</a></nav>
+  const handleChange = (newLocale: string) => {
+    setLocale(newLocale) // Updates state + saves cookie
+    const segments = pathname.split('/')
+    segments[1] = newLocale
+    router.push(segments.join('/'))
+  }
 }
 ```
 
-### 4. Middleware
+## Build Output
 
-```typescript
-// src/middleware.ts
-import { createI18nMiddleware } from 'inline-i18n-multi-next/middleware'
-
-export default createI18nMiddleware({
-  locales: ['ko', 'en', 'ja'],
-  defaultLocale: 'ko',
-})
-
-export const config = {
-  matcher: ['/((?!api|_next|.*\\..*).*)'],
-}
+```
+Route (app)                              Size  First Load JS
+├ ○ /_not-found                         988 B         103 kB
+└ ● /[locale]                          3.13 kB        105 kB
+    ├ /ko   (SSG)
+    ├ /en   (SSG)
+    └ /ja   (SSG)
 ```
 
-## Optional: SWC Plugin
-
-For build-time optimization, add the SWC plugin:
-
-```typescript
-// next.config.ts
-const nextConfig = {
-  experimental: {
-    swcPlugins: [['@inline-i18n-multi/swc-plugin', {}]],
-  },
-}
-```
+All locale pages are pre-rendered at build time for optimal SEO and performance.
