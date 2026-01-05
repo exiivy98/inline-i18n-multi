@@ -9,6 +9,13 @@ out/
 .next/
 .turbo/
 
+# Rust/Cargo (swc-plugin)
+target/
+Cargo.lock
+
+# VSCode extension
+*.vsix
+
 # Cache
 *.tsbuildinfo
 .eslintcache

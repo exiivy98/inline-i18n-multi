@@ -9,7 +9,7 @@ description = "SWC plugin for inline-i18n-multi build-time optimization"
 crate-type = ["cdylib"]
 
 [dependencies]
-swc_core = { version = "0.106.*", features = [
+swc_core = { version = "54", features = [
     "ecma_plugin_transform",
     "ecma_utils",
     "ecma_visit",

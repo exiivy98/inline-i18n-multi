@@ -5,7 +5,7 @@
   "description": "Inline i18n - write translations inline, support multiple languages",
   "repository": {
     "type": "git",
-    "url": "https://github.com/exiivy98/inline-18n-multi.git"
+    "url": "https://github.com/exiivy98/inline-i18n-multi.git"
   },
   "author": "exiivy98",
   "license": "MIT",

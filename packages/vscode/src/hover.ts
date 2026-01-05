@@ -6,7 +6,6 @@ export class TranslationHoverProvider implements vscode.HoverProvider {
     document: vscode.TextDocument,
     position: vscode.Position,
   ): Promise<vscode.Hover | null> {
-    const line = document.lineAt(position.line).text
     const wordRange = document.getWordRangeAtPosition(position, /it[_a-z]*\s*\(/)
 
     if (!wordRange) return null

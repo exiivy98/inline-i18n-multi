@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use swc_core::ecma::{
     ast::*,
-    visit::{as_folder, FoldWith, VisitMut, VisitMutWith},
+    visit::{VisitMut, VisitMutWith},
 };
 use swc_core::plugin::{plugin_transform, proxies::TransformPluginProgramMetadata};
 use std::collections::HashMap;
@@ -61,6 +61,16 @@ fn generate_hash(content: &str) -> String {
     hash_str.chars().take(8).collect()
 }
 
+/// Convert Atom to String
+fn atom_to_string(atom: &swc_core::atoms::Atom) -> String {
+    atom.as_str().to_string()
+}
+
+/// Convert Wtf8Atom to String
+fn wtf8_atom_to_string(atom: &swc_core::atoms::Wtf8Atom) -> String {
+    atom.as_str().unwrap_or("").to_string()
+}
+
 pub struct TransformVisitor {
     config: PluginConfig,
 }
@@ -73,7 +83,7 @@ impl TransformVisitor {
     /// Extract string value from a Lit node
     fn get_string_value(&self, expr: &Expr) -> Option<String> {
         match expr {
-            Expr::Lit(Lit::Str(s)) => Some(s.value.to_string()),
+            Expr::Lit(Lit::Str(s)) => Some(wtf8_atom_to_string(&s.value)),
             _ => None,
         }
     }
@@ -86,8 +96,8 @@ impl TransformVisitor {
             if let PropOrSpread::Prop(prop) = prop {
                 if let Prop::KeyValue(kv) = prop.as_ref() {
                     let key = match &kv.key {
-                        PropName::Ident(ident) => ident.sym.to_string(),
-                        PropName::Str(s) => s.value.to_string(),
+                        PropName::Ident(ident) => atom_to_string(&ident.sym),
+                        PropName::Str(s) => wtf8_atom_to_string(&s.value),
                         _ => continue,
                     };
 
@@ -138,7 +148,7 @@ impl TransformVisitor {
             _ => return None,
         };
 
-        let func_name = callee_ident.sym.to_string();
+        let func_name = atom_to_string(&callee_ident.sym);
 
         // Check if it's a translation function
         if !IT_FUNCTION_NAMES.contains(&func_name.as_str()) {
@@ -237,7 +247,7 @@ impl VisitMut for TransformVisitor {
 
 #[plugin_transform]
 pub fn process_transform(
-    program: Program,
+    mut program: Program,
     metadata: TransformPluginProgramMetadata,
 ) -> Program {
     let config: PluginConfig = serde_json::from_str(
@@ -245,5 +255,6 @@ pub fn process_transform(
             .unwrap_or_else(|| "{}".to_string())
     ).unwrap_or_default();
 
-    program.fold_with(&mut as_folder(TransformVisitor::new(config)))
+    program.visit_mut_with(&mut TransformVisitor::new(config));
+    program
 }
