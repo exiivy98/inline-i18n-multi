@@ -242,6 +242,30 @@ export default async function Page() {
 }
 ```
 
+### Server Components with Key-Based Translations
+
+```tsx
+// app/[locale]/page.tsx
+import { t, setLocale, loadDictionaries } from 'inline-i18n-multi'
+
+loadDictionaries({
+  en: { greeting: 'Hello', items: { count_one: '{count} item', count_other: '{count} items' } },
+  ko: { greeting: '안녕하세요', items: { count_other: '{count}개' } },
+})
+
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params
+  setLocale(locale)  // Required before using t()
+
+  return (
+    <div>
+      <h1>{t('greeting')}</h1>
+      <p>{t('items.count', { count: 5 })}</p>
+    </div>
+  )
+}
+```
+
 ### App Router (Client Components)
 
 ```tsx

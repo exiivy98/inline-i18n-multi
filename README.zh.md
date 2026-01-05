@@ -243,6 +243,33 @@ export default async function Page() {
 }
 ```
 
+### 服务器组件中的基于键翻译
+
+要在服务器组件中使用 `t()`，必须先调用 `setLocale()`：
+
+```tsx
+// app/[locale]/page.tsx
+import { t, setLocale, loadDictionaries } from 'inline-i18n-multi'
+
+loadDictionaries({
+  en: { greeting: 'Hello', items: { count_one: '{count} item', count_other: '{count} items' } },
+  ko: { greeting: '안녕하세요', items: { count_other: '{count}개' } },
+  zh: { greeting: '你好', items: { count_other: '{count}个' } },
+})
+
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params
+  setLocale(locale)  // 使用t()之前必须调用
+
+  return (
+    <div>
+      <h1>{t('greeting')}</h1>
+      <p>{t('items.count', { count: 5 })}</p>
+    </div>
+  )
+}
+```
+
 ### App Router（客户端组件）
 
 ```tsx

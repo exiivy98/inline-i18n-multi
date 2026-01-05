@@ -243,6 +243,33 @@ export default async function Page() {
 }
 ```
 
+### サーバーコンポーネントでキーベース翻訳
+
+サーバーコンポーネントで `t()` を使用するには、まず `setLocale()` を呼び出す必要があります：
+
+```tsx
+// app/[locale]/page.tsx
+import { t, setLocale, loadDictionaries } from 'inline-i18n-multi'
+
+loadDictionaries({
+  en: { greeting: 'Hello', items: { count_one: '{count} item', count_other: '{count} items' } },
+  ko: { greeting: '안녕하세요', items: { count_other: '{count}개' } },
+  ja: { greeting: 'こんにちは', items: { count_other: '{count}件' } },
+})
+
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params
+  setLocale(locale)  // t()を使用する前に必須
+
+  return (
+    <div>
+      <h1>{t('greeting')}</h1>
+      <p>{t('items.count', { count: 5 })}</p>
+    </div>
+  )
+}
+```
+
 ### App Router（クライアントコンポーネント）
 
 ```tsx

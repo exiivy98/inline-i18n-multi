@@ -1,4 +1,30 @@
 import { it, getLocaleFromParams, getAlternates } from 'inline-i18n-multi-next/server'
+import { t, setLocale, loadDictionaries } from 'inline-i18n-multi'
+
+// Load dictionaries for server-side t() usage
+loadDictionaries({
+  en: {
+    server: {
+      title: 'Key-Based Translation (Server)',
+      description: 'Using t() with setLocale() in Server Components.',
+      items: { count_one: '{count} item loaded', count_other: '{count} items loaded' },
+    },
+  },
+  ko: {
+    server: {
+      title: '키 기반 번역 (서버)',
+      description: '서버 컴포넌트에서 setLocale()과 t()를 사용합니다.',
+      items: { count_other: '{count}개 항목 로드됨' },
+    },
+  },
+  ja: {
+    server: {
+      title: 'キーベース翻訳（サーバー）',
+      description: 'サーバーコンポーネントでsetLocale()とt()を使用します。',
+      items: { count_other: '{count}件読み込み済み' },
+    },
+  },
+})
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { ClientSection } from '@/components/ClientSection'
 import { NavMenu } from '@/components/NavMenu'
@@ -11,6 +37,7 @@ export default async function Home({
 }) {
   const { locale } = await params
   getLocaleFromParams({ locale }) // validate
+  setLocale(locale) // Required for t() in Server Components
 
   const alternates = getAlternates('', locale)
 
@@ -72,6 +99,21 @@ export default async function Home({
         </p>
       </div>
 
+      {/* Server Component with Key-Based Translation */}
+      <div className="section">
+        <h2>{t('server.title')}</h2>
+        <p>{t('server.description')}</p>
+        <p>
+          {t('server.items.count', { count: 1 })} | {t('server.items.count', { count: 5 })}
+        </p>
+        <p style={{ marginTop: '12px', color: '#666', fontSize: '0.9em' }}>
+          {await it(
+            '💡 서버에서 t()를 사용하려면 setLocale(locale)을 먼저 호출하세요.',
+            '💡 To use t() on server, call setLocale(locale) first.'
+          )}
+        </p>
+      </div>
+
       {/* Client Component Example */}
       <ClientSection />
 
@@ -96,6 +138,9 @@ export default async function Home({
           </li>
           <li>
             <code>LocaleProvider</code> {await it('쿠키 자동 동기화', 'auto cookie sync')}
+          </li>
+          <li>
+            <code>setLocale()</code> {await it('서버에서 t() 사용 시 필수', 'required for t() on server')}
           </li>
         </ul>
       </div>

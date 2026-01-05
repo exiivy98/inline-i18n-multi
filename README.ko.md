@@ -250,6 +250,32 @@ export default async function Page() {
 }
 ```
 
+### 서버 컴포넌트에서 키 기반 번역
+
+서버 컴포넌트에서 `t()`를 사용하려면 먼저 `setLocale()`을 호출해야 합니다:
+
+```tsx
+// app/[locale]/page.tsx
+import { t, setLocale, loadDictionaries } from 'inline-i18n-multi'
+
+loadDictionaries({
+  en: { greeting: 'Hello', items: { count_one: '{count} item', count_other: '{count} items' } },
+  ko: { greeting: '안녕하세요', items: { count_other: '{count}개' } },
+})
+
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params
+  setLocale(locale)  // t() 사용 전에 필수
+
+  return (
+    <div>
+      <h1>{t('greeting')}</h1>
+      <p>{t('items.count', { count: 5 })}</p>
+    </div>
+  )
+}
+```
+
 ### App Router (클라이언트 컴포넌트)
 
 ```tsx
