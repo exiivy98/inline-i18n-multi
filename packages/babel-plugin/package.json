@@ -1,6 +1,6 @@
 {
   "name": "@inline-i18n-multi/babel-plugin",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Babel plugin for inline-i18n-multi build-time optimization",
   "keywords": [
     "babel-plugin",

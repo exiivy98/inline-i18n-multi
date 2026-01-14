@@ -1,5 +1,6 @@
 import { getLocale } from './context'
 import type { Locale, TranslationVars } from './types'
+import { interpolate } from './interpolation'
 
 /**
  * Nested dictionary structure for translations
@@ -25,8 +26,6 @@ export interface PluralRules {
   many?: string
   other: string
 }
-
-const VARIABLE_PATTERN = /\{(\w+)\}/g
 
 // Global dictionary storage
 let dictionaries: Dictionaries = {}
@@ -83,18 +82,6 @@ function getNestedValue(dict: Dictionary, key: string): string | undefined {
 }
 
 /**
- * Interpolate variables into template string
- */
-function interpolate(template: string, vars?: TranslationVars): string {
-  if (!vars) return template
-
-  return template.replace(VARIABLE_PATTERN, (_, key) => {
-    const value = vars[key]
-    return value !== undefined ? String(value) : `{${key}}`
-  })
-}
-
-/**
  * Get plural category using Intl.PluralRules
  */
 function getPluralCategory(count: number, locale: Locale): Intl.LDMLPluralRule {
@@ -148,7 +135,7 @@ export function t(
     return key
   }
 
-  return interpolate(template, vars)
+  return interpolate(template, vars, currentLocale)
 }
 
 /**

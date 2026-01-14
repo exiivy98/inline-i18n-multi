@@ -2,15 +2,20 @@ import type { Translations, TranslationVars } from './types'
 import { getLocale } from './context'
 import { interpolate } from './interpolation'
 
-function resolveTemplate(translations: Translations): string {
+interface ResolveResult {
+  template: string
+  locale: string
+}
+
+function resolveTemplate(translations: Translations): ResolveResult {
   const locale = getLocale()
 
   const template = translations[locale]
-  if (template) return template
+  if (template) return { template, locale }
 
   // fallback: en -> first available
   const fallback = translations.en ?? Object.values(translations)[0]
-  if (fallback) return fallback
+  if (fallback) return { template: fallback, locale: 'en' }
 
   throw new Error(
     `No translation found for locale "${locale}". Available: ${Object.keys(translations).join(', ')}`
@@ -41,7 +46,8 @@ export function it(
   if (typeof first === 'object') {
     const translations = first
     const vars = second as TranslationVars | undefined
-    return interpolate(resolveTemplate(translations), vars)
+    const { template, locale } = resolveTemplate(translations)
+    return interpolate(template, vars, locale)
   }
 
   // shorthand syntax: it('한글', 'English', vars?)
@@ -50,5 +56,6 @@ export function it(
   const vars = third
 
   const translations: Translations = { ko, en }
-  return interpolate(resolveTemplate(translations), vars)
+  const { template, locale } = resolveTemplate(translations)
+  return interpolate(template, vars, locale)
 }

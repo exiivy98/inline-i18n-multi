@@ -56,6 +56,7 @@
 - **フレームワーク対応** - React、Next.js（App Router & Pages Router）
 - **開発者ツール** - 検証用CLI、ナビゲーション用VSCode拡張機能
 - **i18n互換** - JSON辞書と複数形をサポートする従来のキーベース翻訳対応
+- **ICU Message Format** - 複雑な翻訳のための複数形とセレクト構文サポート
 
 ---
 
@@ -394,6 +395,75 @@ ja_zh('こんにちは', '你好')
 
 ---
 
+## ICU Message Format
+
+複数形と条件付きテキストが必要な複雑な翻訳には、ICU Message Formatを使用します：
+
+```typescript
+import { it, setLocale } from "inline-i18n-multi";
+
+setLocale("en");
+
+// 複数形
+it(
+  {
+    ko: "{count, plural, =0 {項目なし} other {# 個}}",
+    en: "{count, plural, =0 {No items} one {# item} other {# items}}",
+    ja: "{count, plural, =0 {アイテムなし} other {# 件}}",
+  },
+  { count: 0 }
+); // → "No items"
+
+it(
+  {
+    ko: "{count, plural, =0 {項目なし} other {# 個}}",
+    en: "{count, plural, =0 {No items} one {# item} other {# items}}",
+    ja: "{count, plural, =0 {アイテムなし} other {# 件}}",
+  },
+  { count: 1 }
+); // → "1 item"
+
+it(
+  {
+    ko: "{count, plural, =0 {項目なし} other {# 個}}",
+    en: "{count, plural, =0 {No items} one {# item} other {# items}}",
+    ja: "{count, plural, =0 {アイテムなし} other {# 件}}",
+  },
+  { count: 5 }
+); // → "5 items"
+
+// セレクト
+it(
+  {
+    ko: "{gender, select, male {彼} female {彼女} other {彼ら}}",
+    en: "{gender, select, male {He} female {She} other {They}}",
+    ja: "{gender, select, male {彼} female {彼女} other {彼ら}}",
+  },
+  { gender: "female" }
+); // → "She"
+
+// テキストと組み合わせ
+it(
+  {
+    ko: "{name}님이 {count, plural, =0 {メッセージがありません} other {# 件のメッセージがあります}}",
+    en: "{name} has {count, plural, =0 {no messages} one {# message} other {# messages}}",
+    ja: "{name}さんは{count, plural, =0 {メッセージがありません} other {# 件のメッセージがあります}}",
+  },
+  { name: "John", count: 3 }
+); // → "John has 3 messages"
+```
+
+### サポートされる構文
+
+| 構文                   | 説明                                                           | 例                                           |
+| ---------------------- | -------------------------------------------------------------- | -------------------------------------------- |
+| `{var}`                | 単純な変数置換                                                 | `{name}` → "John"                            |
+| `{var, plural, ...}`   | 数値ベースの複数形選択（`=0`、`=1`、`one`、`other`など）       | `{count, plural, one {# 件} other {# 件}}`   |
+| `{var, select, ...}`   | 文字列値ベースの選択                                           | `{gender, select, male {彼} female {彼女}}`  |
+| `#`                    | 複数形内で現在の数値を表示                                     | `# items` → "5 items"                        |
+
+---
+
 ## ビルド時最適化
 
 パフォーマンス向上のため、ビルド時に`it()`呼び出しを変換します。
@@ -554,7 +624,7 @@ pnpm test -- --run
 
 | パッケージ | テスト数 | ステータス |
 |-----------|---------|-----------|
-| `inline-i18n-multi` (core) | 26 | ✅ |
+| `inline-i18n-multi` (core) | 45 | ✅ |
 | `inline-i18n-multi-next` (server) | 16 | ✅ |
 
 詳細は[テストドキュメント](./docs/test.md)をご覧ください。

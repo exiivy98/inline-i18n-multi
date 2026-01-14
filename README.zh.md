@@ -56,6 +56,7 @@
 - **框架支持** - React、Next.js（App Router和Pages Router）
 - **开发者工具** - 用于验证的CLI，用于导航的VSCode扩展
 - **i18n兼容** - 支持带有JSON字典和复数形式的传统基于键的翻译
+- **ICU Message Format** - 支持复杂翻译的复数和选择语法
 
 ---
 
@@ -394,6 +395,75 @@ ja_zh('こんにちは', '你好')
 
 ---
 
+## ICU Message Format
+
+对于需要复数和条件文本的复杂翻译，使用ICU Message Format：
+
+```typescript
+import { it, setLocale } from "inline-i18n-multi";
+
+setLocale("en");
+
+// 复数
+it(
+  {
+    ko: "{count, plural, =0 {没有项目} other {# 个}}",
+    en: "{count, plural, =0 {No items} one {# item} other {# items}}",
+    zh: "{count, plural, =0 {没有项目} other {# 个项目}}",
+  },
+  { count: 0 }
+); // → "No items"
+
+it(
+  {
+    ko: "{count, plural, =0 {没有项目} other {# 个}}",
+    en: "{count, plural, =0 {No items} one {# item} other {# items}}",
+    zh: "{count, plural, =0 {没有项目} other {# 个项目}}",
+  },
+  { count: 1 }
+); // → "1 item"
+
+it(
+  {
+    ko: "{count, plural, =0 {没有项目} other {# 个}}",
+    en: "{count, plural, =0 {No items} one {# item} other {# items}}",
+    zh: "{count, plural, =0 {没有项目} other {# 个项目}}",
+  },
+  { count: 5 }
+); // → "5 items"
+
+// 选择
+it(
+  {
+    ko: "{gender, select, male {他} female {她} other {他们}}",
+    en: "{gender, select, male {He} female {She} other {They}}",
+    zh: "{gender, select, male {他} female {她} other {他们}}",
+  },
+  { gender: "female" }
+); // → "She"
+
+// 与文本结合
+it(
+  {
+    ko: "{name}님이 {count, plural, =0 {没有消息} other {有 # 条消息}}",
+    en: "{name} has {count, plural, =0 {no messages} one {# message} other {# messages}}",
+    zh: "{name}{count, plural, =0 {没有消息} other {有 # 条消息}}",
+  },
+  { name: "John", count: 3 }
+); // → "John has 3 messages"
+```
+
+### 支持的语法
+
+| 语法                   | 描述                                                      | 示例                                         |
+| ---------------------- | --------------------------------------------------------- | -------------------------------------------- |
+| `{var}`                | 简单变量替换                                              | `{name}` → "John"                            |
+| `{var, plural, ...}`   | 基于数字的复数选择（`=0`、`=1`、`one`、`other`等）        | `{count, plural, one {# 个} other {# 个}}`   |
+| `{var, select, ...}`   | 基于字符串值的选择                                        | `{gender, select, male {他} female {她}}`    |
+| `#`                    | 在复数中显示当前数值                                      | `# items` → "5 items"                        |
+
+---
+
 ## 构建时优化
 
 为了更好的性能，在构建时转换`it()`调用。
@@ -554,7 +624,7 @@ pnpm test -- --run
 
 | 包 | 测试数 | 状态 |
 |---|--------|------|
-| `inline-i18n-multi` (core) | 26 | ✅ |
+| `inline-i18n-multi` (core) | 45 | ✅ |
 | `inline-i18n-multi-next` (server) | 16 | ✅ |
 
 详情请参阅[测试文档](./docs/test.md)。

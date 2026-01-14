@@ -1,6 +1,6 @@
 {
   "name": "inline-i18n-multi-react",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "React integration for inline-i18n-multi",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

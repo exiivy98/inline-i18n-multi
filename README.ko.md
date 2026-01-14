@@ -57,6 +57,7 @@
 - **프레임워크 지원** - React, Next.js (App Router & Pages Router)
 - **개발자 도구** - 검증용 CLI, 탐색용 VSCode 확장
 - **i18n 호환** - JSON 딕셔너리와 복수형을 지원하는 전통적인 키 기반 번역 지원
+- **ICU Message Format** - 복잡한 번역을 위한 복수형 및 선택 구문 지원
 
 ---
 
@@ -411,6 +412,70 @@ ja_es("こんにちは", "Hola");
 
 ---
 
+## ICU Message Format
+
+복수형과 조건부 텍스트가 필요한 복잡한 번역을 위해 ICU Message Format을 사용합니다:
+
+```typescript
+import { it, setLocale } from "inline-i18n-multi";
+
+setLocale("en");
+
+// 복수형
+it(
+  {
+    ko: "{count, plural, =0 {항목 없음} other {# 개}}",
+    en: "{count, plural, =0 {No items} one {# item} other {# items}}",
+  },
+  { count: 0 }
+); // → "No items"
+
+it(
+  {
+    ko: "{count, plural, =0 {항목 없음} other {# 개}}",
+    en: "{count, plural, =0 {No items} one {# item} other {# items}}",
+  },
+  { count: 1 }
+); // → "1 item"
+
+it(
+  {
+    ko: "{count, plural, =0 {항목 없음} other {# 개}}",
+    en: "{count, plural, =0 {No items} one {# item} other {# items}}",
+  },
+  { count: 5 }
+); // → "5 items"
+
+// 선택
+it(
+  {
+    ko: "{gender, select, male {그} female {그녀} other {그들}}",
+    en: "{gender, select, male {He} female {She} other {They}}",
+  },
+  { gender: "female" }
+); // → "She"
+
+// 텍스트와 결합
+it(
+  {
+    ko: "{name}님이 {count, plural, =0 {메시지가 없습니다} other {# 개의 메시지가 있습니다}}",
+    en: "{name} has {count, plural, =0 {no messages} one {# message} other {# messages}}",
+  },
+  { name: "John", count: 3 }
+); // → "John has 3 messages"
+```
+
+### 지원되는 구문
+
+| 구문          | 설명                                                       | 예시                                     |
+| ------------- | ---------------------------------------------------------- | ---------------------------------------- |
+| `{var}`       | 단순 변수 치환                                             | `{name}` → "John"                        |
+| `{var, plural, ...}` | 숫자 기반 복수형 선택 (`=0`, `=1`, `one`, `other` 등) | `{count, plural, one {# 개} other {# 개}}` |
+| `{var, select, ...}` | 문자열 값 기반 선택                                    | `{gender, select, male {그} female {그녀}}` |
+| `#`           | 복수형 내에서 현재 숫자 값 표시                            | `# items` → "5 items"                    |
+
+---
+
 ## 빌드 타임 최적화
 
 더 나은 성능을 위해 빌드 시 `it()` 호출을 변환합니다.
@@ -573,7 +638,7 @@ pnpm test -- --run
 
 | 패키지                            | 테스트 수 | 상태 |
 | --------------------------------- | --------- | ---- |
-| `inline-i18n-multi` (core)        | 26        | ✅   |
+| `inline-i18n-multi` (core)        | 45        | ✅   |
 | `inline-i18n-multi-next` (server) | 16        | ✅   |
 
 자세한 내용은 [테스트 문서](./docs/test.md)를 참조하세요.

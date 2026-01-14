@@ -114,6 +114,39 @@ export default async function Home({
         </p>
       </div>
 
+      {/* ICU Message Format Example */}
+      <div className="section">
+        <h2>🆕 ICU Message Format</h2>
+        <p>
+          <strong>Plural:</strong>{' '}
+          {await it({
+            ko: '{count, plural, =0 {항목 없음} other {# 개}}',
+            en: '{count, plural, =0 {No items} one {# item} other {# items}}',
+            ja: '{count, plural, =0 {アイテムなし} other {# 件}}',
+          }, { count: 0 })}
+          {' | '}
+          {await it({
+            ko: '{count, plural, =0 {항목 없음} other {# 개}}',
+            en: '{count, plural, =0 {No items} one {# item} other {# items}}',
+            ja: '{count, plural, =0 {アイテムなし} other {# 件}}',
+          }, { count: 1 })}
+          {' | '}
+          {await it({
+            ko: '{count, plural, =0 {항목 없음} other {# 개}}',
+            en: '{count, plural, =0 {No items} one {# item} other {# items}}',
+            ja: '{count, plural, =0 {アイテムなし} other {# 件}}',
+          }, { count: 5 })}
+        </p>
+        <p>
+          <strong>Select:</strong>{' '}
+          {await it({
+            ko: '{gender, select, male {그} female {그녀} other {그들}}가 말했습니다.',
+            en: '{gender, select, male {He} female {She} other {They}} said.',
+            ja: '{gender, select, male {彼} female {彼女} other {彼ら}}が言いました。',
+          }, { gender: 'female' })}
+        </p>
+      </div>
+
       {/* Client Component Example */}
       <ClientSection />
 

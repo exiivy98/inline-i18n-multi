@@ -53,7 +53,7 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Type-safe** - Full TypeScript support with variable type checking
 - **Multiple languages** - Support for any number of locales
 - **i18n compatible** - Support for traditional key-based translations with JSON dictionaries
-- **Plural support** - Built-in plural forms using `Intl.PluralRules`
+- **ICU Message Format** - Plural and select syntax for complex translations
 - **Variable interpolation** - `{name}` syntax for dynamic values
 
 ---
@@ -144,6 +144,46 @@ getLoadedLocales()  // → ['en', 'ko']
 
 // Get dictionary for a locale
 getDictionary('en')  // → { greeting: { hello: 'Hello', ... }, ... }
+```
+
+---
+
+## ICU Message Format
+
+For complex translations with plurals and conditional text:
+
+```typescript
+import { it, setLocale } from 'inline-i18n-multi'
+
+setLocale('en')
+
+// Plural
+it({
+  ko: '{count, plural, =0 {항목 없음} other {# 개}}',
+  en: '{count, plural, =0 {No items} one {# item} other {# items}}'
+}, { count: 0 })  // → "No items"
+
+it({
+  ko: '{count, plural, =0 {항목 없음} other {# 개}}',
+  en: '{count, plural, =0 {No items} one {# item} other {# items}}'
+}, { count: 1 })  // → "1 item"
+
+it({
+  ko: '{count, plural, =0 {항목 없음} other {# 개}}',
+  en: '{count, plural, =0 {No items} one {# item} other {# items}}'
+}, { count: 5 })  // → "5 items"
+
+// Select
+it({
+  ko: '{gender, select, male {그} female {그녀} other {그들}}',
+  en: '{gender, select, male {He} female {She} other {They}}'
+}, { gender: 'female' })  // → "She"
+
+// Combined with text
+it({
+  ko: '{name}님이 {count, plural, =0 {메시지가 없습니다} other {# 개의 메시지가 있습니다}}',
+  en: '{name} has {count, plural, =0 {no messages} one {# message} other {# messages}}'
+}, { name: 'John', count: 3 })  // → "John has 3 messages"
 ```
 
 ---

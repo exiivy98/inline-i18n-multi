@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2025-01-14
+
+### Added
+
+- **ICU Message Format** support for complex translations
+  - Plural syntax: `{count, plural, =0 {none} one {# item} other {# items}}`
+  - Select syntax: `{gender, select, male {He} female {She} other {They}}`
+  - Uses `@formatjs/icu-messageformat-parser` for standard ICU parsing
+  - Works with both `it()` and `t()` functions
+- ICU examples in Next.js example app
+
+### Changed
+
+- Updated README with ICU Message Format documentation
+- Refactored interpolation to support ICU patterns
+
 ## [0.1.3] - 2025-01-05
 
 ### Changed
