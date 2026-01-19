@@ -56,7 +56,9 @@
 - **フレームワーク対応** - React、Next.js（App Router & Pages Router）
 - **開発者ツール** - 検証用CLI、ナビゲーション用VSCode拡張機能
 - **i18n互換** - JSON辞書と複数形をサポートする従来のキーベース翻訳対応
-- **ICU Message Format** - 複雑な翻訳のための複数形とセレクト構文サポート
+- **ICU Message Format** - 複数形、セレクト、日付、数値、時刻フォーマットサポート
+- **ロケールフォールバックチェーン** - BCP 47親ロケールサポート（`zh-TW` → `zh` → `en`）
+- **翻訳欠落警告** - カスタマイズ可能なハンドラーによる開発時診断
 
 ---
 
@@ -462,6 +464,143 @@ it(
 | `{var, select, ...}`   | 文字列値ベースの選択                                           | `{gender, select, male {彼} female {彼女}}`  |
 | `#`                    | 複数形内で現在の数値を表示                                     | `# items` → "5 items"                        |
 
+### 日付、数値、時刻フォーマット
+
+ICUはロケール対応の日付、数値、時刻フォーマットもサポートしています：
+
+```typescript
+// 数値フォーマット
+it({
+  en: 'Price: {price, number}',
+  ja: '価格: {price, number}'
+}, { price: 1234.56 })  // → "価格: 1,234.56"
+
+it({
+  en: 'Discount: {rate, number, percent}',
+  ja: '割引: {rate, number, percent}'
+}, { rate: 0.25 })  // → "割引: 25%"
+
+// 日付フォーマット
+it({
+  en: 'Created: {date, date, long}',
+  ja: '作成日: {date, date, long}'
+}, { date: new Date('2024-03-15') })  // → "作成日: 2024年3月15日"
+
+it({
+  en: 'Due: {date, date, short}',
+  ja: '期限: {date, date, short}'
+}, { date: new Date() })  // → "期限: 2024/03/15"
+
+// 時刻フォーマット
+it({
+  en: 'Time: {time, time, short}',
+  ja: '時刻: {time, time, short}'
+}, { time: new Date() })  // → "時刻: 14:30"
+
+// 組み合わせ
+it({
+  en: 'Order on {date, date, short}: {total, number, currency}',
+  ja: '{date, date, short}の注文: {total, number, currency}'
+}, { date: new Date(), total: 99.99 })
+```
+
+**サポートされるスタイル:**
+- `number`: `decimal`, `percent`, `integer`, `currency`
+- `date`: `short`, `medium`, `long`, `full`
+- `time`: `short`, `medium`, `long`, `full`
+
+---
+
+## 設定
+
+フォールバック動作と警告のグローバル設定を構成します：
+
+```typescript
+import { configure, resetConfig, getConfig } from 'inline-i18n-multi'
+
+configure({
+  // 最終フォールバックロケール（デフォルト: 'en'）
+  fallbackLocale: 'en',
+
+  // BCP 47タグから親ロケールを自動抽出（デフォルト: true）
+  // zh-TW → zh → fallbackLocale
+  autoParentLocale: true,
+
+  // 特定ロケールのカスタムフォールバックチェーン
+  fallbackChain: {
+    'pt-BR': ['pt', 'es', 'en'],  // ブラジルポルトガル語 → ポルトガル語 → スペイン語 → 英語
+  },
+
+  // 翻訳欠落警告を有効化（デフォルト: 開発モードでtrue）
+  warnOnMissing: true,
+
+  // カスタム警告ハンドラー
+  onMissingTranslation: (warning) => {
+    console.warn(`欠落: ${warning.requestedLocale}`, warning)
+  },
+})
+
+// デフォルトにリセット
+resetConfig()
+
+// 現在の設定を取得
+const config = getConfig()
+```
+
+### ロケールフォールバックチェーン
+
+BCP 47親ロケールサポートによる自動ロケールフォールバック：
+
+```typescript
+import { setLocale, it, t, loadDictionaries } from 'inline-i18n-multi'
+
+// 自動BCP 47フォールバック: zh-TW → zh → en
+setLocale('zh-TW')
+it({ en: 'Hello', zh: '你好' })  // → '你好'（zhにフォールバック）
+
+// t()でも動作
+loadDictionaries({
+  en: { greeting: 'Hello' },
+  zh: { greeting: '你好' },
+})
+setLocale('zh-TW')
+t('greeting')  // → '你好'
+
+// カスタムフォールバックチェーン
+configure({
+  fallbackChain: {
+    'pt-BR': ['pt', 'es', 'en']
+  }
+})
+setLocale('pt-BR')
+it({ en: 'Hello', es: 'Hola' })  // → 'Hola'（チェーンを通じてフォールバック）
+```
+
+### 翻訳欠落警告
+
+翻訳が欠落した場合に通知を受け取ります：
+
+```typescript
+import { configure, setLocale, it } from 'inline-i18n-multi'
+
+configure({
+  warnOnMissing: true,
+  onMissingTranslation: (warning) => {
+    // warning: {
+    //   type: 'missing_translation',
+    //   requestedLocale: 'fr',
+    //   availableLocales: ['en', 'ko'],
+    //   fallbackUsed: 'en',
+    //   key: 'greeting'  // t()のみ
+    // }
+    console.warn(`${warning.requestedLocale}の翻訳が欠落しています`)
+  }
+})
+
+setLocale('fr')
+it({ en: 'Hello', ko: '안녕하세요' })  // 警告: frの翻訳が欠落しています
+```
+
 ---
 
 ## ビルド時最適化
@@ -604,33 +743,6 @@ VSCodeマーケットプレイスから`inline-i18n-multi-vscode`をインスト
 
 ---
 
-## テスト
-
-Vitestを使用してテストを実行します。
-
-```bash
-# 全パッケージのテスト
-pnpm test
-
-# 特定パッケージのみテスト
-pnpm --filter inline-i18n-multi test        # core
-pnpm --filter inline-i18n-multi-next test   # next
-
-# CI用（1回のみ実行）
-pnpm test -- --run
-```
-
-### テストカバレッジ
-
-| パッケージ | テスト数 | ステータス |
-|-----------|---------|-----------|
-| `inline-i18n-multi` (core) | 45 | ✅ |
-| `inline-i18n-multi-next` (server) | 16 | ✅ |
-
-詳細は[テストドキュメント](./docs/test.md)をご覧ください。
-
----
-
 ## APIリファレンス
 
 ### コア関数
@@ -647,6 +759,9 @@ pnpm test -- --run
 | `hasTranslation(key, locale?)` | 翻訳キーの存在確認 |
 | `getLoadedLocales()` | ロードされたロケールコードの配列を返す |
 | `getDictionary(locale)` | 特定ロケールの辞書を返す |
+| `configure(options)` | グローバル設定（フォールバック、警告） |
+| `getConfig()` | 現在の設定を取得 |
+| `resetConfig()` | 設定をデフォルトにリセット |
 
 ### Reactフック＆コンポーネント
 
@@ -662,7 +777,26 @@ pnpm test -- --run
 ```typescript
 type Locale = string
 type Translations = Record<Locale, string>
-type TranslationVars = Record<string, string | number>
+type TranslationVars = Record<string, string | number | Date>
+
+interface Config {
+  defaultLocale: Locale
+  fallbackLocale?: Locale
+  autoParentLocale?: boolean
+  fallbackChain?: Record<Locale, Locale[]>
+  warnOnMissing?: boolean
+  onMissingTranslation?: WarningHandler
+}
+
+interface TranslationWarning {
+  type: 'missing_translation'
+  key?: string
+  requestedLocale: string
+  availableLocales: string[]
+  fallbackUsed?: string
+}
+
+type WarningHandler = (warning: TranslationWarning) => void
 ```
 
 ---

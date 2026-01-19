@@ -29,11 +29,16 @@ export {
   getDictionary,
 } from './dictionary'
 
+// Configuration
+export { configure, getConfig, resetConfig } from './config'
+
 export type {
   Locale,
   Translations,
   TranslationVars,
   Config,
+  TranslationWarning,
+  WarningHandler,
 } from './types'
 
 export type {

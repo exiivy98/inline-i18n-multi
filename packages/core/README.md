@@ -53,8 +53,10 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Type-safe** - Full TypeScript support with variable type checking
 - **Multiple languages** - Support for any number of locales
 - **i18n compatible** - Support for traditional key-based translations with JSON dictionaries
-- **ICU Message Format** - Plural and select syntax for complex translations
+- **ICU Message Format** - Plural, select, date, number, and time formatting
 - **Variable interpolation** - `{name}` syntax for dynamic values
+- **Locale Fallback Chain** - BCP 47 parent locale support (`zh-TW` → `zh` → `en`)
+- **Missing Translation Warning** - Development-time diagnostics with customizable handlers
 
 ---
 
@@ -184,6 +186,56 @@ it({
   ko: '{name}님이 {count, plural, =0 {메시지가 없습니다} other {# 개의 메시지가 있습니다}}',
   en: '{name} has {count, plural, =0 {no messages} one {# message} other {# messages}}'
 }, { name: 'John', count: 3 })  // → "John has 3 messages"
+
+// Date formatting
+it({
+  en: 'Created: {date, date, long}',
+  ko: '생성일: {date, date, long}'
+}, { date: new Date() })  // → "Created: January 15, 2024"
+
+// Number formatting
+it({
+  en: 'Price: {price, number}',
+  ko: '가격: {price, number}'
+}, { price: 1234.56 })  // → "Price: 1,234.56"
+```
+
+**Supported ICU styles:**
+- `number`: `decimal`, `percent`, `integer`, `currency`
+- `date`: `short`, `medium`, `long`, `full`
+- `time`: `short`, `medium`, `long`, `full`
+
+---
+
+## Configuration
+
+Configure global settings for fallback behavior and warnings:
+
+```typescript
+import { configure, getConfig, resetConfig } from 'inline-i18n-multi'
+
+configure({
+  fallbackLocale: 'en',           // Final fallback (default: 'en')
+  autoParentLocale: true,         // BCP 47 parent (zh-TW → zh)
+  fallbackChain: {                // Custom chains
+    'pt-BR': ['pt', 'es', 'en']
+  },
+  warnOnMissing: true,            // Enable warnings
+  onMissingTranslation: (w) => {  // Custom handler
+    console.warn(`Missing: ${w.requestedLocale}`)
+  }
+})
+```
+
+### Locale Fallback Chain
+
+Automatic locale fallback with BCP 47 support:
+
+```typescript
+setLocale('zh-TW')
+it({ en: 'Hello', zh: '你好' })  // → '你好' (falls back to zh)
+
+t('greeting')  // Also works with dictionaries
 ```
 
 ---
@@ -234,12 +286,39 @@ Available helpers:
 | `getLoadedLocales()` | Get array of loaded locale codes |
 | `getDictionary(locale)` | Get dictionary for a specific locale |
 
+### Configuration
+
+| Function | Description |
+|----------|-------------|
+| `configure(options)` | Configure global settings (fallback, warnings) |
+| `getConfig()` | Get current configuration |
+| `resetConfig()` | Reset configuration to defaults |
+
 ### Types
 
 ```typescript
 type Locale = string
 type Translations = Record<Locale, string>
-type TranslationVars = Record<string, string | number>
+type TranslationVars = Record<string, string | number | Date>
+
+interface Config {
+  defaultLocale: Locale
+  fallbackLocale?: Locale
+  autoParentLocale?: boolean
+  fallbackChain?: Record<Locale, Locale[]>
+  warnOnMissing?: boolean
+  onMissingTranslation?: WarningHandler
+}
+
+interface TranslationWarning {
+  type: 'missing_translation'
+  key?: string
+  requestedLocale: string
+  availableLocales: string[]
+  fallbackUsed?: string
+}
+
+type WarningHandler = (warning: TranslationWarning) => void
 ```
 
 ---

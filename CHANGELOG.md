@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2025-01-19
+
+### Added
+
+- **Locale Fallback Chain** - BCP 47 parent locale support
+  - Auto-derive parent locale: `zh-TW` → `zh` → `en`
+  - Custom fallback chain configuration
+  - Works with both `it()` and `t()` functions
+- **Missing Translation Warning** - Development-time diagnostics
+  - Warns when translation is missing and fallback is used
+  - Customizable warning handler via `onMissingTranslation`
+  - Shows requested locale, available locales, and fallback used
+- **ICU Date/Number/Time Formatting** - Extended ICU support
+  - Date formatting: `{date, date, short|medium|long|full}`
+  - Time formatting: `{time, time, short|medium|long|full}`
+  - Number formatting: `{price, number, decimal|percent|integer|currency}`
+  - Locale-aware formatting via `Intl.DateTimeFormat` and `Intl.NumberFormat`
+- New `configure()` function for global settings
+- New exports: `getConfig()`, `resetConfig()`, `TranslationWarning`, `WarningHandler`
+
+### Changed
+
+- Fallback behavior now uses configurable chain instead of hardcoded `en`
+- `TranslationVars` type now accepts `Date` objects
+- Improved warning messages with more context
+
 ## [0.2.0] - 2025-01-14
 
 ### Added

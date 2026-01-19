@@ -1,6 +1,6 @@
 {
   "name": "@inline-i18n-multi/swc-plugin",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "SWC plugin for inline-i18n-multi build-time optimization",
   "keywords": [
     "swc-plugin",

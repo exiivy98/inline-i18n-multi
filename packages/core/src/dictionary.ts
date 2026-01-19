@@ -1,6 +1,7 @@
 import { getLocale } from './context'
 import type { Locale, TranslationVars } from './types'
 import { interpolate } from './interpolation'
+import { buildFallbackChain, emitWarning } from './config'
 
 /**
  * Nested dictionary structure for translations
@@ -90,6 +91,29 @@ function getPluralCategory(count: number, locale: Locale): Intl.LDMLPluralRule {
 }
 
 /**
+ * Try to find a translation in a dictionary, handling plurals
+ */
+function findInDictionary(
+  dict: Dictionary,
+  key: string,
+  vars: TranslationVars | undefined,
+  locale: Locale
+): string | undefined {
+  let template = getNestedValue(dict, key)
+
+  // Handle plurals if count is provided
+  if (vars && typeof vars.count === 'number') {
+    const pluralKey = `${key}_${getPluralCategory(vars.count, locale)}`
+    const pluralTemplate = getNestedValue(dict, pluralKey)
+    if (pluralTemplate) {
+      template = pluralTemplate
+    }
+  }
+
+  return template
+}
+
+/**
  * Translate using key-based lookup (i18n compatible)
  * @param key - Dot-separated translation key
  * @param vars - Variables for interpolation (including 'count' for plurals)
@@ -104,38 +128,47 @@ export function t(
   locale?: Locale
 ): string {
   const currentLocale = locale ?? getLocale()
-  const dict = dictionaries[currentLocale]
+  const fallbackChain = buildFallbackChain(currentLocale)
+  const availableLocales = Object.keys(dictionaries)
 
-  if (!dict) {
-    console.warn(`[inline-i18n] No dictionary loaded for locale: ${currentLocale}`)
-    return key
-  }
+  let template: string | undefined
+  let usedLocale: Locale | undefined
 
-  let template = getNestedValue(dict, key)
+  // Try each locale in the fallback chain
+  for (const tryLocale of fallbackChain) {
+    const dict = dictionaries[tryLocale]
+    if (!dict) continue
 
-  // Handle plurals if count is provided
-  if (vars && typeof vars.count === 'number') {
-    const pluralKey = `${key}_${getPluralCategory(vars.count, currentLocale)}`
-    const pluralTemplate = getNestedValue(dict, pluralKey)
-    if (pluralTemplate) {
-      template = pluralTemplate
+    const found = findInDictionary(dict, key, vars, tryLocale)
+    if (found) {
+      template = found
+      usedLocale = tryLocale
+      break
     }
   }
 
   if (!template) {
-    // Try fallback to English
-    const fallbackDict = dictionaries['en']
-    if (fallbackDict && currentLocale !== 'en') {
-      template = getNestedValue(fallbackDict, key)
-    }
-  }
-
-  if (!template) {
-    console.warn(`[inline-i18n] Missing translation: ${key} (${currentLocale})`)
+    emitWarning({
+      type: 'missing_translation',
+      key,
+      requestedLocale: currentLocale,
+      availableLocales,
+    })
     return key
   }
 
-  return interpolate(template, vars, currentLocale)
+  // Warn if we used a fallback
+  if (usedLocale && usedLocale !== currentLocale) {
+    emitWarning({
+      type: 'missing_translation',
+      key,
+      requestedLocale: currentLocale,
+      availableLocales,
+      fallbackUsed: usedLocale,
+    })
+  }
+
+  return interpolate(template, vars, usedLocale || currentLocale)
 }
 
 /**

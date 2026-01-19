@@ -56,7 +56,9 @@
 - **框架支持** - React、Next.js（App Router和Pages Router）
 - **开发者工具** - 用于验证的CLI，用于导航的VSCode扩展
 - **i18n兼容** - 支持带有JSON字典和复数形式的传统基于键的翻译
-- **ICU Message Format** - 支持复杂翻译的复数和选择语法
+- **ICU Message Format** - 支持复数、选择、日期、数字、时间格式化
+- **语言环境回退链** - BCP 47父语言环境支持（`zh-TW` → `zh` → `en`）
+- **缺失翻译警告** - 可自定义处理程序的开发时诊断
 
 ---
 
@@ -462,6 +464,143 @@ it(
 | `{var, select, ...}`   | 基于字符串值的选择                                        | `{gender, select, male {他} female {她}}`    |
 | `#`                    | 在复数中显示当前数值                                      | `# items` → "5 items"                        |
 
+### 日期、数字、时间格式化
+
+ICU还支持本地化感知的日期、数字、时间格式化：
+
+```typescript
+// 数字格式化
+it({
+  en: 'Price: {price, number}',
+  zh: '价格: {price, number}'
+}, { price: 1234.56 })  // → "价格: 1,234.56"
+
+it({
+  en: 'Discount: {rate, number, percent}',
+  zh: '折扣: {rate, number, percent}'
+}, { rate: 0.25 })  // → "折扣: 25%"
+
+// 日期格式化
+it({
+  en: 'Created: {date, date, long}',
+  zh: '创建日期: {date, date, long}'
+}, { date: new Date('2024-03-15') })  // → "创建日期: 2024年3月15日"
+
+it({
+  en: 'Due: {date, date, short}',
+  zh: '截止: {date, date, short}'
+}, { date: new Date() })  // → "截止: 2024/3/15"
+
+// 时间格式化
+it({
+  en: 'Time: {time, time, short}',
+  zh: '时间: {time, time, short}'
+}, { time: new Date() })  // → "时间: 14:30"
+
+// 组合
+it({
+  en: 'Order on {date, date, short}: {total, number, currency}',
+  zh: '{date, date, short}订单: {total, number, currency}'
+}, { date: new Date(), total: 99.99 })
+```
+
+**支持的样式:**
+- `number`: `decimal`, `percent`, `integer`, `currency`
+- `date`: `short`, `medium`, `long`, `full`
+- `time`: `short`, `medium`, `long`, `full`
+
+---
+
+## 配置
+
+配置回退行为和警告的全局设置：
+
+```typescript
+import { configure, resetConfig, getConfig } from 'inline-i18n-multi'
+
+configure({
+  // 最终回退语言环境（默认: 'en'）
+  fallbackLocale: 'en',
+
+  // 从BCP 47标签自动提取父语言环境（默认: true）
+  // zh-TW → zh → fallbackLocale
+  autoParentLocale: true,
+
+  // 特定语言环境的自定义回退链
+  fallbackChain: {
+    'pt-BR': ['pt', 'es', 'en'],  // 巴西葡萄牙语 → 葡萄牙语 → 西班牙语 → 英语
+  },
+
+  // 启用缺失翻译警告（默认: 开发模式下为true）
+  warnOnMissing: true,
+
+  // 自定义警告处理程序
+  onMissingTranslation: (warning) => {
+    console.warn(`缺失: ${warning.requestedLocale}`, warning)
+  },
+})
+
+// 重置为默认值
+resetConfig()
+
+// 获取当前配置
+const config = getConfig()
+```
+
+### 语言环境回退链
+
+通过BCP 47父语言环境支持实现自动语言环境回退：
+
+```typescript
+import { setLocale, it, t, loadDictionaries } from 'inline-i18n-multi'
+
+// 自动BCP 47回退: zh-TW → zh → en
+setLocale('zh-TW')
+it({ en: 'Hello', zh: '你好' })  // → '你好'（回退到zh）
+
+// 在t()中也有效
+loadDictionaries({
+  en: { greeting: 'Hello' },
+  zh: { greeting: '你好' },
+})
+setLocale('zh-TW')
+t('greeting')  // → '你好'
+
+// 自定义回退链
+configure({
+  fallbackChain: {
+    'pt-BR': ['pt', 'es', 'en']
+  }
+})
+setLocale('pt-BR')
+it({ en: 'Hello', es: 'Hola' })  // → 'Hola'（通过链回退）
+```
+
+### 缺失翻译警告
+
+当翻译缺失时收到通知：
+
+```typescript
+import { configure, setLocale, it } from 'inline-i18n-multi'
+
+configure({
+  warnOnMissing: true,
+  onMissingTranslation: (warning) => {
+    // warning: {
+    //   type: 'missing_translation',
+    //   requestedLocale: 'fr',
+    //   availableLocales: ['en', 'ko'],
+    //   fallbackUsed: 'en',
+    //   key: 'greeting'  // 仅用于t()
+    // }
+    console.warn(`缺失${warning.requestedLocale}的翻译`)
+  }
+})
+
+setLocale('fr')
+it({ en: 'Hello', ko: '안녕하세요' })  // 警告: 缺失fr的翻译
+```
+
 ---
 
 ## 构建时优化
@@ -604,33 +743,6 @@ pnpm --filter inline-i18n-multi-nextjs-example dev
 
 ---
 
-## 测试
-
-使用Vitest运行测试。
-
-```bash
-# 运行所有包的测试
-pnpm test
-
-# 运行特定包的测试
-pnpm --filter inline-i18n-multi test        # core
-pnpm --filter inline-i18n-multi-next test   # next
-
-# CI用（只运行一次）
-pnpm test -- --run
-```
-
-### 测试覆盖率
-
-| 包 | 测试数 | 状态 |
-|---|--------|------|
-| `inline-i18n-multi` (core) | 45 | ✅ |
-| `inline-i18n-multi-next` (server) | 16 | ✅ |
-
-详情请参阅[测试文档](./docs/test.md)。
-
----
-
 ## API参考
 
 ### 核心函数
@@ -647,6 +759,9 @@ pnpm test -- --run
 | `hasTranslation(key, locale?)` | 检查翻译键是否存在 |
 | `getLoadedLocales()` | 返回已加载的语言环境代码数组 |
 | `getDictionary(locale)` | 返回特定语言环境的字典 |
+| `configure(options)` | 全局设置（回退、警告） |
+| `getConfig()` | 获取当前配置 |
+| `resetConfig()` | 重置配置为默认值 |
 
 ### React钩子和组件
 
@@ -662,7 +777,26 @@ pnpm test -- --run
 ```typescript
 type Locale = string
 type Translations = Record<Locale, string>
-type TranslationVars = Record<string, string | number>
+type TranslationVars = Record<string, string | number | Date>
+
+interface Config {
+  defaultLocale: Locale
+  fallbackLocale?: Locale
+  autoParentLocale?: boolean
+  fallbackChain?: Record<Locale, Locale[]>
+  warnOnMissing?: boolean
+  onMissingTranslation?: WarningHandler
+}
+
+interface TranslationWarning {
+  type: 'missing_translation'
+  key?: string
+  requestedLocale: string
+  availableLocales: string[]
+  fallbackUsed?: string
+}
+
+type WarningHandler = (warning: TranslationWarning) => void
 ```
 
 ---

@@ -56,7 +56,9 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Framework support** - React, Next.js (App Router & Pages Router)
 - **Developer tools** - CLI for validation, VSCode extension for navigation
 - **i18n compatible** - Support for traditional key-based translations with JSON dictionaries and plural forms
-- **ICU Message Format** - Plural and select syntax for complex translations
+- **ICU Message Format** - Plural, select, date, number, and time formatting
+- **Locale Fallback Chain** - BCP 47 parent locale support (`zh-TW` → `zh` → `en`)
+- **Missing Translation Warning** - Development-time diagnostics with customizable handlers
 
 ---
 
@@ -393,7 +395,7 @@ Available helpers:
 
 ## ICU Message Format
 
-For complex translations with plurals and conditional text:
+For complex translations with plurals, conditional text, and formatting:
 
 ```typescript
 import { it, setLocale } from 'inline-i18n-multi'
@@ -427,6 +429,143 @@ it({
   ko: '{name}님이 {count, plural, =0 {메시지가 없습니다} other {# 개의 메시지가 있습니다}}',
   en: '{name} has {count, plural, =0 {no messages} one {# message} other {# messages}}'
 }, { name: 'John', count: 3 })  // → "John has 3 messages"
+```
+
+### Date, Number, and Time Formatting
+
+ICU also supports locale-aware date, number, and time formatting:
+
+```typescript
+// Number formatting
+it({
+  en: 'Price: {price, number}',
+  ko: '가격: {price, number}'
+}, { price: 1234.56 })  // → "Price: 1,234.56"
+
+it({
+  en: 'Discount: {rate, number, percent}',
+  ko: '할인율: {rate, number, percent}'
+}, { rate: 0.25 })  // → "Discount: 25%"
+
+// Date formatting
+it({
+  en: 'Created: {date, date, long}',
+  ko: '생성일: {date, date, long}'
+}, { date: new Date('2024-03-15') })  // → "Created: March 15, 2024"
+
+it({
+  en: 'Due: {date, date, short}',
+  ko: '마감: {date, date, short}'
+}, { date: new Date() })  // → "Due: 3/15/24"
+
+// Time formatting
+it({
+  en: 'Time: {time, time, short}',
+  ko: '시간: {time, time, short}'
+}, { time: new Date() })  // → "Time: 2:30 PM"
+
+// Combined
+it({
+  en: 'Order on {date, date, short}: {total, number, currency}',
+  ko: '{date, date, short} 주문: {total, number, currency}'
+}, { date: new Date(), total: 99.99 })
+```
+
+**Supported styles:**
+- `number`: `decimal`, `percent`, `integer`, `currency`
+- `date`: `short`, `medium`, `long`, `full`
+- `time`: `short`, `medium`, `long`, `full`
+
+---
+
+## Configuration
+
+Configure global settings for fallback behavior and warnings:
+
+```typescript
+import { configure, resetConfig, getConfig } from 'inline-i18n-multi'
+
+configure({
+  // Final fallback locale (default: 'en')
+  fallbackLocale: 'en',
+
+  // Auto-derive parent locale from BCP 47 tags (default: true)
+  // zh-TW → zh → fallbackLocale
+  autoParentLocale: true,
+
+  // Custom fallback chains for specific locales
+  fallbackChain: {
+    'pt-BR': ['pt', 'es', 'en'],  // Portuguese (Brazil) → Portuguese → Spanish → English
+  },
+
+  // Enable missing translation warnings (default: true in dev mode)
+  warnOnMissing: true,
+
+  // Custom warning handler
+  onMissingTranslation: (warning) => {
+    console.warn(`Missing: ${warning.requestedLocale}`, warning)
+  },
+})
+
+// Reset to defaults
+resetConfig()
+
+// Get current config
+const config = getConfig()
+```
+
+### Locale Fallback Chain
+
+Automatic locale fallback with BCP 47 parent locale support:
+
+```typescript
+import { setLocale, it, t, loadDictionaries } from 'inline-i18n-multi'
+
+// Auto BCP 47 fallback: zh-TW → zh → en
+setLocale('zh-TW')
+it({ en: 'Hello', zh: '你好' })  // → '你好' (falls back to zh)
+
+// Works with t() too
+loadDictionaries({
+  en: { greeting: 'Hello' },
+  zh: { greeting: '你好' },
+})
+setLocale('zh-TW')
+t('greeting')  // → '你好'
+
+// Custom fallback chain
+configure({
+  fallbackChain: {
+    'pt-BR': ['pt', 'es', 'en']
+  }
+})
+setLocale('pt-BR')
+it({ en: 'Hello', es: 'Hola' })  // → 'Hola' (falls back through chain)
+```
+
+### Missing Translation Warnings
+
+Get notified when translations are missing:
+
+```typescript
+import { configure, setLocale, it } from 'inline-i18n-multi'
+
+configure({
+  warnOnMissing: true,
+  onMissingTranslation: (warning) => {
+    // warning: {
+    //   type: 'missing_translation',
+    //   requestedLocale: 'fr',
+    //   availableLocales: ['en', 'ko'],
+    //   fallbackUsed: 'en',
+    //   key: 'greeting'  // for t() only
+    // }
+    console.warn(`Missing translation for ${warning.requestedLocale}`)
+  }
+})
+
+setLocale('fr')
+it({ en: 'Hello', ko: '안녕하세요' })  // Warns: Missing translation for fr
 ```
 
 ---
@@ -591,7 +730,7 @@ pnpm test -- --run
 
 | Package | Tests | Status |
 |---------|-------|--------|
-| `inline-i18n-multi` (core) | 45 | ✅ |
+| `inline-i18n-multi` (core) | 94 | ✅ |
 | `inline-i18n-multi-next` (server) | 16 | ✅ |
 
 See [Testing Documentation](./docs/test.md) for more details.
@@ -614,6 +753,9 @@ See [Testing Documentation](./docs/test.md) for more details.
 | `hasTranslation(key, locale?)` | Check if translation key exists |
 | `getLoadedLocales()` | Get array of loaded locale codes |
 | `getDictionary(locale)` | Get dictionary for a specific locale |
+| `configure(options)` | Configure global settings (fallback, warnings) |
+| `getConfig()` | Get current configuration |
+| `resetConfig()` | Reset configuration to defaults |
 
 ### React Hooks & Components
 
@@ -629,7 +771,26 @@ See [Testing Documentation](./docs/test.md) for more details.
 ```typescript
 type Locale = string
 type Translations = Record<Locale, string>
-type TranslationVars = Record<string, string | number>
+type TranslationVars = Record<string, string | number | Date>
+
+interface Config {
+  defaultLocale: Locale
+  fallbackLocale?: Locale
+  autoParentLocale?: boolean
+  fallbackChain?: Record<Locale, Locale[]>
+  warnOnMissing?: boolean
+  onMissingTranslation?: WarningHandler
+}
+
+interface TranslationWarning {
+  type: 'missing_translation'
+  key?: string
+  requestedLocale: string
+  availableLocales: string[]
+  fallbackUsed?: string
+}
+
+type WarningHandler = (warning: TranslationWarning) => void
 ```
 
 ---

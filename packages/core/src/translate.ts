@@ -1,6 +1,7 @@
 import type { Translations, TranslationVars } from './types'
 import { getLocale } from './context'
 import { interpolate } from './interpolation'
+import { buildFallbackChain, emitWarning } from './config'
 
 interface ResolveResult {
   template: string
@@ -9,16 +10,40 @@ interface ResolveResult {
 
 function resolveTemplate(translations: Translations): ResolveResult {
   const locale = getLocale()
+  const availableLocales = Object.keys(translations)
+  const fallbackChain = buildFallbackChain(locale)
 
-  const template = translations[locale]
-  if (template) return { template, locale }
+  // Try each locale in the fallback chain
+  for (const tryLocale of fallbackChain) {
+    const template = translations[tryLocale]
+    if (template) {
+      // Warn if we had to fall back
+      if (tryLocale !== locale) {
+        emitWarning({
+          type: 'missing_translation',
+          requestedLocale: locale,
+          availableLocales,
+          fallbackUsed: tryLocale,
+        })
+      }
+      return { template, locale: tryLocale }
+    }
+  }
 
-  // fallback: en -> first available
-  const fallback = translations.en ?? Object.values(translations)[0]
-  if (fallback) return { template: fallback, locale: 'en' }
+  // Last resort: use first available translation
+  const firstAvailable = Object.entries(translations)[0]
+  if (firstAvailable) {
+    emitWarning({
+      type: 'missing_translation',
+      requestedLocale: locale,
+      availableLocales,
+      fallbackUsed: firstAvailable[0],
+    })
+    return { template: firstAvailable[1], locale: firstAvailable[0] }
+  }
 
   throw new Error(
-    `No translation found for locale "${locale}". Available: ${Object.keys(translations).join(', ')}`
+    `No translation found for locale "${locale}". Available: ${availableLocales.join(', ')}`
   )
 }
 

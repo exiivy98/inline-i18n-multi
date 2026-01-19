@@ -1,4 +1,4 @@
-import { describe, it as test, expect, beforeEach } from 'vitest'
+import { describe, it as test, expect, beforeEach, vi } from 'vitest'
 import {
   it,
   setLocale,
@@ -12,6 +12,8 @@ import {
   getDictionary,
   it_ja,
   en_zh,
+  configure,
+  resetConfig,
 } from './index'
 
 describe('setLocale / getLocale', () => {
@@ -178,13 +180,13 @@ describe('Dictionary-based translation (t)', () => {
     expect(t('goodbye')).toBe('Goodbye') // fallback to en
   })
 
-  test('should return key if locale dictionary not loaded', () => {
+  test('should fallback to en if locale dictionary not loaded', () => {
     loadDictionaries({
       en: { hello: 'Hello' },
     })
 
-    setLocale('fr') // fr dictionary not loaded
-    expect(t('hello')).toBe('hello') // returns key
+    setLocale('fr') // fr dictionary not loaded, falls back to en
+    expect(t('hello')).toBe('Hello')
   })
 
   test('should return key if translation not found', () => {
@@ -255,5 +257,137 @@ describe('Dictionary utilities', () => {
 
     expect(getLoadedLocales()).toHaveLength(0)
     expect(getDictionary('en')).toBeUndefined()
+  })
+})
+
+describe('Fallback chain', () => {
+  beforeEach(() => {
+    clearDictionaries()
+    resetConfig()
+    setLocale('en')
+  })
+
+  describe('it() with BCP 47 fallback', () => {
+    test('should fallback from zh-TW to zh', () => {
+      setLocale('zh-TW')
+      expect(it({ en: 'Hello', zh: '你好' })).toBe('你好')
+    })
+
+    test('should fallback from en-US to en', () => {
+      setLocale('en-US')
+      expect(it({ en: 'Hello', ko: '안녕하세요' })).toBe('Hello')
+    })
+
+    test('should use exact match if available', () => {
+      setLocale('zh-TW')
+      expect(it({ en: 'Hello', zh: '你好', 'zh-TW': '你好 (繁體)' })).toBe('你好 (繁體)')
+    })
+  })
+
+  describe('t() with BCP 47 fallback', () => {
+    test('should fallback from zh-TW to zh', () => {
+      loadDictionaries({
+        en: { hello: 'Hello' },
+        zh: { hello: '你好' },
+      })
+
+      setLocale('zh-TW')
+      expect(t('hello')).toBe('你好')
+    })
+
+    test('should use exact locale match first', () => {
+      loadDictionaries({
+        en: { hello: 'Hello' },
+        zh: { hello: '你好' },
+        'zh-TW': { hello: '你好 (繁體)' },
+      })
+
+      setLocale('zh-TW')
+      expect(t('hello')).toBe('你好 (繁體)')
+    })
+
+    test('should fallback through chain to en', () => {
+      loadDictionaries({
+        en: { hello: 'Hello' },
+        ko: { hello: '안녕하세요' },
+      })
+
+      setLocale('ja') // ja not loaded, should fallback to en
+      expect(t('hello')).toBe('Hello')
+    })
+  })
+
+  describe('configure()', () => {
+    test('should allow custom fallback locale', () => {
+      configure({ fallbackLocale: 'ko' })
+      loadDictionaries({
+        ko: { hello: '안녕하세요' },
+      })
+
+      setLocale('fr')
+      expect(t('hello')).toBe('안녕하세요')
+    })
+
+    test('should allow custom fallback chain', () => {
+      configure({
+        fallbackChain: {
+          'pt-BR': ['pt', 'es', 'en'],
+        },
+      })
+      loadDictionaries({
+        en: { hello: 'Hello' },
+        es: { hello: 'Hola' },
+      })
+
+      setLocale('pt-BR')
+      expect(t('hello')).toBe('Hola') // falls back to es
+    })
+
+    test('should disable autoParentLocale', () => {
+      configure({ autoParentLocale: false })
+      loadDictionaries({
+        en: { hello: 'Hello' },
+        zh: { hello: '你好' },
+      })
+
+      setLocale('zh-TW')
+      // Without autoParentLocale, zh-TW won't fallback to zh
+      // It will go directly to the fallbackLocale (en)
+      expect(t('hello')).toBe('Hello')
+    })
+  })
+
+  describe('warnings', () => {
+    test('should call onMissingTranslation when fallback is used', () => {
+      const handler = vi.fn()
+      configure({
+        warnOnMissing: true,
+        onMissingTranslation: handler,
+      })
+
+      setLocale('fr')
+      it({ en: 'Hello', ko: '안녕하세요' })
+
+      expect(handler).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'missing_translation',
+          requestedLocale: 'fr',
+          fallbackUsed: 'en',
+        })
+      )
+    })
+
+    test('should not warn when exact match is found', () => {
+      const handler = vi.fn()
+      configure({
+        warnOnMissing: true,
+        onMissingTranslation: handler,
+      })
+
+      setLocale('en')
+      it({ en: 'Hello', ko: '안녕하세요' })
+
+      expect(handler).not.toHaveBeenCalled()
+    })
   })
 })

@@ -145,6 +145,22 @@ export default async function Home({
             ja: '{gender, select, male {彼} female {彼女} other {彼ら}}が言いました。',
           }, { gender: 'female' })}
         </p>
+        <p>
+          <strong>{await it('날짜', 'Date')}:</strong>{' '}
+          {await it({
+            ko: '{date, date, long}',
+            en: '{date, date, long}',
+            ja: '{date, date, long}',
+          }, { date: new Date() })}
+        </p>
+        <p>
+          <strong>{await it('숫자', 'Number')}:</strong>{' '}
+          {await it({
+            ko: '가격: {price, number}',
+            en: 'Price: {price, number}',
+            ja: '価格: {price, number}',
+          }, { price: 1234.56 })}
+        </p>
       </div>
 
       {/* Client Component Example */}

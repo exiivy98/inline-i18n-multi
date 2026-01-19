@@ -57,7 +57,9 @@
 - **프레임워크 지원** - React, Next.js (App Router & Pages Router)
 - **개발자 도구** - 검증용 CLI, 탐색용 VSCode 확장
 - **i18n 호환** - JSON 딕셔너리와 복수형을 지원하는 전통적인 키 기반 번역 지원
-- **ICU Message Format** - 복잡한 번역을 위한 복수형 및 선택 구문 지원
+- **ICU Message Format** - 복수형, 선택, 날짜, 숫자, 시간 포맷팅 지원
+- **로케일 폴백 체인** - BCP 47 부모 로케일 지원 (`zh-TW` → `zh` → `en`)
+- **누락 번역 경고** - 커스터마이즈 가능한 핸들러를 통한 개발 시점 진단
 
 ---
 
@@ -474,6 +476,143 @@ it(
 | `{var, select, ...}` | 문자열 값 기반 선택                                    | `{gender, select, male {그} female {그녀}}` |
 | `#`           | 복수형 내에서 현재 숫자 값 표시                            | `# items` → "5 items"                    |
 
+### 날짜, 숫자, 시간 포맷팅
+
+ICU는 로케일 인식 날짜, 숫자, 시간 포맷팅도 지원합니다:
+
+```typescript
+// 숫자 포맷팅
+it({
+  en: 'Price: {price, number}',
+  ko: '가격: {price, number}'
+}, { price: 1234.56 })  // → "가격: 1,234.56"
+
+it({
+  en: 'Discount: {rate, number, percent}',
+  ko: '할인율: {rate, number, percent}'
+}, { rate: 0.25 })  // → "할인율: 25%"
+
+// 날짜 포맷팅
+it({
+  en: 'Created: {date, date, long}',
+  ko: '생성일: {date, date, long}'
+}, { date: new Date('2024-03-15') })  // → "생성일: 2024년 3월 15일"
+
+it({
+  en: 'Due: {date, date, short}',
+  ko: '마감: {date, date, short}'
+}, { date: new Date() })  // → "마감: 24. 3. 15."
+
+// 시간 포맷팅
+it({
+  en: 'Time: {time, time, short}',
+  ko: '시간: {time, time, short}'
+}, { time: new Date() })  // → "시간: 오후 2:30"
+
+// 조합
+it({
+  en: 'Order on {date, date, short}: {total, number, currency}',
+  ko: '{date, date, short} 주문: {total, number, currency}'
+}, { date: new Date(), total: 99.99 })
+```
+
+**지원되는 스타일:**
+- `number`: `decimal`, `percent`, `integer`, `currency`
+- `date`: `short`, `medium`, `long`, `full`
+- `time`: `short`, `medium`, `long`, `full`
+
+---
+
+## 설정
+
+폴백 동작과 경고에 대한 전역 설정을 구성합니다:
+
+```typescript
+import { configure, resetConfig, getConfig } from 'inline-i18n-multi'
+
+configure({
+  // 최종 폴백 로케일 (기본값: 'en')
+  fallbackLocale: 'en',
+
+  // BCP 47 태그에서 부모 로케일 자동 추출 (기본값: true)
+  // zh-TW → zh → fallbackLocale
+  autoParentLocale: true,
+
+  // 특정 로케일에 대한 커스텀 폴백 체인
+  fallbackChain: {
+    'pt-BR': ['pt', 'es', 'en'],  // 브라질 포르투갈어 → 포르투갈어 → 스페인어 → 영어
+  },
+
+  // 누락 번역 경고 활성화 (기본값: 개발 모드에서 true)
+  warnOnMissing: true,
+
+  // 커스텀 경고 핸들러
+  onMissingTranslation: (warning) => {
+    console.warn(`누락: ${warning.requestedLocale}`, warning)
+  },
+})
+
+// 기본값으로 리셋
+resetConfig()
+
+// 현재 설정 조회
+const config = getConfig()
+```
+
+### 로케일 폴백 체인
+
+BCP 47 부모 로케일 지원을 통한 자동 로케일 폴백:
+
+```typescript
+import { setLocale, it, t, loadDictionaries } from 'inline-i18n-multi'
+
+// 자동 BCP 47 폴백: zh-TW → zh → en
+setLocale('zh-TW')
+it({ en: 'Hello', zh: '你好' })  // → '你好' (zh로 폴백)
+
+// t()에서도 동작
+loadDictionaries({
+  en: { greeting: 'Hello' },
+  zh: { greeting: '你好' },
+})
+setLocale('zh-TW')
+t('greeting')  // → '你好'
+
+// 커스텀 폴백 체인
+configure({
+  fallbackChain: {
+    'pt-BR': ['pt', 'es', 'en']
+  }
+})
+setLocale('pt-BR')
+it({ en: 'Hello', es: 'Hola' })  // → 'Hola' (체인을 통해 폴백)
+```
+
+### 누락 번역 경고
+
+번역이 누락되면 알림을 받습니다:
+
+```typescript
+import { configure, setLocale, it } from 'inline-i18n-multi'
+
+configure({
+  warnOnMissing: true,
+  onMissingTranslation: (warning) => {
+    // warning: {
+    //   type: 'missing_translation',
+    //   requestedLocale: 'fr',
+    //   availableLocales: ['en', 'ko'],
+    //   fallbackUsed: 'en',
+    //   key: 'greeting'  // t()에서만
+    // }
+    console.warn(`${warning.requestedLocale}에 대한 번역 누락`)
+  }
+})
+
+setLocale('fr')
+it({ en: 'Hello', ko: '안녕하세요' })  // 경고: fr에 대한 번역 누락
+```
+
 ---
 
 ## 빌드 타임 최적화
@@ -618,33 +757,6 @@ VSCode 마켓플레이스에서 `inline-i18n-multi-vscode`를 설치하세요.
 
 ---
 
-## 테스트
-
-Vitest를 사용하여 테스트합니다.
-
-```bash
-# 모든 패키지 테스트
-pnpm test
-
-# 특정 패키지만 테스트
-pnpm --filter inline-i18n-multi test        # core
-pnpm --filter inline-i18n-multi-next test   # next
-
-# CI용 (한 번만 실행)
-pnpm test -- --run
-```
-
-### 테스트 커버리지
-
-| 패키지                            | 테스트 수 | 상태 |
-| --------------------------------- | --------- | ---- |
-| `inline-i18n-multi` (core)        | 45        | ✅   |
-| `inline-i18n-multi-next` (server) | 16        | ✅   |
-
-자세한 내용은 [테스트 문서](./docs/test.md)를 참조하세요.
-
----
-
 ## API 레퍼런스
 
 ### 핵심 함수
@@ -661,6 +773,9 @@ pnpm test -- --run
 | `hasTranslation(key, locale?)` | 번역 키 존재 여부 확인                  |
 | `getLoadedLocales()`           | 로드된 로케일 코드 배열 반환            |
 | `getDictionary(locale)`        | 특정 로케일의 딕셔너리 반환             |
+| `configure(options)`           | 전역 설정 (폴백, 경고)                  |
+| `getConfig()`                  | 현재 설정 조회                          |
+| `resetConfig()`                | 설정을 기본값으로 리셋                  |
 
 ### React 훅 & 컴포넌트
 
@@ -674,9 +789,28 @@ pnpm test -- --run
 ### 타입
 
 ```typescript
-type Locale = string;
-type Translations = Record<Locale, string>;
-type TranslationVars = Record<string, string | number>;
+type Locale = string
+type Translations = Record<Locale, string>
+type TranslationVars = Record<string, string | number | Date>
+
+interface Config {
+  defaultLocale: Locale
+  fallbackLocale?: Locale
+  autoParentLocale?: boolean
+  fallbackChain?: Record<Locale, Locale[]>
+  warnOnMissing?: boolean
+  onMissingTranslation?: WarningHandler
+}
+
+interface TranslationWarning {
+  type: 'missing_translation'
+  key?: string
+  requestedLocale: string
+  availableLocales: string[]
+  fallbackUsed?: string
+}
+
+type WarningHandler = (warning: TranslationWarning) => void
 ```
 
 ---
