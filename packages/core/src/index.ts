@@ -27,6 +27,7 @@ export {
   hasTranslation,
   getLoadedLocales,
   getDictionary,
+  getLoadedNamespaces,
 } from './dictionary'
 
 // Configuration
@@ -39,6 +40,7 @@ export type {
   Config,
   TranslationWarning,
   WarningHandler,
+  DebugModeOptions,
 } from './types'
 
 export type {

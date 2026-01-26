@@ -56,9 +56,11 @@
 - **框架支持** - React、Next.js（App Router和Pages Router）
 - **开发者工具** - 用于验证的CLI，用于导航的VSCode扩展
 - **i18n兼容** - 支持带有JSON字典和复数形式的传统基于键的翻译
-- **ICU Message Format** - 支持复数、选择、日期、数字、时间格式化
+- **ICU Message Format** - 支持复数、选择、日期、数字、时间、相对时间、列表格式化
 - **语言环境回退链** - BCP 47父语言环境支持（`zh-TW` → `zh` → `en`）
 - **缺失翻译警告** - 可自定义处理程序的开发时诊断
+- **命名空间支持** - 为大型应用组织翻译（`t('common:greeting')`）
+- **调试模式** - 缺失/回退翻译的可视化指示
 
 ---
 
@@ -509,6 +511,120 @@ it({
 - `date`: `short`, `medium`, `long`, `full`
 - `time`: `short`, `medium`, `long`, `full`
 
+### 相对时间格式化
+
+自动单位检测的人类可读相对时间：
+
+```typescript
+// 相对时间
+it({
+  en: 'Updated {time, relativeTime}',
+  zh: '{time, relativeTime}更新'
+}, { time: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) })
+// → "3天前更新"
+
+// 样式选项: long（默认）、short、narrow
+it({ zh: '{time, relativeTime, short}' }, { time: pastDate })
+// → "3天前"
+
+it({ zh: '{time, relativeTime, narrow}' }, { time: pastDate })
+// → "3天前"
+```
+
+### 列表格式化
+
+本地化感知的列表连接：
+
+```typescript
+// 列表（conjunction - "和"）
+it({
+  en: 'Invited: {names, list}',
+  zh: '已邀请: {names, list}'
+}, { names: ['Alice', 'Bob', 'Charlie'] })
+// en → "Invited: Alice, Bob, and Charlie"
+// zh → "已邀请: Alice、Bob和Charlie"
+
+// Disjunction（"或"）
+it({ zh: '{options, list, disjunction}' }, { options: ['A', 'B', 'C'] })
+// → "A、B或C"
+
+// Unit（无连词）
+it({ zh: '{items, list, unit}' }, { items: ['10kg', '5m', '3L'] })
+// → "10kg、5m、3L"
+```
+
+---
+
+## 命名空间支持
+
+为大型应用程序组织翻译：
+
+```typescript
+import { loadDictionaries, t, getLoadedNamespaces, clearDictionaries } from 'inline-i18n-multi'
+
+// 使用命名空间加载
+loadDictionaries({
+  en: { hello: 'Hello', goodbye: 'Goodbye' },
+  zh: { hello: '你好', goodbye: '再见' }
+}, 'common')
+
+loadDictionaries({
+  en: { title: 'Settings', theme: 'Theme' },
+  zh: { title: '设置', theme: '主题' }
+}, 'settings')
+
+// 使用命名空间前缀
+t('common:hello')      // → "你好"
+t('settings:title')    // → "设置"
+
+// 嵌套键也可以使用
+t('common:buttons.submit')
+
+// 没有命名空间 = 'default'（向后兼容）
+loadDictionaries({ zh: { greeting: '嗨' } })
+t('greeting')  // → "嗨"
+
+// 获取所有已加载的命名空间
+getLoadedNamespaces()  // → ['common', 'settings', 'default']
+
+// 清除特定命名空间
+clearDictionaries('settings')
+
+// 清除全部
+clearDictionaries()
+```
+
+---
+
+## 调试模式
+
+用于调试缺失和回退翻译的可视化指示：
+
+```typescript
+import { configure, setLocale, it, t } from 'inline-i18n-multi'
+
+// 启用调试模式
+configure({ debugMode: true })
+
+// 缺失的翻译显示前缀
+setLocale('fr')
+it({ en: 'Hello', zh: '你好' })
+// → "[fr -> en] Hello"
+
+t('missing.key')
+// → "[MISSING: en] missing.key"
+
+// 自定义格式
+configure({
+  debugMode: {
+    showMissingPrefix: true,
+    showFallbackPrefix: true,
+    missingPrefixFormat: (locale, key) => `[!${locale}] `,
+    fallbackPrefixFormat: (from, to) => `[${from}=>${to}] `,
+  }
+})
+```
+
 ---
 
 ## 配置
@@ -754,12 +870,14 @@ pnpm --filter inline-i18n-multi-nextjs-example dev
 | `setLocale(locale)` | 设置当前语言环境 |
 | `getLocale()` | 获取当前语言环境 |
 | `t(key, vars?, locale?)` | 可覆盖语言环境的基于键的翻译 |
-| `loadDictionaries(dicts)` | 加载多个语言环境的翻译字典 |
-| `loadDictionary(locale, dict)` | 加载单个语言环境的字典 |
-| `hasTranslation(key, locale?)` | 检查翻译键是否存在 |
+| `loadDictionaries(dicts, namespace?)` | 使用可选命名空间加载翻译字典 |
+| `loadDictionary(locale, dict, namespace?)` | 使用可选命名空间加载单个语言环境的字典 |
+| `hasTranslation(key, locale?)` | 检查翻译键是否存在（支持namespace:key） |
 | `getLoadedLocales()` | 返回已加载的语言环境代码数组 |
-| `getDictionary(locale)` | 返回特定语言环境的字典 |
-| `configure(options)` | 全局设置（回退、警告） |
+| `getLoadedNamespaces()` | 返回已加载的命名空间名称数组 |
+| `getDictionary(locale, namespace?)` | 返回特定语言环境和命名空间的字典 |
+| `clearDictionaries(namespace?)` | 清除字典（全部或特定命名空间） |
+| `configure(options)` | 全局设置（回退、警告、调试） |
 | `getConfig()` | 获取当前配置 |
 | `resetConfig()` | 重置配置为默认值 |
 
@@ -777,7 +895,7 @@ pnpm --filter inline-i18n-multi-nextjs-example dev
 ```typescript
 type Locale = string
 type Translations = Record<Locale, string>
-type TranslationVars = Record<string, string | number | Date>
+type TranslationVars = Record<string, string | number | Date | string[]>
 
 interface Config {
   defaultLocale: Locale
@@ -786,6 +904,14 @@ interface Config {
   fallbackChain?: Record<Locale, Locale[]>
   warnOnMissing?: boolean
   onMissingTranslation?: WarningHandler
+  debugMode?: boolean | DebugModeOptions
+}
+
+interface DebugModeOptions {
+  showMissingPrefix?: boolean
+  showFallbackPrefix?: boolean
+  missingPrefixFormat?: (locale: string, key?: string) => string
+  fallbackPrefixFormat?: (requestedLocale: string, usedLocale: string, key?: string) => string
 }
 
 interface TranslationWarning {

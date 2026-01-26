@@ -3,7 +3,7 @@
   "private": true,
   "displayName": "Inline i18n Multi",
   "description": "Smart search and tooling for inline-i18n-multi",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "exiivy98",
   "repository": {
     "type": "git",

@@ -1,11 +1,12 @@
 import type { Translations, TranslationVars } from './types'
 import { getLocale } from './context'
 import { interpolate } from './interpolation'
-import { buildFallbackChain, emitWarning } from './config'
+import { buildFallbackChain, emitWarning, applyDebugFormat, type DebugInfo } from './config'
 
 interface ResolveResult {
   template: string
   locale: string
+  debugInfo: DebugInfo
 }
 
 function resolveTemplate(translations: Translations): ResolveResult {
@@ -17,8 +18,9 @@ function resolveTemplate(translations: Translations): ResolveResult {
   for (const tryLocale of fallbackChain) {
     const template = translations[tryLocale]
     if (template) {
+      const isFallback = tryLocale !== locale
       // Warn if we had to fall back
-      if (tryLocale !== locale) {
+      if (isFallback) {
         emitWarning({
           type: 'missing_translation',
           requestedLocale: locale,
@@ -26,7 +28,16 @@ function resolveTemplate(translations: Translations): ResolveResult {
           fallbackUsed: tryLocale,
         })
       }
-      return { template, locale: tryLocale }
+      return {
+        template,
+        locale: tryLocale,
+        debugInfo: {
+          isMissing: false,
+          isFallback,
+          requestedLocale: locale,
+          usedLocale: tryLocale,
+        },
+      }
     }
   }
 
@@ -39,7 +50,16 @@ function resolveTemplate(translations: Translations): ResolveResult {
       availableLocales,
       fallbackUsed: firstAvailable[0],
     })
-    return { template: firstAvailable[1], locale: firstAvailable[0] }
+    return {
+      template: firstAvailable[1],
+      locale: firstAvailable[0],
+      debugInfo: {
+        isMissing: false,
+        isFallback: true,
+        requestedLocale: locale,
+        usedLocale: firstAvailable[0],
+      },
+    }
   }
 
   throw new Error(
@@ -71,8 +91,9 @@ export function it(
   if (typeof first === 'object') {
     const translations = first
     const vars = second as TranslationVars | undefined
-    const { template, locale } = resolveTemplate(translations)
-    return interpolate(template, vars, locale)
+    const { template, locale, debugInfo } = resolveTemplate(translations)
+    const result = interpolate(template, vars, locale)
+    return applyDebugFormat(result, debugInfo)
   }
 
   // shorthand syntax: it('한글', 'English', vars?)
@@ -81,6 +102,7 @@ export function it(
   const vars = third
 
   const translations: Translations = { ko, en }
-  const { template, locale } = resolveTemplate(translations)
-  return interpolate(template, vars, locale)
+  const { template, locale, debugInfo } = resolveTemplate(translations)
+  const result = interpolate(template, vars, locale)
+  return applyDebugFormat(result, debugInfo)
 }

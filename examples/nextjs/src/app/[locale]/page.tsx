@@ -163,6 +163,35 @@ export default async function Home({
         </p>
       </div>
 
+      {/* v0.4.0 Features */}
+      <div className="section">
+        <h2>🆕 v0.4.0 {await it('기능', 'Features')}</h2>
+        <p>
+          <strong>{await it('상대 시간', 'Relative Time')}:</strong>{' '}
+          {await it({
+            ko: '{time, relativeTime} 업데이트됨',
+            en: 'Updated {time, relativeTime}',
+            ja: '{time, relativeTime}に更新',
+          }, { time: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) })}
+        </p>
+        <p>
+          <strong>{await it('목록', 'List')}:</strong>{' '}
+          {await it({
+            ko: '초대됨: {names, list}',
+            en: 'Invited: {names, list}',
+            ja: '招待済み: {names, list}',
+          }, { names: ['Alice', 'Bob', 'Charlie'] })}
+        </p>
+        <p>
+          <strong>{await it('네임스페이스', 'Namespace')}:</strong>{' '}
+          <code>t(&apos;common:hello&apos;)</code> → {await it('네임스페이스로 번역 분류', 'Organize translations by namespace')}
+        </p>
+        <p>
+          <strong>{await it('디버그 모드', 'Debug Mode')}:</strong>{' '}
+          <code>configure({'{'}debugMode: true{'}'})</code> → {await it('누락 번역 시각적 표시', 'Visual indicators for missing translations')}
+        </p>
+      </div>
+
       {/* Client Component Example */}
       <ClientSection />
 

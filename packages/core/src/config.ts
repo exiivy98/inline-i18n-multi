@@ -1,4 +1,4 @@
-import type { Config, Locale, TranslationWarning } from './types'
+import type { Config, Locale, TranslationWarning, DebugModeOptions } from './types'
 
 /**
  * Default warning handler - logs to console
@@ -42,6 +42,7 @@ const defaultConfig: Required<Config> = {
   fallbackChain: {},
   warnOnMissing: isDevMode(),
   onMissingTranslation: defaultWarningHandler,
+  debugMode: false,
 }
 
 let config: Config = { ...defaultConfig }
@@ -146,4 +147,58 @@ export function emitWarning(warning: TranslationWarning): void {
   if (cfg.warnOnMissing && cfg.onMissingTranslation) {
     cfg.onMissingTranslation(warning)
   }
+}
+
+// ============================================================================
+// Debug Mode (v0.4.0)
+// ============================================================================
+
+/**
+ * Debug information for translation output
+ */
+export interface DebugInfo {
+  /** True if no translation was found */
+  isMissing: boolean
+  /** True if a fallback locale was used */
+  isFallback: boolean
+  /** The locale that was requested */
+  requestedLocale: string
+  /** The locale that was actually used */
+  usedLocale?: string
+  /** The translation key (for t() function) */
+  key?: string
+}
+
+/**
+ * Format translation output with debug information if enabled
+ */
+export function applyDebugFormat(output: string, debugInfo: DebugInfo): string {
+  const cfg = getConfig()
+
+  if (!cfg.debugMode) {
+    return output
+  }
+
+  const options: DebugModeOptions =
+    typeof cfg.debugMode === 'object'
+      ? cfg.debugMode
+      : { showMissingPrefix: true, showFallbackPrefix: true }
+
+  // Handle missing translation
+  if (debugInfo.isMissing && options.showMissingPrefix !== false) {
+    const prefix = options.missingPrefixFormat
+      ? options.missingPrefixFormat(debugInfo.requestedLocale, debugInfo.key)
+      : `[MISSING: ${debugInfo.requestedLocale}] `
+    return prefix + output
+  }
+
+  // Handle fallback translation
+  if (debugInfo.isFallback && options.showFallbackPrefix !== false && debugInfo.usedLocale) {
+    const prefix = options.fallbackPrefixFormat
+      ? options.fallbackPrefixFormat(debugInfo.requestedLocale, debugInfo.usedLocale, debugInfo.key)
+      : `[${debugInfo.requestedLocale} -> ${debugInfo.usedLocale}] `
+    return prefix + output
+  }
+
+  return output
 }

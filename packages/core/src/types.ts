@@ -10,9 +10,10 @@ export type Translations = Record<Locale, string>
 
 /**
  * Variables for interpolation
- * Supports string, number, and Date values for ICU formatting
+ * Supports string, number, Date values for ICU formatting
+ * Supports string[] for list formatting
  */
-export type TranslationVars = Record<string, string | number | Date>
+export type TranslationVars = Record<string, string | number | Date | string[]>
 
 /**
  * Extract variable names from template string
@@ -44,6 +45,20 @@ export interface TranslationWarning {
 export type WarningHandler = (warning: TranslationWarning) => void
 
 /**
+ * Debug mode options for visual indicators
+ */
+export interface DebugModeOptions {
+  /** Show visual prefix for missing translations (default: true) */
+  showMissingPrefix?: boolean
+  /** Show visual prefix for fallback translations (default: true) */
+  showFallbackPrefix?: boolean
+  /** Custom prefix format for missing translations */
+  missingPrefixFormat?: (locale: string, key?: string) => string
+  /** Custom prefix format for fallback translations */
+  fallbackPrefixFormat?: (requestedLocale: string, usedLocale: string, key?: string) => string
+}
+
+/**
  * Configuration options
  */
 export interface Config {
@@ -59,4 +74,6 @@ export interface Config {
   warnOnMissing?: boolean
   /** Custom warning handler */
   onMissingTranslation?: WarningHandler
+  /** Enable debug mode with visual indicators (default: false) */
+  debugMode?: boolean | DebugModeOptions
 }

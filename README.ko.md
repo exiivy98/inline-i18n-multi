@@ -57,9 +57,11 @@
 - **프레임워크 지원** - React, Next.js (App Router & Pages Router)
 - **개발자 도구** - 검증용 CLI, 탐색용 VSCode 확장
 - **i18n 호환** - JSON 딕셔너리와 복수형을 지원하는 전통적인 키 기반 번역 지원
-- **ICU Message Format** - 복수형, 선택, 날짜, 숫자, 시간 포맷팅 지원
+- **ICU Message Format** - 복수형, 선택, 날짜, 숫자, 시간, 상대 시간, 목록 포맷팅 지원
 - **로케일 폴백 체인** - BCP 47 부모 로케일 지원 (`zh-TW` → `zh` → `en`)
 - **누락 번역 경고** - 커스터마이즈 가능한 핸들러를 통한 개발 시점 진단
+- **네임스페이스 지원** - 대규모 앱을 위한 번역 분류 (`t('common:greeting')`)
+- **디버그 모드** - 누락/폴백 번역에 대한 시각적 표시
 
 ---
 
@@ -521,6 +523,120 @@ it({
 - `date`: `short`, `medium`, `long`, `full`
 - `time`: `short`, `medium`, `long`, `full`
 
+### 상대 시간 포맷팅
+
+자동 단위 감지를 통한 사람이 읽기 쉬운 상대 시간:
+
+```typescript
+// 상대 시간
+it({
+  en: 'Updated {time, relativeTime}',
+  ko: '{time, relativeTime} 업데이트됨'
+}, { time: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) })
+// → "3일 전 업데이트됨"
+
+// 스타일 옵션: long (기본값), short, narrow
+it({ ko: '{time, relativeTime, short}' }, { time: pastDate })
+// → "3일 전"
+
+it({ ko: '{time, relativeTime, narrow}' }, { time: pastDate })
+// → "3일 전"
+```
+
+### 목록 포맷팅
+
+로케일 인식 목록 조합:
+
+```typescript
+// 목록 (conjunction - "그리고")
+it({
+  en: 'Invited: {names, list}',
+  ko: '초대됨: {names, list}'
+}, { names: ['Alice', 'Bob', 'Charlie'] })
+// en → "Invited: Alice, Bob, and Charlie"
+// ko → "초대됨: Alice, Bob, Charlie"
+
+// Disjunction ("또는")
+it({ ko: '{options, list, disjunction}' }, { options: ['A', 'B', 'C'] })
+// → "A, B 또는 C"
+
+// Unit (접속사 없음)
+it({ ko: '{items, list, unit}' }, { items: ['10kg', '5m', '3L'] })
+// → "10kg, 5m, 3L"
+```
+
+---
+
+## 네임스페이스 지원
+
+대규모 앱을 위한 번역 분류:
+
+```typescript
+import { loadDictionaries, t, getLoadedNamespaces, clearDictionaries } from 'inline-i18n-multi'
+
+// 네임스페이스와 함께 로드
+loadDictionaries({
+  en: { hello: 'Hello', goodbye: 'Goodbye' },
+  ko: { hello: '안녕하세요', goodbye: '안녕히 가세요' }
+}, 'common')
+
+loadDictionaries({
+  en: { title: 'Settings', theme: 'Theme' },
+  ko: { title: '설정', theme: '테마' }
+}, 'settings')
+
+// 네임스페이스 접두사와 함께 사용
+t('common:hello')      // → "안녕하세요"
+t('settings:title')    // → "설정"
+
+// 중첩 키도 사용 가능
+t('common:buttons.submit')
+
+// 네임스페이스 없이 = 'default' (하위 호환)
+loadDictionaries({ ko: { greeting: '안녕' } })
+t('greeting')  // → "안녕"
+
+// 로드된 모든 네임스페이스 조회
+getLoadedNamespaces()  // → ['common', 'settings', 'default']
+
+// 특정 네임스페이스 삭제
+clearDictionaries('settings')
+
+// 전체 삭제
+clearDictionaries()
+```
+
+---
+
+## 디버그 모드
+
+누락 및 폴백 번역 디버깅을 위한 시각적 표시:
+
+```typescript
+import { configure, setLocale, it, t } from 'inline-i18n-multi'
+
+// 디버그 모드 활성화
+configure({ debugMode: true })
+
+// 누락 번역은 접두사 표시
+setLocale('fr')
+it({ en: 'Hello', ko: '안녕하세요' })
+// → "[fr -> en] Hello"
+
+t('missing.key')
+// → "[MISSING: en] missing.key"
+
+// 커스텀 포맷
+configure({
+  debugMode: {
+    showMissingPrefix: true,
+    showFallbackPrefix: true,
+    missingPrefixFormat: (locale, key) => `[!${locale}] `,
+    fallbackPrefixFormat: (from, to) => `[${from}=>${to}] `,
+  }
+})
+```
+
 ---
 
 ## 설정
@@ -768,12 +884,14 @@ VSCode 마켓플레이스에서 `inline-i18n-multi-vscode`를 설치하세요.
 | `setLocale(locale)`            | 현재 로케일 설정                        |
 | `getLocale()`                  | 현재 로케일 가져오기                    |
 | `t(key, vars?, locale?)`       | 로케일 오버라이드가 가능한 키 기반 번역 |
-| `loadDictionaries(dicts)`      | 여러 로케일의 번역 딕셔너리 로드        |
-| `loadDictionary(locale, dict)` | 단일 로케일 딕셔너리 로드               |
-| `hasTranslation(key, locale?)` | 번역 키 존재 여부 확인                  |
+| `loadDictionaries(dicts, namespace?)` | 선택적 네임스페이스와 함께 번역 딕셔너리 로드 |
+| `loadDictionary(locale, dict, namespace?)` | 선택적 네임스페이스와 함께 단일 로케일 딕셔너리 로드 |
+| `hasTranslation(key, locale?)` | 번역 키 존재 여부 확인 (namespace:key 지원) |
 | `getLoadedLocales()`           | 로드된 로케일 코드 배열 반환            |
-| `getDictionary(locale)`        | 특정 로케일의 딕셔너리 반환             |
-| `configure(options)`           | 전역 설정 (폴백, 경고)                  |
+| `getLoadedNamespaces()`        | 로드된 네임스페이스 이름 배열 반환      |
+| `getDictionary(locale, namespace?)` | 특정 로케일과 네임스페이스의 딕셔너리 반환 |
+| `clearDictionaries(namespace?)` | 딕셔너리 삭제 (전체 또는 특정 네임스페이스) |
+| `configure(options)`           | 전역 설정 (폴백, 경고, 디버그)          |
 | `getConfig()`                  | 현재 설정 조회                          |
 | `resetConfig()`                | 설정을 기본값으로 리셋                  |
 
@@ -791,7 +909,7 @@ VSCode 마켓플레이스에서 `inline-i18n-multi-vscode`를 설치하세요.
 ```typescript
 type Locale = string
 type Translations = Record<Locale, string>
-type TranslationVars = Record<string, string | number | Date>
+type TranslationVars = Record<string, string | number | Date | string[]>
 
 interface Config {
   defaultLocale: Locale
@@ -800,6 +918,14 @@ interface Config {
   fallbackChain?: Record<Locale, Locale[]>
   warnOnMissing?: boolean
   onMissingTranslation?: WarningHandler
+  debugMode?: boolean | DebugModeOptions
+}
+
+interface DebugModeOptions {
+  showMissingPrefix?: boolean
+  showFallbackPrefix?: boolean
+  missingPrefixFormat?: (locale: string, key?: string) => string
+  fallbackPrefixFormat?: (requestedLocale: string, usedLocale: string, key?: string) => string
 }
 
 interface TranslationWarning {

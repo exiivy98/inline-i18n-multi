@@ -56,9 +56,11 @@
 - **フレームワーク対応** - React、Next.js（App Router & Pages Router）
 - **開発者ツール** - 検証用CLI、ナビゲーション用VSCode拡張機能
 - **i18n互換** - JSON辞書と複数形をサポートする従来のキーベース翻訳対応
-- **ICU Message Format** - 複数形、セレクト、日付、数値、時刻フォーマットサポート
+- **ICU Message Format** - 複数形、セレクト、日付、数値、時刻、相対時間、リストフォーマットサポート
 - **ロケールフォールバックチェーン** - BCP 47親ロケールサポート（`zh-TW` → `zh` → `en`）
 - **翻訳欠落警告** - カスタマイズ可能なハンドラーによる開発時診断
+- **名前空間サポート** - 大規模アプリ向けの翻訳整理（`t('common:greeting')`）
+- **デバッグモード** - 欠落/フォールバック翻訳の視覚的表示
 
 ---
 
@@ -509,6 +511,120 @@ it({
 - `date`: `short`, `medium`, `long`, `full`
 - `time`: `short`, `medium`, `long`, `full`
 
+### 相対時間フォーマット
+
+自動単位検出による人間が読みやすい相対時間：
+
+```typescript
+// 相対時間
+it({
+  en: 'Updated {time, relativeTime}',
+  ja: '{time, relativeTime}に更新'
+}, { time: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) })
+// → "3日前に更新"
+
+// スタイルオプション: long（デフォルト）、short、narrow
+it({ ja: '{time, relativeTime, short}' }, { time: pastDate })
+// → "3日前"
+
+it({ ja: '{time, relativeTime, narrow}' }, { time: pastDate })
+// → "3日前"
+```
+
+### リストフォーマット
+
+ロケール対応のリスト結合：
+
+```typescript
+// リスト（conjunction - 「と」）
+it({
+  en: 'Invited: {names, list}',
+  ja: '招待済み: {names, list}'
+}, { names: ['Alice', 'Bob', 'Charlie'] })
+// en → "Invited: Alice, Bob, and Charlie"
+// ja → "招待済み: Alice、Bob、Charlie"
+
+// Disjunction（「または」）
+it({ ja: '{options, list, disjunction}' }, { options: ['A', 'B', 'C'] })
+// → "A、B、またはC"
+
+// Unit（接続詞なし）
+it({ ja: '{items, list, unit}' }, { items: ['10kg', '5m', '3L'] })
+// → "10kg、5m、3L"
+```
+
+---
+
+## 名前空間サポート
+
+大規模アプリケーション向けの翻訳整理：
+
+```typescript
+import { loadDictionaries, t, getLoadedNamespaces, clearDictionaries } from 'inline-i18n-multi'
+
+// 名前空間付きでロード
+loadDictionaries({
+  en: { hello: 'Hello', goodbye: 'Goodbye' },
+  ja: { hello: 'こんにちは', goodbye: 'さようなら' }
+}, 'common')
+
+loadDictionaries({
+  en: { title: 'Settings', theme: 'Theme' },
+  ja: { title: '設定', theme: 'テーマ' }
+}, 'settings')
+
+// 名前空間プレフィックス付きで使用
+t('common:hello')      // → "こんにちは"
+t('settings:title')    // → "設定"
+
+// ネストしたキーも動作
+t('common:buttons.submit')
+
+// 名前空間なし = 'default'（後方互換性）
+loadDictionaries({ ja: { greeting: 'こんにちは' } })
+t('greeting')  // → "こんにちは"
+
+// ロードされた全ての名前空間を取得
+getLoadedNamespaces()  // → ['common', 'settings', 'default']
+
+// 特定の名前空間をクリア
+clearDictionaries('settings')
+
+// 全てクリア
+clearDictionaries()
+```
+
+---
+
+## デバッグモード
+
+欠落とフォールバック翻訳のデバッグ用視覚的表示：
+
+```typescript
+import { configure, setLocale, it, t } from 'inline-i18n-multi'
+
+// デバッグモードを有効化
+configure({ debugMode: true })
+
+// 欠落した翻訳はプレフィックスを表示
+setLocale('fr')
+it({ en: 'Hello', ja: 'こんにちは' })
+// → "[fr -> en] Hello"
+
+t('missing.key')
+// → "[MISSING: en] missing.key"
+
+// カスタムフォーマット
+configure({
+  debugMode: {
+    showMissingPrefix: true,
+    showFallbackPrefix: true,
+    missingPrefixFormat: (locale, key) => `[!${locale}] `,
+    fallbackPrefixFormat: (from, to) => `[${from}=>${to}] `,
+  }
+})
+```
+
 ---
 
 ## 設定
@@ -754,12 +870,14 @@ VSCodeマーケットプレイスから`inline-i18n-multi-vscode`をインスト
 | `setLocale(locale)` | 現在のロケールを設定 |
 | `getLocale()` | 現在のロケールを取得 |
 | `t(key, vars?, locale?)` | ロケールオーバーライド可能なキーベース翻訳 |
-| `loadDictionaries(dicts)` | 複数ロケールの翻訳辞書をロード |
-| `loadDictionary(locale, dict)` | 単一ロケールの辞書をロード |
-| `hasTranslation(key, locale?)` | 翻訳キーの存在確認 |
+| `loadDictionaries(dicts, namespace?)` | オプションの名前空間付きで翻訳辞書をロード |
+| `loadDictionary(locale, dict, namespace?)` | オプションの名前空間付きで単一ロケールの辞書をロード |
+| `hasTranslation(key, locale?)` | 翻訳キーの存在確認（namespace:keyサポート） |
 | `getLoadedLocales()` | ロードされたロケールコードの配列を返す |
-| `getDictionary(locale)` | 特定ロケールの辞書を返す |
-| `configure(options)` | グローバル設定（フォールバック、警告） |
+| `getLoadedNamespaces()` | ロードされた名前空間名の配列を返す |
+| `getDictionary(locale, namespace?)` | 特定ロケールと名前空間の辞書を返す |
+| `clearDictionaries(namespace?)` | 辞書をクリア（全てまたは特定の名前空間） |
+| `configure(options)` | グローバル設定（フォールバック、警告、デバッグ） |
 | `getConfig()` | 現在の設定を取得 |
 | `resetConfig()` | 設定をデフォルトにリセット |
 
@@ -777,7 +895,7 @@ VSCodeマーケットプレイスから`inline-i18n-multi-vscode`をインスト
 ```typescript
 type Locale = string
 type Translations = Record<Locale, string>
-type TranslationVars = Record<string, string | number | Date>
+type TranslationVars = Record<string, string | number | Date | string[]>
 
 interface Config {
   defaultLocale: Locale
@@ -786,6 +904,14 @@ interface Config {
   fallbackChain?: Record<Locale, Locale[]>
   warnOnMissing?: boolean
   onMissingTranslation?: WarningHandler
+  debugMode?: boolean | DebugModeOptions
+}
+
+interface DebugModeOptions {
+  showMissingPrefix?: boolean
+  showFallbackPrefix?: boolean
+  missingPrefixFormat?: (locale: string, key?: string) => string
+  fallbackPrefixFormat?: (requestedLocale: string, usedLocale: string, key?: string) => string
 }
 
 interface TranslationWarning {

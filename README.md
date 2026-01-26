@@ -56,9 +56,11 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Framework support** - React, Next.js (App Router & Pages Router)
 - **Developer tools** - CLI for validation, VSCode extension for navigation
 - **i18n compatible** - Support for traditional key-based translations with JSON dictionaries and plural forms
-- **ICU Message Format** - Plural, select, date, number, and time formatting
+- **ICU Message Format** - Plural, select, date, number, time, relative time, and list formatting
 - **Locale Fallback Chain** - BCP 47 parent locale support (`zh-TW` → `zh` → `en`)
 - **Missing Translation Warning** - Development-time diagnostics with customizable handlers
+- **Namespace Support** - Organize translations for large apps (`t('common:greeting')`)
+- **Debug Mode** - Visual indicators for missing/fallback translations
 
 ---
 
@@ -476,6 +478,120 @@ it({
 - `date`: `short`, `medium`, `long`, `full`
 - `time`: `short`, `medium`, `long`, `full`
 
+### Relative Time Formatting
+
+Human-readable relative time with automatic unit detection:
+
+```typescript
+// Relative time
+it({
+  en: 'Updated {time, relativeTime}',
+  ko: '{time, relativeTime} 업데이트됨'
+}, { time: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) })
+// → "Updated 3 days ago" / "3일 전 업데이트됨"
+
+// Style options: long (default), short, narrow
+it({ en: '{time, relativeTime, short}' }, { time: pastDate })
+// → "3d ago"
+
+it({ en: '{time, relativeTime, narrow}' }, { time: pastDate })
+// → "3d ago"
+```
+
+### List Formatting
+
+Locale-aware list joining:
+
+```typescript
+// List (conjunction - "and")
+it({
+  en: 'Invited: {names, list}',
+  ko: '초대됨: {names, list}'
+}, { names: ['Alice', 'Bob', 'Charlie'] })
+// en → "Invited: Alice, Bob, and Charlie"
+// ko → "초대됨: Alice, Bob, Charlie"
+
+// Disjunction ("or")
+it({ en: '{options, list, disjunction}' }, { options: ['A', 'B', 'C'] })
+// → "A, B, or C"
+
+// Unit (no conjunction)
+it({ en: '{items, list, unit}' }, { items: ['10kg', '5m', '3L'] })
+// → "10kg, 5m, 3L"
+```
+
+---
+
+## Namespace Support
+
+Organize translations for large applications:
+
+```typescript
+import { loadDictionaries, t, getLoadedNamespaces, clearDictionaries } from 'inline-i18n-multi'
+
+// Load with namespace
+loadDictionaries({
+  en: { hello: 'Hello', goodbye: 'Goodbye' },
+  ko: { hello: '안녕하세요', goodbye: '안녕히 가세요' }
+}, 'common')
+
+loadDictionaries({
+  en: { title: 'Settings', theme: 'Theme' },
+  ko: { title: '설정', theme: '테마' }
+}, 'settings')
+
+// Use with namespace prefix
+t('common:hello')      // → "Hello"
+t('settings:title')    // → "Settings"
+
+// Nested keys work too
+t('common:buttons.submit')
+
+// Without namespace = 'default' (backward compatible)
+loadDictionaries({ en: { greeting: 'Hi' } })
+t('greeting')  // → "Hi"
+
+// Get all loaded namespaces
+getLoadedNamespaces()  // → ['common', 'settings', 'default']
+
+// Clear specific namespace
+clearDictionaries('settings')
+
+// Clear all
+clearDictionaries()
+```
+
+---
+
+## Debug Mode
+
+Visual indicators for debugging missing and fallback translations:
+
+```typescript
+import { configure, setLocale, it, t } from 'inline-i18n-multi'
+
+// Enable debug mode
+configure({ debugMode: true })
+
+// Missing translation shows prefix
+setLocale('fr')
+it({ en: 'Hello', ko: '안녕하세요' })
+// → "[fr -> en] Hello"
+
+t('missing.key')
+// → "[MISSING: en] missing.key"
+
+// Custom format
+configure({
+  debugMode: {
+    showMissingPrefix: true,
+    showFallbackPrefix: true,
+    missingPrefixFormat: (locale, key) => `[!${locale}] `,
+    fallbackPrefixFormat: (from, to) => `[${from}=>${to}] `,
+  }
+})
+```
+
 ---
 
 ## Configuration
@@ -730,7 +846,7 @@ pnpm test -- --run
 
 | Package | Tests | Status |
 |---------|-------|--------|
-| `inline-i18n-multi` (core) | 94 | ✅ |
+| `inline-i18n-multi` (core) | 142 | ✅ |
 | `inline-i18n-multi-next` (server) | 16 | ✅ |
 
 See [Testing Documentation](./docs/test.md) for more details.
@@ -748,12 +864,14 @@ See [Testing Documentation](./docs/test.md) for more details.
 | `setLocale(locale)` | Set current locale |
 | `getLocale()` | Get current locale |
 | `t(key, vars?, locale?)` | Key-based translation with optional locale override |
-| `loadDictionaries(dicts)` | Load translation dictionaries for multiple locales |
-| `loadDictionary(locale, dict)` | Load dictionary for a single locale |
-| `hasTranslation(key, locale?)` | Check if translation key exists |
+| `loadDictionaries(dicts, namespace?)` | Load translation dictionaries with optional namespace |
+| `loadDictionary(locale, dict, namespace?)` | Load dictionary for a single locale with optional namespace |
+| `hasTranslation(key, locale?)` | Check if translation key exists (supports namespace:key) |
 | `getLoadedLocales()` | Get array of loaded locale codes |
-| `getDictionary(locale)` | Get dictionary for a specific locale |
-| `configure(options)` | Configure global settings (fallback, warnings) |
+| `getLoadedNamespaces()` | Get array of loaded namespace names |
+| `getDictionary(locale, namespace?)` | Get dictionary for a specific locale and namespace |
+| `clearDictionaries(namespace?)` | Clear dictionaries (all or specific namespace) |
+| `configure(options)` | Configure global settings (fallback, warnings, debug) |
 | `getConfig()` | Get current configuration |
 | `resetConfig()` | Reset configuration to defaults |
 
@@ -771,7 +889,7 @@ See [Testing Documentation](./docs/test.md) for more details.
 ```typescript
 type Locale = string
 type Translations = Record<Locale, string>
-type TranslationVars = Record<string, string | number | Date>
+type TranslationVars = Record<string, string | number | Date | string[]>
 
 interface Config {
   defaultLocale: Locale
@@ -780,6 +898,14 @@ interface Config {
   fallbackChain?: Record<Locale, Locale[]>
   warnOnMissing?: boolean
   onMissingTranslation?: WarningHandler
+  debugMode?: boolean | DebugModeOptions
+}
+
+interface DebugModeOptions {
+  showMissingPrefix?: boolean
+  showFallbackPrefix?: boolean
+  missingPrefixFormat?: (locale: string, key?: string) => string
+  fallbackPrefixFormat?: (requestedLocale: string, usedLocale: string, key?: string) => string
 }
 
 interface TranslationWarning {

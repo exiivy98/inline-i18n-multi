@@ -342,4 +342,195 @@ describe('ICU Message Format', () => {
       expect(result).toContain('150')
     })
   })
+
+  describe('relativeTime formatting (v0.4.0)', () => {
+    test('detects relativeTime pattern', () => {
+      expect(hasICUPattern('{time, relativeTime}')).toBe(true)
+      expect(hasICUPattern('{time, relativeTime, short}')).toBe(true)
+    })
+
+    test('formats past time (days ago)', () => {
+      const pastDate = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) // 3 days ago
+      const result = interpolateICU(
+        'Updated {time, relativeTime}',
+        { time: pastDate },
+        'en-US'
+      )
+      expect(result).toContain('3 days ago')
+    })
+
+    test('formats future time (in X hours)', () => {
+      const futureDate = new Date(Date.now() + 2 * 60 * 60 * 1000) // 2 hours from now
+      const result = interpolateICU(
+        'Expires {time, relativeTime}',
+        { time: futureDate },
+        'en-US'
+      )
+      expect(result).toContain('in 2 hours')
+    })
+
+    test('formats with short style', () => {
+      const pastDate = new Date(Date.now() - 5 * 60 * 1000) // 5 minutes ago
+      const result = interpolateICU(
+        '{time, relativeTime, short}',
+        { time: pastDate },
+        'en-US'
+      )
+      expect(result).toMatch(/5\s*min/)
+    })
+
+    test('formats for Korean locale', () => {
+      const pastDate = new Date(Date.now() - 24 * 60 * 60 * 1000) // 1 day ago
+      const result = interpolateICU(
+        '{time, relativeTime}',
+        { time: pastDate },
+        'ko-KR'
+      )
+      // Korean "yesterday" or "1일 전"
+      expect(result).toMatch(/(어제|1일 전)/)
+    })
+
+    test('formats with narrow style', () => {
+      const pastDate = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) // 2 days ago
+      const result = interpolateICU(
+        '{time, relativeTime, narrow}',
+        { time: pastDate },
+        'en-US'
+      )
+      expect(result).toMatch(/2\s*d/)
+    })
+
+    test('missing value returns placeholder', () => {
+      const result = interpolateICU(
+        'Updated {time, relativeTime}',
+        {},
+        'en-US'
+      )
+      expect(result).toBe('Updated {time}')
+    })
+
+    test('combined with other formats', () => {
+      const pastDate = new Date(Date.now() - 60 * 1000) // 1 minute ago
+      const result = interpolateICU(
+        '{name} updated {time, relativeTime}',
+        { name: 'Alice', time: pastDate },
+        'en-US'
+      )
+      expect(result).toContain('Alice')
+      expect(result).toContain('minute')
+    })
+  })
+
+  describe('list formatting (v0.4.0)', () => {
+    test('detects list pattern', () => {
+      expect(hasICUPattern('{names, list}')).toBe(true)
+      expect(hasICUPattern('{names, list, conjunction}')).toBe(true)
+    })
+
+    test('formats list with conjunction (and)', () => {
+      const result = interpolateICU(
+        '{names, list}',
+        { names: ['Alice', 'Bob', 'Carol'] },
+        'en-US'
+      )
+      expect(result).toBe('Alice, Bob, and Carol')
+    })
+
+    test('formats list with disjunction (or)', () => {
+      const result = interpolateICU(
+        '{options, list, disjunction}',
+        { options: ['red', 'blue', 'green'] },
+        'en-US'
+      )
+      expect(result).toBe('red, blue, or green')
+    })
+
+    test('formats list with unit type', () => {
+      const result = interpolateICU(
+        '{items, list, unit}',
+        { items: ['5 kg', '10 cm'] },
+        'en-US'
+      )
+      expect(result).toContain('5 kg')
+      expect(result).toContain('10 cm')
+    })
+
+    test('formats list with short style', () => {
+      const result = interpolateICU(
+        '{names, list, conjunction, short}',
+        { names: ['A', 'B', 'C'] },
+        'en-US'
+      )
+      expect(result).toContain('A')
+      expect(result).toContain('B')
+      expect(result).toContain('C')
+    })
+
+    test('formats two items', () => {
+      const result = interpolateICU(
+        '{names, list}',
+        { names: ['Alice', 'Bob'] },
+        'en-US'
+      )
+      expect(result).toBe('Alice and Bob')
+    })
+
+    test('formats single item', () => {
+      const result = interpolateICU(
+        '{names, list}',
+        { names: ['Alice'] },
+        'en-US'
+      )
+      expect(result).toBe('Alice')
+    })
+
+    test('formats for Korean locale', () => {
+      const result = interpolateICU(
+        '{names, list}',
+        { names: ['철수', '영희', '민수'] },
+        'ko-KR'
+      )
+      // Korean uses different connectors
+      expect(result).toContain('철수')
+      expect(result).toContain('영희')
+      expect(result).toContain('민수')
+    })
+
+    test('missing value returns placeholder', () => {
+      const result = interpolateICU(
+        'Invited: {names, list}',
+        {},
+        'en-US'
+      )
+      expect(result).toBe('Invited: {names}')
+    })
+
+    test('non-array value returns placeholder', () => {
+      const result = interpolateICU(
+        '{names, list}',
+        { names: 'not an array' as unknown as string[] },
+        'en-US'
+      )
+      expect(result).toBe('{names}')
+    })
+
+    test('combined with text', () => {
+      const result = interpolateICU(
+        'Invited: {names, list}',
+        { names: ['Alice', 'Bob'] },
+        'en-US'
+      )
+      expect(result).toBe('Invited: Alice and Bob')
+    })
+
+    test('combined with other formats', () => {
+      const result = interpolateICU(
+        '{names, list} have {count, plural, one {# item} other {# items}}',
+        { names: ['Alice', 'Bob'], count: 5 },
+        'en-US'
+      )
+      expect(result).toContain('Alice and Bob')
+      expect(result).toContain('5 items')
+    })
+  })
 })

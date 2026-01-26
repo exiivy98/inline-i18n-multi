@@ -10,6 +10,7 @@ import {
   hasTranslation,
   getLoadedLocales,
   getDictionary,
+  getLoadedNamespaces,
   it_ja,
   en_zh,
   configure,
@@ -388,6 +389,300 @@ describe('Fallback chain', () => {
       it({ en: 'Hello', ko: '안녕하세요' })
 
       expect(handler).not.toHaveBeenCalled()
+    })
+  })
+})
+
+describe('Namespace support (v0.4.0)', () => {
+  beforeEach(() => {
+    clearDictionaries()
+    resetConfig()
+    setLocale('en')
+  })
+
+  describe('loadDictionaries with namespace', () => {
+    test('should load dictionaries with namespace', () => {
+      loadDictionaries({
+        en: { hello: 'Hello from common' },
+      }, 'common')
+
+      expect(t('common:hello')).toBe('Hello from common')
+    })
+
+    test('should load multiple namespaces', () => {
+      loadDictionaries({ en: { title: 'Home' } }, 'home')
+      loadDictionaries({ en: { title: 'Settings' } }, 'settings')
+
+      expect(t('home:title')).toBe('Home')
+      expect(t('settings:title')).toBe('Settings')
+    })
+
+    test('should use default namespace without prefix', () => {
+      loadDictionaries({
+        en: { greeting: 'Hello' },
+      })
+
+      expect(t('greeting')).toBe('Hello')
+    })
+
+    test('should support nested keys with namespace', () => {
+      loadDictionaries({
+        en: { buttons: { submit: 'Submit', cancel: 'Cancel' } },
+      }, 'common')
+
+      expect(t('common:buttons.submit')).toBe('Submit')
+      expect(t('common:buttons.cancel')).toBe('Cancel')
+    })
+  })
+
+  describe('loadDictionary with namespace', () => {
+    test('should load single locale with namespace', () => {
+      loadDictionary('en', { hello: 'Hello' }, 'common')
+      loadDictionary('ko', { hello: '안녕하세요' }, 'common')
+
+      setLocale('en')
+      expect(t('common:hello')).toBe('Hello')
+
+      setLocale('ko')
+      expect(t('common:hello')).toBe('안녕하세요')
+    })
+  })
+
+  describe('hasTranslation with namespace', () => {
+    test('should check key in specific namespace', () => {
+      loadDictionaries({ en: { hello: 'Hello' } }, 'common')
+
+      expect(hasTranslation('common:hello')).toBe(true)
+      expect(hasTranslation('common:missing')).toBe(false)
+      expect(hasTranslation('other:hello')).toBe(false)
+    })
+
+    test('should check key in default namespace', () => {
+      loadDictionaries({ en: { hello: 'Hello' } })
+
+      expect(hasTranslation('hello')).toBe(true)
+      expect(hasTranslation('missing')).toBe(false)
+    })
+  })
+
+  describe('clearDictionaries with namespace', () => {
+    test('should clear specific namespace', () => {
+      loadDictionaries({ en: { a: 'A' } }, 'ns1')
+      loadDictionaries({ en: { b: 'B' } }, 'ns2')
+
+      clearDictionaries('ns1')
+
+      expect(t('ns1:a')).toBe('ns1:a') // Returns key (not found)
+      expect(t('ns2:b')).toBe('B')
+    })
+
+    test('should clear all namespaces when no arg', () => {
+      loadDictionaries({ en: { a: 'A' } }, 'ns1')
+      loadDictionaries({ en: { b: 'B' } }, 'ns2')
+
+      clearDictionaries()
+
+      expect(getLoadedNamespaces()).toHaveLength(0)
+    })
+  })
+
+  describe('getLoadedLocales with namespace', () => {
+    test('should return locales for specific namespace', () => {
+      loadDictionaries({ en: { a: 'A' }, ko: { a: 'ㄱ' } }, 'ns1')
+      loadDictionaries({ ja: { b: 'B' } }, 'ns2')
+
+      expect(getLoadedLocales('ns1')).toEqual(['en', 'ko'])
+      expect(getLoadedLocales('ns2')).toEqual(['ja'])
+    })
+
+    test('should return all unique locales without arg', () => {
+      loadDictionaries({ en: { a: 'A' } }, 'ns1')
+      loadDictionaries({ en: { b: 'B' }, ko: { b: 'ㄴ' } }, 'ns2')
+
+      const locales = getLoadedLocales()
+      expect(locales).toContain('en')
+      expect(locales).toContain('ko')
+    })
+  })
+
+  describe('getDictionary with namespace', () => {
+    test('should get dictionary from specific namespace', () => {
+      loadDictionaries({ en: { hello: 'Hello' } }, 'common')
+
+      expect(getDictionary('en', 'common')).toEqual({ hello: 'Hello' })
+      expect(getDictionary('en', 'other')).toBeUndefined()
+    })
+
+    test('should get dictionary from default namespace', () => {
+      loadDictionaries({ en: { hello: 'Hello' } })
+
+      expect(getDictionary('en')).toEqual({ hello: 'Hello' })
+    })
+  })
+
+  describe('getLoadedNamespaces', () => {
+    test('should return all loaded namespaces', () => {
+      loadDictionaries({ en: {} }, 'common')
+      loadDictionaries({ en: {} }, 'admin')
+      loadDictionaries({ en: {} })
+
+      const namespaces = getLoadedNamespaces()
+      expect(namespaces).toContain('common')
+      expect(namespaces).toContain('admin')
+      expect(namespaces).toContain('default')
+    })
+  })
+
+  describe('fallback within namespace', () => {
+    test('should fallback to other locale within same namespace', () => {
+      loadDictionaries({
+        en: { greeting: 'Hello' },
+        ko: { farewell: '안녕히 가세요' },
+      }, 'common')
+
+      setLocale('ko')
+      expect(t('common:greeting')).toBe('Hello') // Falls back to en
+    })
+  })
+
+  describe('missing translation in namespace', () => {
+    test('should return full key when not found', () => {
+      expect(t('common:missing.key')).toBe('common:missing.key')
+    })
+  })
+})
+
+describe('Debug mode (v0.4.0)', () => {
+  beforeEach(() => {
+    clearDictionaries()
+    resetConfig()
+    setLocale('en')
+  })
+
+  describe('it() with debug mode', () => {
+    test('should show fallback prefix when debug mode is enabled', () => {
+      configure({ debugMode: true, warnOnMissing: false })
+      setLocale('fr')
+
+      const result = it({ en: 'Hello', ko: '안녕하세요' })
+      expect(result).toBe('[fr -> en] Hello')
+    })
+
+    test('should not show prefix when exact match found', () => {
+      configure({ debugMode: true, warnOnMissing: false })
+      setLocale('en')
+
+      const result = it({ en: 'Hello', ko: '안녕하세요' })
+      expect(result).toBe('Hello')
+    })
+
+    test('should not show prefix when debug mode is disabled', () => {
+      configure({ debugMode: false, warnOnMissing: false })
+      setLocale('fr')
+
+      const result = it({ en: 'Hello' })
+      expect(result).toBe('Hello')
+    })
+
+    test('should work with shorthand syntax', () => {
+      configure({ debugMode: true, warnOnMissing: false })
+      setLocale('fr')
+
+      const result = it('안녕하세요', 'Hello')
+      expect(result).toBe('[fr -> en] Hello')
+    })
+  })
+
+  describe('t() with debug mode', () => {
+    test('should show missing prefix for missing keys', () => {
+      configure({ debugMode: true, warnOnMissing: false })
+      loadDictionaries({ en: {} })
+
+      const result = t('missing.key')
+      expect(result).toBe('[MISSING: en] missing.key')
+    })
+
+    test('should show fallback prefix when using fallback', () => {
+      configure({ debugMode: true, warnOnMissing: false })
+      loadDictionaries({
+        en: { hello: 'Hello' },
+      })
+
+      setLocale('fr')
+      const result = t('hello')
+      expect(result).toBe('[fr -> en] Hello')
+    })
+
+    test('should not show prefix when exact match found', () => {
+      configure({ debugMode: true, warnOnMissing: false })
+      loadDictionaries({
+        en: { hello: 'Hello' },
+      })
+
+      setLocale('en')
+      const result = t('hello')
+      expect(result).toBe('Hello')
+    })
+
+    test('should work with namespaced keys', () => {
+      configure({ debugMode: true, warnOnMissing: false })
+      loadDictionaries({ en: { hello: 'Hello' } }, 'common')
+
+      setLocale('fr')
+      const result = t('common:hello')
+      expect(result).toBe('[fr -> en] Hello')
+    })
+  })
+
+  describe('custom debug options', () => {
+    test('should respect showMissingPrefix: false', () => {
+      configure({
+        debugMode: { showMissingPrefix: false, showFallbackPrefix: true },
+        warnOnMissing: false,
+      })
+      loadDictionaries({ en: {} })
+
+      const result = t('missing.key')
+      expect(result).toBe('missing.key')
+    })
+
+    test('should respect showFallbackPrefix: false', () => {
+      configure({
+        debugMode: { showMissingPrefix: true, showFallbackPrefix: false },
+        warnOnMissing: false,
+      })
+      loadDictionaries({ en: { hello: 'Hello' } })
+
+      setLocale('fr')
+      const result = t('hello')
+      expect(result).toBe('Hello')
+    })
+
+    test('should use custom missing prefix format', () => {
+      configure({
+        debugMode: {
+          missingPrefixFormat: (locale, key) => `[!${locale}:${key}] `,
+        },
+        warnOnMissing: false,
+      })
+      loadDictionaries({ en: {} })
+
+      const result = t('greeting')
+      expect(result).toBe('[!en:greeting] greeting')
+    })
+
+    test('should use custom fallback prefix format', () => {
+      configure({
+        debugMode: {
+          fallbackPrefixFormat: (from, to) => `[${from}=>${to}] `,
+        },
+        warnOnMissing: false,
+      })
+      loadDictionaries({ en: { hello: 'Hello' } })
+
+      setLocale('ko')
+      const result = t('hello')
+      expect(result).toBe('[ko=>en] Hello')
     })
   })
 })

@@ -7,9 +7,11 @@
  * - Variable interpolation
  * - Plural support
  * - Language pair helpers
- * - ICU Message Format (date, number, time)
+ * - ICU Message Format (date, number, time, relativeTime, list)
  * - Locale Fallback Chain
  * - Missing Translation Warning
+ * - Namespace Support (v0.4.0)
+ * - Debug Mode (v0.4.0)
  */
 
 import {
@@ -25,6 +27,8 @@ import {
   loadDictionaries,
   hasTranslation,
   getLoadedLocales,
+  getLoadedNamespaces,
+  clearDictionaries,
   // Configuration
   configure,
   resetConfig,
@@ -196,6 +200,115 @@ console.log('Locale: fr (not available)')
 console.log('Result:', it({ en: 'Hello', ko: '안녕하세요' }))  // Triggers warning
 
 // ============================================
+// 7. Relative Time Formatting (v0.4.0)
+// ============================================
+
+console.log('\n=== Relative Time Formatting (v0.4.0) ===\n')
+
+resetConfig()
+setLocale('en')
+
+// Past time
+const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
+console.log(it({
+  en: 'Updated {time, relativeTime}',
+  ko: '{time, relativeTime} 업데이트됨'
+}, { time: threeDaysAgo }))
+
+// Future time
+const inTwoHours = new Date(Date.now() + 2 * 60 * 60 * 1000)
+console.log(it({
+  en: 'Expires {time, relativeTime}',
+  ko: '{time, relativeTime} 만료'
+}, { time: inTwoHours }))
+
+// Short style
+console.log(it({
+  en: '{time, relativeTime, short}',
+  ko: '{time, relativeTime, short}'
+}, { time: threeDaysAgo }))
+
+// ============================================
+// 8. List Formatting (v0.4.0)
+// ============================================
+
+console.log('\n=== List Formatting (v0.4.0) ===\n')
+
+// Conjunction (and)
+console.log(it({
+  en: 'Invited: {names, list}',
+  ko: '초대됨: {names, list}'
+}, { names: ['Alice', 'Bob', 'Charlie'] }))
+
+// Disjunction (or)
+console.log(it({
+  en: 'Choose: {options, list, disjunction}',
+  ko: '선택: {options, list, disjunction}'
+}, { options: ['A', 'B', 'C'] }))
+
+// Unit (no conjunction)
+console.log(it({
+  en: 'Sizes: {sizes, list, unit}',
+  ko: '사이즈: {sizes, list, unit}'
+}, { sizes: ['S', 'M', 'L', 'XL'] }))
+
+// ============================================
+// 9. Namespace Support (v0.4.0)
+// ============================================
+
+console.log('\n=== Namespace Support (v0.4.0) ===\n')
+
+// Clear previous dictionaries
+clearDictionaries()
+
+// Load with namespaces
+loadDictionaries({
+  en: { hello: 'Hello', goodbye: 'Goodbye' },
+  ko: { hello: '안녕하세요', goodbye: '안녕히 가세요' }
+}, 'common')
+
+loadDictionaries({
+  en: { title: 'Settings', theme: 'Theme', darkMode: 'Dark Mode' },
+  ko: { title: '설정', theme: '테마', darkMode: '다크 모드' }
+}, 'settings')
+
+console.log('Loaded namespaces:', getLoadedNamespaces())  // → ['common', 'settings']
+
+setLocale('en')
+console.log(t('common:hello'))       // → "Hello"
+console.log(t('settings:title'))     // → "Settings"
+console.log(t('settings:darkMode'))  // → "Dark Mode"
+
+setLocale('ko')
+console.log(t('common:hello'))       // → "안녕하세요"
+console.log(t('settings:title'))     // → "설정"
+
+// Clear specific namespace
+clearDictionaries('settings')
+console.log('\nAfter clearing "settings" namespace:')
+console.log('Loaded namespaces:', getLoadedNamespaces())  // → ['common']
+
+// ============================================
+// 10. Debug Mode (v0.4.0)
+// ============================================
+
+console.log('\n=== Debug Mode (v0.4.0) ===\n')
+
+// Enable debug mode
+configure({ debugMode: true })
+
+// When translation is missing, shows fallback prefix
+setLocale('fr')
+console.log('With debugMode (missing fr):')
+console.log(it({ en: 'Hello', ko: '안녕하세요' }))  // → "[fr -> en] Hello"
+
+// When key is missing
+console.log(t('common:missing.key'))  // → "[MISSING: fr] common:missing.key"
+
+// Disable debug mode
+configure({ debugMode: false })
+
+// ============================================
 // Summary
 // ============================================
 
@@ -218,4 +331,10 @@ v0.3.0 features:
 - ICU Date/Number/Time formatting
 - Locale Fallback Chain (BCP 47)
 - Missing Translation Warnings
+
+v0.4.0 features:
+- Relative Time formatting ({time, relativeTime})
+- List formatting ({names, list})
+- Namespace support (t('common:greeting'))
+- Debug mode for visual debugging
 `)

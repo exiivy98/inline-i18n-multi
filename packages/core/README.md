@@ -53,10 +53,12 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Type-safe** - Full TypeScript support with variable type checking
 - **Multiple languages** - Support for any number of locales
 - **i18n compatible** - Support for traditional key-based translations with JSON dictionaries
-- **ICU Message Format** - Plural, select, date, number, and time formatting
+- **ICU Message Format** - Plural, select, date, number, time, relative time, and list formatting
 - **Variable interpolation** - `{name}` syntax for dynamic values
 - **Locale Fallback Chain** - BCP 47 parent locale support (`zh-TW` → `zh` → `en`)
 - **Missing Translation Warning** - Development-time diagnostics with customizable handlers
+- **Namespace Support** - Organize translations for large apps (`t('common:greeting')`)
+- **Debug Mode** - Visual indicators for missing/fallback translations
 
 ---
 
@@ -205,6 +207,75 @@ it({
 - `date`: `short`, `medium`, `long`, `full`
 - `time`: `short`, `medium`, `long`, `full`
 
+### Relative Time Formatting
+
+```typescript
+it({
+  en: 'Updated {time, relativeTime}',
+  ko: '{time, relativeTime} 업데이트됨'
+}, { time: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) })
+// → "Updated 3 days ago"
+
+// Styles: long (default), short, narrow
+it({ en: '{time, relativeTime, short}' }, { time: pastDate })
+```
+
+### List Formatting
+
+```typescript
+it({
+  en: 'Invited: {names, list}',
+  ko: '초대됨: {names, list}'
+}, { names: ['Alice', 'Bob', 'Charlie'] })
+// → "Invited: Alice, Bob, and Charlie"
+
+// Types: conjunction (and), disjunction (or), unit
+it({ en: '{options, list, disjunction}' }, { options: ['A', 'B'] })
+// → "A or B"
+```
+
+---
+
+## Namespace Support
+
+Organize translations for large applications:
+
+```typescript
+import { loadDictionaries, t, getLoadedNamespaces, clearDictionaries } from 'inline-i18n-multi'
+
+// Load with namespace
+loadDictionaries({
+  en: { hello: 'Hello' },
+  ko: { hello: '안녕하세요' }
+}, 'common')
+
+// Use with namespace prefix
+t('common:hello')  // → "Hello"
+
+// Without namespace = 'default' (backward compatible)
+loadDictionaries({ en: { greeting: 'Hi' } })
+t('greeting')  // → "Hi"
+
+getLoadedNamespaces()  // → ['common', 'default']
+clearDictionaries('common')  // Clear specific namespace
+```
+
+---
+
+## Debug Mode
+
+Visual indicators for debugging:
+
+```typescript
+import { configure, setLocale, it, t } from 'inline-i18n-multi'
+
+configure({ debugMode: true })
+
+setLocale('fr')
+it({ en: 'Hello', ko: '안녕하세요' })  // → "[fr -> en] Hello"
+t('missing.key')  // → "[MISSING: fr] missing.key"
+```
+
 ---
 
 ## Configuration
@@ -280,17 +351,19 @@ Available helpers:
 | Function | Description |
 |----------|-------------|
 | `t(key, vars?, locale?)` | Key-based translation with optional locale override |
-| `loadDictionaries(dicts)` | Load translation dictionaries for multiple locales |
-| `loadDictionary(locale, dict)` | Load dictionary for a single locale |
-| `hasTranslation(key, locale?)` | Check if translation key exists |
+| `loadDictionaries(dicts, namespace?)` | Load translation dictionaries with optional namespace |
+| `loadDictionary(locale, dict, namespace?)` | Load dictionary for a single locale with optional namespace |
+| `hasTranslation(key, locale?)` | Check if translation key exists (supports namespace:key) |
 | `getLoadedLocales()` | Get array of loaded locale codes |
-| `getDictionary(locale)` | Get dictionary for a specific locale |
+| `getLoadedNamespaces()` | Get array of loaded namespace names |
+| `getDictionary(locale, namespace?)` | Get dictionary for a specific locale and namespace |
+| `clearDictionaries(namespace?)` | Clear dictionaries (all or specific namespace) |
 
 ### Configuration
 
 | Function | Description |
 |----------|-------------|
-| `configure(options)` | Configure global settings (fallback, warnings) |
+| `configure(options)` | Configure global settings (fallback, warnings, debug) |
 | `getConfig()` | Get current configuration |
 | `resetConfig()` | Reset configuration to defaults |
 
@@ -299,7 +372,7 @@ Available helpers:
 ```typescript
 type Locale = string
 type Translations = Record<Locale, string>
-type TranslationVars = Record<string, string | number | Date>
+type TranslationVars = Record<string, string | number | Date | string[]>
 
 interface Config {
   defaultLocale: Locale
@@ -308,6 +381,14 @@ interface Config {
   fallbackChain?: Record<Locale, Locale[]>
   warnOnMissing?: boolean
   onMissingTranslation?: WarningHandler
+  debugMode?: boolean | DebugModeOptions
+}
+
+interface DebugModeOptions {
+  showMissingPrefix?: boolean
+  showFallbackPrefix?: boolean
+  missingPrefixFormat?: (locale: string, key?: string) => string
+  fallbackPrefixFormat?: (requestedLocale: string, usedLocale: string, key?: string) => string
 }
 
 interface TranslationWarning {

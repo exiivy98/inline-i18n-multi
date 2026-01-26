@@ -1,7 +1,7 @@
 import { getLocale } from './context'
 import type { Locale, TranslationVars } from './types'
 import { interpolate } from './interpolation'
-import { buildFallbackChain, emitWarning } from './config'
+import { buildFallbackChain, emitWarning, applyDebugFormat, type DebugInfo } from './config'
 
 /**
  * Nested dictionary structure for translations
@@ -17,6 +17,12 @@ export type Dictionary = {
 export type Dictionaries = Record<Locale, Dictionary>
 
 /**
+ * Namespaced dictionaries storage
+ * Structure: { namespace: { locale: Dictionary } }
+ */
+type NamespacedDictionaries = Record<string, Dictionaries>
+
+/**
  * Plural rules configuration
  */
 export interface PluralRules {
@@ -28,36 +34,90 @@ export interface PluralRules {
   other: string
 }
 
-// Global dictionary storage
-let dictionaries: Dictionaries = {}
+// Default namespace for backward compatibility
+const DEFAULT_NAMESPACE = 'default'
+
+// Namespace separator in keys
+const NAMESPACE_SEPARATOR = ':'
+
+// Global dictionary storage - now namespaced
+let namespacedDictionaries: NamespacedDictionaries = {}
+
+/**
+ * Parse a key that may contain a namespace prefix
+ * @example
+ * parseKey('common:greeting') // { namespace: 'common', key: 'greeting' }
+ * parseKey('greeting')        // { namespace: 'default', key: 'greeting' }
+ */
+function parseKey(fullKey: string): { namespace: string; key: string } {
+  const separatorIndex = fullKey.indexOf(NAMESPACE_SEPARATOR)
+  if (separatorIndex > 0) {
+    return {
+      namespace: fullKey.substring(0, separatorIndex),
+      key: fullKey.substring(separatorIndex + 1),
+    }
+  }
+  return {
+    namespace: DEFAULT_NAMESPACE,
+    key: fullKey,
+  }
+}
 
 /**
  * Load translations from dictionary objects
  * @param dicts - Dictionary objects keyed by locale
+ * @param namespace - Optional namespace (defaults to 'default')
  * @example
+ * // Without namespace (backward compatible)
  * loadDictionaries({
  *   en: { greeting: { hello: "Hello" } },
  *   ko: { greeting: { hello: "안녕하세요" } }
  * })
+ *
+ * // With namespace
+ * loadDictionaries({
+ *   en: { hello: "Hello" },
+ *   ko: { hello: "안녕하세요" }
+ * }, 'common')
  */
-export function loadDictionaries(dicts: Dictionaries): void {
-  dictionaries = { ...dictionaries, ...dicts }
+export function loadDictionaries(dicts: Dictionaries, namespace?: string): void {
+  const ns = namespace || DEFAULT_NAMESPACE
+  if (!namespacedDictionaries[ns]) {
+    namespacedDictionaries[ns] = {}
+  }
+  namespacedDictionaries[ns] = {
+    ...namespacedDictionaries[ns],
+    ...dicts,
+  }
 }
 
 /**
  * Load a single locale's dictionary
  * @param locale - Locale code
  * @param dict - Dictionary object
+ * @param namespace - Optional namespace (defaults to 'default')
  */
-export function loadDictionary(locale: Locale, dict: Dictionary): void {
-  dictionaries[locale] = { ...dictionaries[locale], ...dict }
+export function loadDictionary(locale: Locale, dict: Dictionary, namespace?: string): void {
+  const ns = namespace || DEFAULT_NAMESPACE
+  if (!namespacedDictionaries[ns]) {
+    namespacedDictionaries[ns] = {}
+  }
+  namespacedDictionaries[ns][locale] = {
+    ...namespacedDictionaries[ns][locale],
+    ...dict,
+  }
 }
 
 /**
- * Clear all loaded dictionaries
+ * Clear loaded dictionaries
+ * @param namespace - Optional namespace to clear (clears all if not specified)
  */
-export function clearDictionaries(): void {
-  dictionaries = {}
+export function clearDictionaries(namespace?: string): void {
+  if (namespace) {
+    delete namespacedDictionaries[namespace]
+  } else {
+    namespacedDictionaries = {}
+  }
 }
 
 /**
@@ -115,11 +175,12 @@ function findInDictionary(
 
 /**
  * Translate using key-based lookup (i18n compatible)
- * @param key - Dot-separated translation key
+ * @param key - Dot-separated translation key, optionally prefixed with namespace
  * @param vars - Variables for interpolation (including 'count' for plurals)
  * @param locale - Override locale (optional)
  * @example
- * t('greeting.hello') // "Hello"
+ * t('greeting.hello')           // Uses default namespace
+ * t('common:greeting.hello')    // Uses 'common' namespace
  * t('items.count', { count: 5 }) // "5 items"
  */
 export function t(
@@ -127,19 +188,22 @@ export function t(
   vars?: TranslationVars,
   locale?: Locale
 ): string {
+  const { namespace, key: actualKey } = parseKey(key)
   const currentLocale = locale ?? getLocale()
   const fallbackChain = buildFallbackChain(currentLocale)
-  const availableLocales = Object.keys(dictionaries)
+
+  const nsDictionaries = namespacedDictionaries[namespace] || {}
+  const availableLocales = Object.keys(nsDictionaries)
 
   let template: string | undefined
   let usedLocale: Locale | undefined
 
   // Try each locale in the fallback chain
   for (const tryLocale of fallbackChain) {
-    const dict = dictionaries[tryLocale]
+    const dict = nsDictionaries[tryLocale]
     if (!dict) continue
 
-    const found = findInDictionary(dict, key, vars, tryLocale)
+    const found = findInDictionary(dict, actualKey, vars, tryLocale)
     if (found) {
       template = found
       usedLocale = tryLocale
@@ -154,11 +218,20 @@ export function t(
       requestedLocale: currentLocale,
       availableLocales,
     })
-    return key
+
+    const debugInfo: DebugInfo = {
+      isMissing: true,
+      isFallback: false,
+      requestedLocale: currentLocale,
+      key,
+    }
+    return applyDebugFormat(key, debugInfo)
   }
 
+  const isFallback = usedLocale !== currentLocale
+
   // Warn if we used a fallback
-  if (usedLocale && usedLocale !== currentLocale) {
+  if (isFallback) {
     emitWarning({
       type: 'missing_translation',
       key,
@@ -168,28 +241,63 @@ export function t(
     })
   }
 
-  return interpolate(template, vars, usedLocale || currentLocale)
+  const result = interpolate(template, vars, usedLocale || currentLocale)
+
+  const debugInfo: DebugInfo = {
+    isMissing: false,
+    isFallback,
+    requestedLocale: currentLocale,
+    usedLocale,
+    key,
+  }
+
+  return applyDebugFormat(result, debugInfo)
 }
 
 /**
  * Check if a translation key exists
+ * @param key - Translation key (may include namespace prefix)
+ * @param locale - Optional locale to check
  */
 export function hasTranslation(key: string, locale?: Locale): boolean {
+  const { namespace, key: actualKey } = parseKey(key)
   const currentLocale = locale ?? getLocale()
-  const dict = dictionaries[currentLocale]
-  return dict ? getNestedValue(dict, key) !== undefined : false
+  const nsDictionaries = namespacedDictionaries[namespace] || {}
+  const dict = nsDictionaries[currentLocale]
+  return dict ? getNestedValue(dict, actualKey) !== undefined : false
 }
 
 /**
  * Get all loaded locales
+ * @param namespace - Optional namespace (returns from all if not specified)
  */
-export function getLoadedLocales(): Locale[] {
-  return Object.keys(dictionaries)
+export function getLoadedLocales(namespace?: string): Locale[] {
+  if (namespace) {
+    return Object.keys(namespacedDictionaries[namespace] || {})
+  }
+  // Return unique locales across all namespaces
+  const locales = new Set<Locale>()
+  for (const ns of Object.values(namespacedDictionaries)) {
+    for (const locale of Object.keys(ns)) {
+      locales.add(locale)
+    }
+  }
+  return Array.from(locales)
 }
 
 /**
  * Get dictionary for a specific locale
+ * @param locale - Locale code
+ * @param namespace - Optional namespace (defaults to 'default')
  */
-export function getDictionary(locale: Locale): Dictionary | undefined {
-  return dictionaries[locale]
+export function getDictionary(locale: Locale, namespace?: string): Dictionary | undefined {
+  const ns = namespace || DEFAULT_NAMESPACE
+  return namespacedDictionaries[ns]?.[locale]
+}
+
+/**
+ * Get all loaded namespaces
+ */
+export function getLoadedNamespaces(): string[] {
+  return Object.keys(namespacedDictionaries)
 }

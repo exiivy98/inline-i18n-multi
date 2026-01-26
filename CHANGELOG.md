@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2025-01-26
+
+### Added
+
+- **Relative Time Formatting** - Human-readable relative time support
+  - ICU format: `{time, relativeTime}` → "3 days ago" / "3일 전"
+  - Style options: `long` (default), `short`, `narrow`
+  - Auto-detects best unit (seconds → years)
+  - Locale-aware via `Intl.RelativeTimeFormat`
+- **List Formatting** - Locale-aware list joins
+  - ICU format: `{names, list}` → "Alice, Bob, and Charlie"
+  - Type options: `conjunction` (and), `disjunction` (or), `unit`
+  - Style options: `long` (default), `short`, `narrow`
+  - Locale-aware via `Intl.ListFormat`
+- **Namespace Support** - Organize translations for large apps
+  - Load with namespace: `loadDictionaries({...}, 'common')`
+  - Use with prefix: `t('common:greeting')`
+  - New `getLoadedNamespaces()` function
+  - `clearDictionaries(namespace?)` supports selective clearing
+  - Backward compatible: omitting namespace uses `'default'`
+- **Debug Mode** - Visual indicators for missing/fallback translations
+  - Enable: `configure({ debugMode: true })`
+  - Missing: `"[MISSING: fr] key"`
+  - Fallback: `"[fr -> en] Hello"`
+  - Customizable prefix formats via `DebugModeOptions`
+- New exports: `getLoadedNamespaces`, `DebugModeOptions`
+
+### Changed
+
+- `TranslationVars` type now accepts `string[]` for list formatting
+- Dictionary storage refactored to support namespaces internally
+
 ## [0.3.0] - 2025-01-19
 
 ### Added
