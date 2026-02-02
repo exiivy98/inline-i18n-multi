@@ -76,4 +76,6 @@ export interface Config {
   onMissingTranslation?: WarningHandler
   /** Enable debug mode with visual indicators (default: false) */
   debugMode?: boolean | DebugModeOptions
+  /** Async loader function for lazy loading dictionaries */
+  loader?: (locale: Locale, namespace: string) => Promise<Record<string, unknown>>
 }

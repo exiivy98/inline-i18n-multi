@@ -61,6 +61,10 @@
 - **翻訳欠落警告** - カスタマイズ可能なハンドラーによる開発時診断
 - **名前空間サポート** - 大規模アプリ向けの翻訳整理（`t('common:greeting')`）
 - **デバッグモード** - 欠落/フォールバック翻訳の視覚的表示
+- **通貨フォーマット** - ロケール対応の通貨表示（`{price, currency, USD}`）
+- **コンパクト数値フォーマット** - 大きな数値の短縮表示（`{count, number, compact}`）
+- **リッチテキスト補間** - 翻訳にReactコンポーネントを埋め込み（`<link>テキスト</link>`）
+- **遅延読み込み** - 非同期辞書ロード（`loadAsync()`）
 
 ---
 
@@ -507,7 +511,7 @@ it({
 ```
 
 **サポートされるスタイル:**
-- `number`: `decimal`, `percent`, `integer`, `currency`
+- `number`: `decimal`, `percent`, `integer`, `currency`, `compact`, `compactLong`
 - `date`: `short`, `medium`, `long`, `full`
 - `time`: `short`, `medium`, `long`, `full`
 
@@ -551,6 +555,42 @@ it({ ja: '{options, list, disjunction}' }, { options: ['A', 'B', 'C'] })
 // Unit（接続詞なし）
 it({ ja: '{items, list, unit}' }, { items: ['10kg', '5m', '3L'] })
 // → "10kg、5m、3L"
+```
+
+### 通貨フォーマット
+
+自動通貨シンボル検出によるロケール対応の通貨フォーマット：
+
+```typescript
+// 通貨フォーマット
+it({
+  en: 'Total: {price, currency, USD}',
+  ja: '合計: {price, currency, JPY}'
+}, { price: 42000 })
+// en → "Total: $42,000.00"
+// ja → "合計: ￥42,000"
+
+// 通貨コード省略時はUSDデフォルト
+it({ en: '{price, currency}' }, { price: 100 })
+// → "$100.00"
+```
+
+### コンパクト数値フォーマット
+
+大きな値の短縮数値表示：
+
+```typescript
+// コンパクト（short）
+it({
+  en: '{count, number, compact} views',
+  ja: '{count, number, compact} 回視聴'
+}, { count: 1500000 })
+// en → "1.5M views"
+// ja → "150万 回視聴"
+
+// コンパクト（long）
+it({ en: '{count, number, compactLong}' }, { count: 1500000 })
+// → "1.5 million"
 ```
 
 ---
@@ -623,6 +663,70 @@ configure({
     fallbackPrefixFormat: (from, to) => `[${from}=>${to}] `,
   }
 })
+```
+
+---
+
+## リッチテキスト補間
+
+翻訳にReactコンポーネントを埋め込みます：
+
+```tsx
+import { RichText, useRichText } from 'inline-i18n-multi-react'
+
+// コンポーネント構文
+<RichText
+  translations={{
+    en: 'Read <link>terms</link> and <bold>agree</bold>',
+    ja: '<link>利用規約</link>を読んで<bold>同意</bold>してください'
+  }}
+  components={{
+    link: (text) => <a href="/terms">{text}</a>,
+    bold: (text) => <strong>{text}</strong>
+  }}
+/>
+
+// フック構文
+const richT = useRichText({
+  link: (text) => <a href="/terms">{text}</a>,
+  bold: (text) => <strong>{text}</strong>
+})
+richT({ en: 'Click <link>here</link>', ja: '<link>ここ</link>をクリック' })
+```
+
+---
+
+## 遅延読み込み
+
+辞書を非同期的にオンデマンドでロードします：
+
+```typescript
+import { configure, loadAsync, isLoaded, t } from 'inline-i18n-multi'
+
+// ローダーを設定
+configure({
+  loader: (locale, namespace) => import(`./locales/${locale}/${namespace}.json`)
+})
+
+// オンデマンドでロード
+await loadAsync('ja', 'dashboard')
+t('dashboard:title')
+
+// ロード状態を確認
+isLoaded('ja', 'dashboard')  // → true
+```
+
+### Reactフック
+
+```tsx
+import { useLoadDictionaries } from 'inline-i18n-multi-react'
+
+function Dashboard() {
+  const { isLoading, error } = useLoadDictionaries('ja', 'dashboard')
+  if (isLoading) return <Spinner />
+  if (error) return <Error message={error.message} />
+  return <Content />
+}
 ```
 
 ---
@@ -880,6 +984,9 @@ VSCodeマーケットプレイスから`inline-i18n-multi-vscode`をインスト
 | `configure(options)` | グローバル設定（フォールバック、警告、デバッグ） |
 | `getConfig()` | 現在の設定を取得 |
 | `resetConfig()` | 設定をデフォルトにリセット |
+| `loadAsync(locale, namespace?)` | 設定されたローダーを使用して非同期辞書ロード |
+| `isLoaded(locale, namespace?)` | 辞書がロードされているか確認 |
+| `parseRichText(template, names)` | リッチテキストテンプレートをセグメントに解析 |
 
 ### Reactフック＆コンポーネント
 
@@ -889,6 +996,9 @@ VSCodeマーケットプレイスから`inline-i18n-multi-vscode`をインスト
 | `useLocale()` | `[locale, setLocale]`を返すフック |
 | `useT()` | 現在のロケールにバインドされた`t`関数を返すフック |
 | `T` | 翻訳コンポーネント |
+| `RichText` | コンポーネント埋め込み対応のリッチテキスト翻訳コンポーネント |
+| `useRichText(components)` | リッチテキスト翻訳関数を返すフック |
+| `useLoadDictionaries(locale, ns?)` | ロード状態付きの遅延読み込みフック |
 
 ### 型
 
@@ -905,6 +1015,7 @@ interface Config {
   warnOnMissing?: boolean
   onMissingTranslation?: WarningHandler
   debugMode?: boolean | DebugModeOptions
+  loader?: (locale: string, namespace?: string) => Promise<any>
 }
 
 interface DebugModeOptions {
@@ -923,6 +1034,12 @@ interface TranslationWarning {
 }
 
 type WarningHandler = (warning: TranslationWarning) => void
+
+interface RichTextSegment {
+  type: 'text' | 'component'
+  content: string
+  name?: string
+}
 ```
 
 ---

@@ -192,6 +192,35 @@ export default async function Home({
         </p>
       </div>
 
+      {/* v0.5.0 Features */}
+      <div className="section">
+        <h2>🆕 v0.5.0 {await it('기능', 'Features')}</h2>
+        <p>
+          <strong>{await it('통화', 'Currency')}:</strong>{' '}
+          {await it({
+            ko: '합계: {price, currency, KRW}',
+            en: 'Total: {price, currency, USD}',
+            ja: '合計: {price, currency, JPY}',
+          }, { price: 42000 })}
+        </p>
+        <p>
+          <strong>{await it('축약 숫자', 'Compact Number')}:</strong>{' '}
+          {await it({
+            ko: '{count, number, compact} 조회',
+            en: '{count, number, compact} views',
+            ja: '{count, number, compact} 回視聴',
+          }, { count: 1500000 })}
+        </p>
+        <p>
+          <strong>{await it('축약 숫자 (긴 형식)', 'Compact Number (long)')}:</strong>{' '}
+          {await it({
+            ko: '{count, number, compactLong}',
+            en: '{count, number, compactLong}',
+            ja: '{count, number, compactLong}',
+          }, { count: 1500000 })}
+        </p>
+      </div>
+
       {/* Client Component Example */}
       <ClientSection />
 

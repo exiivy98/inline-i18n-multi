@@ -1,6 +1,5 @@
 import {
   parse,
-  TYPE,
   type MessageFormatElement,
   type PluralElement,
   type SelectElement,
@@ -108,7 +107,7 @@ function formatNumberElement(
       if (el.style === 'currency') {
         options = { style: 'currency', currency: 'USD' }
       } else if (NUMBER_STYLES[el.style]) {
-        options = NUMBER_STYLES[el.style]
+        options = NUMBER_STYLES[el.style]!
       }
     } else if ('parsedOptions' in el.style) {
       // NumberSkeleton with parsed options
@@ -148,7 +147,7 @@ function formatDateElement(
   }
 
   try {
-    const date = toDate(value)
+    const date = toDate(value as string | number | Date)
     return new Intl.DateTimeFormat(locale, options).format(date)
   } catch {
     return `{${el.value}}`
@@ -180,10 +179,127 @@ function formatTimeElement(
   }
 
   try {
-    const date = toDate(value)
+    const date = toDate(value as string | number | Date)
     return new Intl.DateTimeFormat(locale, options).format(date)
   } catch {
     return `{${el.value}}`
+  }
+}
+
+// ============================================================================
+// Currency Formatting (v0.5.0)
+// ============================================================================
+
+interface CurrencyReplacement {
+  variable: string
+  currencyCode: string
+}
+
+const CURRENCY_PATTERN = /\{(\w+),\s*currency(?:,\s*(\w+))?\}/g
+
+/**
+ * Preprocess currency formats before ICU parsing
+ */
+function preprocessCurrency(template: string): {
+  processed: string
+  replacements: Map<string, CurrencyReplacement>
+} {
+  const replacements = new Map<string, CurrencyReplacement>()
+  let counter = 0
+  const processed = template.replace(CURRENCY_PATTERN, (_, variable, currencyCode) => {
+    const placeholder = `__CURRENCY_${counter++}__`
+    replacements.set(placeholder, { variable, currencyCode: currencyCode || 'USD' })
+    return `{${placeholder}}`
+  })
+  return { processed, replacements }
+}
+
+/**
+ * Format a currency value
+ */
+function formatCurrencyValue(
+  variableName: string,
+  currencyCode: string,
+  vars: ICUVars,
+  locale: string
+): string {
+  const value = vars[variableName]
+  if (value === undefined) {
+    return `{${variableName}}`
+  }
+
+  const num = typeof value === 'number' ? value : Number(value)
+  if (isNaN(num)) {
+    return `{${variableName}}`
+  }
+
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: currencyCode,
+    }).format(num)
+  } catch {
+    return String(num)
+  }
+}
+
+// ============================================================================
+// Compact Number Formatting (v0.5.0)
+// ============================================================================
+
+interface CompactNumberReplacement {
+  variable: string
+  display: 'short' | 'long'
+}
+
+const COMPACT_NUMBER_PATTERN = /\{(\w+),\s*number,\s*(compact|compactLong)\}/g
+
+/**
+ * Preprocess compact number formats before ICU parsing
+ */
+function preprocessCompactNumber(template: string): {
+  processed: string
+  replacements: Map<string, CompactNumberReplacement>
+} {
+  const replacements = new Map<string, CompactNumberReplacement>()
+  let counter = 0
+  const processed = template.replace(COMPACT_NUMBER_PATTERN, (_, variable, style) => {
+    const placeholder = `__COMPACT_${counter++}__`
+    replacements.set(placeholder, {
+      variable,
+      display: style === 'compactLong' ? 'long' : 'short',
+    })
+    return `{${placeholder}}`
+  })
+  return { processed, replacements }
+}
+
+/**
+ * Format a compact number value
+ */
+function formatCompactNumber(
+  variableName: string,
+  display: 'short' | 'long',
+  vars: ICUVars,
+  locale: string
+): string {
+  const value = vars[variableName]
+  if (value === undefined) {
+    return `{${variableName}}`
+  }
+
+  const num = typeof value === 'number' ? value : Number(value)
+  if (isNaN(num)) {
+    return `{${variableName}}`
+  }
+
+  try {
+    return new Intl.NumberFormat(locale, {
+      notation: 'compact',
+      compactDisplay: display,
+    }).format(num)
+  } catch {
+    return String(num)
   }
 }
 
@@ -342,12 +458,26 @@ export function interpolateICU(
   vars: ICUVars,
   locale: string
 ): string {
-  // Pre-process relativeTime and list formats (not natively supported by ICU parser)
-  const { processed: afterRelTime, replacements: relTimeReplacements } = preprocessRelativeTime(template)
+  // Pre-process custom formats (not natively supported by ICU parser)
+  const { processed: afterCurrency, replacements: currencyReplacements } = preprocessCurrency(template)
+  const { processed: afterCompact, replacements: compactReplacements } = preprocessCompactNumber(afterCurrency)
+  const { processed: afterRelTime, replacements: relTimeReplacements } = preprocessRelativeTime(afterCompact)
   const { processed: afterList, replacements: listReplacements } = preprocessList(afterRelTime)
 
   const ast = parse(afterList)
   let result = formatElements(ast, vars, locale, null)
+
+  // Post-process currency placeholders
+  for (const [placeholder, { variable, currencyCode }] of currencyReplacements) {
+    const formatted = formatCurrencyValue(variable, currencyCode, vars, locale)
+    result = result.replace(`{${placeholder}}`, formatted)
+  }
+
+  // Post-process compact number placeholders
+  for (const [placeholder, { variable, display }] of compactReplacements) {
+    const formatted = formatCompactNumber(variable, display, vars, locale)
+    result = result.replace(`{${placeholder}}`, formatted)
+  }
 
   // Post-process relativeTime placeholders
   for (const [placeholder, { variable, style }] of relTimeReplacements) {
@@ -474,7 +604,7 @@ function formatSelect(
 }
 
 // Pattern to detect ICU format (plural, select, selectordinal, number, date, time, relativeTime, list)
-export const ICU_PATTERN = /\{[^}]+,\s*(plural|select|selectordinal|number|date|time|relativeTime|list)\s*[,}]/
+export const ICU_PATTERN = /\{[^}]+,\s*(plural|select|selectordinal|number|date|time|relativeTime|list|currency)\s*[,}]/
 
 /**
  * Check if a template contains ICU Message Format patterns

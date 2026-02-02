@@ -59,6 +59,10 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Missing Translation Warning** - Development-time diagnostics with customizable handlers
 - **Namespace Support** - Organize translations for large apps (`t('common:greeting')`)
 - **Debug Mode** - Visual indicators for missing/fallback translations
+- **Currency Formatting** - Locale-aware currency display (`{price, currency, USD}`)
+- **Compact Number Formatting** - Short number display (`{count, number, compact}`)
+- **Rich Text Interpolation** - Embed React components in translations (`<link>text</link>`)
+- **Lazy Loading** - Async dictionary loading on demand (`loadAsync()`)
 
 ---
 
@@ -203,7 +207,7 @@ it({
 ```
 
 **Supported ICU styles:**
-- `number`: `decimal`, `percent`, `integer`, `currency`
+- `number`: `decimal`, `percent`, `integer`, `currency`, `compact`, `compactLong`
 - `date`: `short`, `medium`, `long`, `full`
 - `time`: `short`, `medium`, `long`, `full`
 
@@ -232,6 +236,33 @@ it({
 // Types: conjunction (and), disjunction (or), unit
 it({ en: '{options, list, disjunction}' }, { options: ['A', 'B'] })
 // → "A or B"
+```
+
+### Currency Formatting
+
+```typescript
+it({
+  en: 'Total: {price, currency, USD}',
+  ko: '합계: {price, currency, KRW}'
+}, { price: 42000 })
+// en → "Total: $42,000.00"  /  ko → "합계: ₩42,000"
+
+// Defaults to USD when currency code omitted
+it({ en: '{price, currency}' }, { price: 100 })
+// → "$100.00"
+```
+
+### Compact Number Formatting
+
+```typescript
+it({
+  en: '{count, number, compact} views',
+  ko: '{count, number, compact} 조회'
+}, { count: 1500000 })
+// en → "1.5M views"  /  ko → "150만 조회"
+
+it({ en: '{count, number, compactLong}' }, { count: 1500000 })
+// → "1.5 million"
 ```
 
 ---
@@ -274,6 +305,67 @@ configure({ debugMode: true })
 setLocale('fr')
 it({ en: 'Hello', ko: '안녕하세요' })  // → "[fr -> en] Hello"
 t('missing.key')  // → "[MISSING: fr] missing.key"
+```
+
+---
+
+## Rich Text Interpolation
+
+Embed React components within translations:
+
+```tsx
+import { RichText, useRichText } from 'inline-i18n-multi-react'
+
+// Component syntax
+<RichText
+  translations={{
+    en: 'Read <link>terms</link> and <bold>agree</bold>',
+    ko: '<link>약관</link>을 읽고 <bold>동의</bold>해주세요'
+  }}
+  components={{
+    link: (text) => <a href="/terms">{text}</a>,
+    bold: (text) => <strong>{text}</strong>
+  }}
+/>
+
+// Hook syntax
+const richT = useRichText({
+  link: (text) => <a href="/terms">{text}</a>,
+  bold: (text) => <strong>{text}</strong>
+})
+richT({ en: 'Click <link>here</link>', ko: '<link>여기</link> 클릭' })
+```
+
+---
+
+## Lazy Loading
+
+Load dictionaries asynchronously on demand:
+
+```typescript
+import { configure, loadAsync, isLoaded, t } from 'inline-i18n-multi'
+
+configure({
+  loader: (locale, namespace) => import(`./locales/${locale}/${namespace}.json`)
+})
+
+await loadAsync('ko', 'dashboard')
+t('dashboard:title')
+
+isLoaded('ko', 'dashboard')  // → true
+```
+
+### React Hook
+
+```tsx
+import { useLoadDictionaries } from 'inline-i18n-multi-react'
+
+function Dashboard() {
+  const { isLoading, error } = useLoadDictionaries('ko', 'dashboard')
+  if (isLoading) return <Spinner />
+  if (error) return <Error message={error.message} />
+  return <Content />
+}
 ```
 
 ---
@@ -366,6 +458,17 @@ Available helpers:
 | `configure(options)` | Configure global settings (fallback, warnings, debug) |
 | `getConfig()` | Get current configuration |
 | `resetConfig()` | Reset configuration to defaults |
+| `loadAsync(locale, namespace?)` | Asynchronously load dictionary using configured loader |
+| `isLoaded(locale, namespace?)` | Check if dictionary has been loaded |
+| `parseRichText(template, names)` | Parse rich text template into segments |
+
+### React Hooks & Components
+
+| Export | Description |
+|--------|-------------|
+| `RichText` | Rich text translation component with embedded components |
+| `useRichText(components)` | Hook returning function for rich text translations |
+| `useLoadDictionaries(locale, ns?)` | Hook for lazy loading dictionaries with loading state |
 
 ### Types
 
@@ -382,6 +485,7 @@ interface Config {
   warnOnMissing?: boolean
   onMissingTranslation?: WarningHandler
   debugMode?: boolean | DebugModeOptions
+  loader?: (locale: Locale, namespace: string) => Promise<Record<string, unknown>>
 }
 
 interface DebugModeOptions {
@@ -400,6 +504,12 @@ interface TranslationWarning {
 }
 
 type WarningHandler = (warning: TranslationWarning) => void
+
+interface RichTextSegment {
+  type: 'text' | 'component'
+  content: string
+  componentName?: string
+}
 ```
 
 ---

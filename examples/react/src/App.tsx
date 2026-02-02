@@ -1,4 +1,4 @@
-import { useLocale, useT, it, T } from 'inline-i18n-multi-react'
+import { useLocale, useT, it, T, RichText } from 'inline-i18n-multi-react'
 
 export default function App() {
   const [locale, setLocale] = useLocale()
@@ -75,6 +75,43 @@ export default function App() {
             en: 'Object syntax allows specifying multiple languages at once.',
             ja: 'オブジェクト構文で複数の言語を一度に指定できます。',
           })}
+        </p>
+      </div>
+
+      {/* v0.5.0: Rich Text */}
+      <div className="section">
+        <h2>{it('리치 텍스트 (v0.5.0)', 'Rich Text (v0.5.0)')}</h2>
+        <p>
+          <RichText
+            translations={{
+              ko: '<link>이용약관</link>을 읽고 <bold>동의</bold>해주세요',
+              en: 'Read <link>terms</link> and <bold>agree</bold>',
+              ja: '<link>利用規約</link>を読んで<bold>同意</bold>してください',
+            }}
+            components={{
+              link: (text) => <a href="/terms" style={{ color: '#0070f3', textDecoration: 'underline' }}>{text}</a>,
+              bold: (text) => <strong>{text}</strong>,
+            }}
+          />
+        </p>
+      </div>
+
+      {/* v0.5.0: Currency & Compact Number */}
+      <div className="section">
+        <h2>{it('통화 & 축약 숫자 (v0.5.0)', 'Currency & Compact Number (v0.5.0)')}</h2>
+        <p>
+          {it({
+            ko: '합계: {price, currency, KRW}',
+            en: 'Total: {price, currency, USD}',
+            ja: '合計: {price, currency, JPY}',
+          }, { price: 42000 })}
+        </p>
+        <p>
+          {it({
+            ko: '{count, number, compact} 조회',
+            en: '{count, number, compact} views',
+            ja: '{count, number, compact} 回視聴',
+          }, { count: 1500000 })}
         </p>
       </div>
     </div>

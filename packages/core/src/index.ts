@@ -28,10 +28,15 @@ export {
   getLoadedLocales,
   getDictionary,
   getLoadedNamespaces,
+  loadAsync,
+  isLoaded,
 } from './dictionary'
 
 // Configuration
 export { configure, getConfig, resetConfig } from './config'
+
+// Rich text parsing
+export { parseRichText, type RichTextSegment } from './richtext'
 
 export type {
   Locale,

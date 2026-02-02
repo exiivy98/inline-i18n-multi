@@ -35,7 +35,9 @@ function isDevMode(): boolean {
   }
 }
 
-const defaultConfig: Required<Config> = {
+type FullConfig = Required<Omit<Config, 'loader'>> & Pick<Config, 'loader'>
+
+const defaultConfig: FullConfig = {
   defaultLocale: 'en',
   fallbackLocale: 'en',
   autoParentLocale: true,
@@ -43,6 +45,7 @@ const defaultConfig: Required<Config> = {
   warnOnMissing: isDevMode(),
   onMissingTranslation: defaultWarningHandler,
   debugMode: false,
+  loader: undefined,
 }
 
 let config: Config = { ...defaultConfig }
@@ -64,7 +67,7 @@ export function configure(options: Partial<Config>): void {
 /**
  * Get current configuration
  */
-export function getConfig(): Required<Config> {
+export function getConfig(): FullConfig {
   return {
     ...defaultConfig,
     ...config,

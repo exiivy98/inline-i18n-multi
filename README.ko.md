@@ -62,6 +62,10 @@
 - **누락 번역 경고** - 커스터마이즈 가능한 핸들러를 통한 개발 시점 진단
 - **네임스페이스 지원** - 대규모 앱을 위한 번역 분류 (`t('common:greeting')`)
 - **디버그 모드** - 누락/폴백 번역에 대한 시각적 표시
+- **통화 포맷팅** - 로케일 인식 통화 표시 (`{price, currency, USD}`)
+- **축약 숫자 포맷팅** - 큰 숫자의 축약 표시 (`{count, number, compact}`)
+- **리치 텍스트 보간** - 번역에 React 컴포넌트 삽입 (`<link>텍스트</link>`)
+- **지연 로딩** - 비동기 딕셔너리 로딩 (`loadAsync()`)
 
 ---
 
@@ -519,7 +523,7 @@ it({
 ```
 
 **지원되는 스타일:**
-- `number`: `decimal`, `percent`, `integer`, `currency`
+- `number`: `decimal`, `percent`, `integer`, `currency`, `compact`, `compactLong`
 - `date`: `short`, `medium`, `long`, `full`
 - `time`: `short`, `medium`, `long`, `full`
 
@@ -563,6 +567,42 @@ it({ ko: '{options, list, disjunction}' }, { options: ['A', 'B', 'C'] })
 // Unit (접속사 없음)
 it({ ko: '{items, list, unit}' }, { items: ['10kg', '5m', '3L'] })
 // → "10kg, 5m, 3L"
+```
+
+### 통화 포맷팅
+
+자동 통화 기호 감지를 통한 로케일 인식 통화 포맷팅:
+
+```typescript
+// 통화 포맷팅
+it({
+  en: 'Total: {price, currency, USD}',
+  ko: '합계: {price, currency, KRW}'
+}, { price: 42000 })
+// en → "Total: $42,000.00"
+// ko → "합계: ₩42,000"
+
+// 통화 코드 생략 시 USD 기본값
+it({ en: '{price, currency}' }, { price: 100 })
+// → "$100.00"
+```
+
+### 축약 숫자 포맷팅
+
+큰 숫자의 축약 표시:
+
+```typescript
+// 축약 (short)
+it({
+  en: '{count, number, compact} views',
+  ko: '{count, number, compact} 조회'
+}, { count: 1500000 })
+// en → "1.5M views"
+// ko → "150만 조회"
+
+// 축약 (long)
+it({ en: '{count, number, compactLong}' }, { count: 1500000 })
+// → "1.5 million"
 ```
 
 ---
@@ -635,6 +675,70 @@ configure({
     fallbackPrefixFormat: (from, to) => `[${from}=>${to}] `,
   }
 })
+```
+
+---
+
+## 리치 텍스트 보간
+
+번역에 React 컴포넌트를 삽입합니다:
+
+```tsx
+import { RichText, useRichText } from 'inline-i18n-multi-react'
+
+// 컴포넌트 문법
+<RichText
+  translations={{
+    en: 'Read <link>terms</link> and <bold>agree</bold>',
+    ko: '<link>약관</link>을 읽고 <bold>동의</bold>해주세요'
+  }}
+  components={{
+    link: (text) => <a href="/terms">{text}</a>,
+    bold: (text) => <strong>{text}</strong>
+  }}
+/>
+
+// 훅 문법
+const richT = useRichText({
+  link: (text) => <a href="/terms">{text}</a>,
+  bold: (text) => <strong>{text}</strong>
+})
+richT({ en: 'Click <link>here</link>', ko: '<link>여기</link> 클릭' })
+```
+
+---
+
+## 지연 로딩
+
+딕셔너리를 비동기적으로 필요에 따라 로드합니다:
+
+```typescript
+import { configure, loadAsync, isLoaded, t } from 'inline-i18n-multi'
+
+// 로더 설정
+configure({
+  loader: (locale, namespace) => import(`./locales/${locale}/${namespace}.json`)
+})
+
+// 필요 시 로드
+await loadAsync('ko', 'dashboard')
+t('dashboard:title')
+
+// 로딩 상태 확인
+isLoaded('ko', 'dashboard')  // → true
+```
+
+### React 훅
+
+```tsx
+import { useLoadDictionaries } from 'inline-i18n-multi-react'
+
+function Dashboard() {
+  const { isLoading, error } = useLoadDictionaries('ko', 'dashboard')
+  if (isLoading) return <Spinner />
+  if (error) return <Error message={error.message} />
+  return <Content />
+}
 ```
 
 ---
@@ -894,6 +998,9 @@ VSCode 마켓플레이스에서 `inline-i18n-multi-vscode`를 설치하세요.
 | `configure(options)`           | 전역 설정 (폴백, 경고, 디버그)          |
 | `getConfig()`                  | 현재 설정 조회                          |
 | `resetConfig()`                | 설정을 기본값으로 리셋                  |
+| `loadAsync(locale, namespace?)` | 설정된 로더를 사용하여 비동기 딕셔너리 로드 |
+| `isLoaded(locale, namespace?)` | 딕셔너리 로드 여부 확인 |
+| `parseRichText(template, names)` | 리치 텍스트 템플릿을 세그먼트로 파싱 |
 
 ### React 훅 & 컴포넌트
 
@@ -903,6 +1010,9 @@ VSCode 마켓플레이스에서 `inline-i18n-multi-vscode`를 설치하세요.
 | `useLocale()`    | `[locale, setLocale]`을 반환하는 훅           |
 | `useT()`         | 현재 로케일에 바인딩된 `t` 함수를 반환하는 훅 |
 | `T`              | 번역 컴포넌트                                 |
+| `RichText` | 컴포넌트 삽입이 가능한 리치 텍스트 번역 컴포넌트 |
+| `useRichText(components)` | 리치 텍스트 번역 함수를 반환하는 훅 |
+| `useLoadDictionaries(locale, ns?)` | 로딩 상태를 포함한 지연 로딩 훅 |
 
 ### 타입
 
@@ -919,6 +1029,7 @@ interface Config {
   warnOnMissing?: boolean
   onMissingTranslation?: WarningHandler
   debugMode?: boolean | DebugModeOptions
+  loader?: (locale: string, namespace: string) => Promise<any>
 }
 
 interface DebugModeOptions {
@@ -937,6 +1048,12 @@ interface TranslationWarning {
 }
 
 type WarningHandler = (warning: TranslationWarning) => void
+
+interface RichTextSegment {
+  type: 'text' | 'component'
+  content: string
+  componentName?: string
+}
 ```
 
 ---

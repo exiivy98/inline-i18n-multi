@@ -1,7 +1,7 @@
 import { getLocale } from './context'
 import type { Locale, TranslationVars } from './types'
 import { interpolate } from './interpolation'
-import { buildFallbackChain, emitWarning, applyDebugFormat, type DebugInfo } from './config'
+import { buildFallbackChain, emitWarning, applyDebugFormat, getConfig, type DebugInfo } from './config'
 
 /**
  * Nested dictionary structure for translations
@@ -42,6 +42,14 @@ const NAMESPACE_SEPARATOR = ':'
 
 // Global dictionary storage - now namespaced
 let namespacedDictionaries: NamespacedDictionaries = {}
+
+// Lazy loading state tracking (v0.5.0)
+let loadingState: Record<string, 'loading' | 'loaded' | 'error'> = {}
+const loadingPromises = new Map<string, Promise<void>>()
+
+function getLoadingKey(locale: Locale, namespace: string): string {
+  return `${namespace}:${locale}`
+}
 
 /**
  * Parse a key that may contain a namespace prefix
@@ -115,9 +123,76 @@ export function loadDictionary(locale: Locale, dict: Dictionary, namespace?: str
 export function clearDictionaries(namespace?: string): void {
   if (namespace) {
     delete namespacedDictionaries[namespace]
+    // Clear loading state for this namespace
+    for (const key of Object.keys(loadingState)) {
+      if (key.startsWith(`${namespace}:`)) {
+        delete loadingState[key]
+        loadingPromises.delete(key)
+      }
+    }
   } else {
     namespacedDictionaries = {}
+    loadingState = {}
+    loadingPromises.clear()
   }
+}
+
+/**
+ * Asynchronously load a dictionary using the configured loader
+ * @param locale - Locale to load
+ * @param namespace - Optional namespace (defaults to 'default')
+ * @throws Error if no loader is configured
+ *
+ * @example
+ * configure({ loader: (locale, ns) => import(`./locales/${locale}/${ns}.json`) })
+ * await loadAsync('ko', 'dashboard')
+ * t('dashboard:title')
+ */
+export async function loadAsync(locale: Locale, namespace?: string): Promise<void> {
+  const ns = namespace || DEFAULT_NAMESPACE
+  const cfg = getConfig()
+
+  if (!cfg.loader) {
+    throw new Error('No loader configured. Call configure({ loader: ... }) first.')
+  }
+
+  const key = getLoadingKey(locale, ns)
+
+  // Skip if already loaded
+  if (loadingState[key] === 'loaded') return
+
+  // Deduplicate concurrent calls
+  if (loadingPromises.has(key)) {
+    return loadingPromises.get(key)!
+  }
+
+  const promise = (async () => {
+    loadingState[key] = 'loading'
+    try {
+      const dict = await cfg.loader!(locale, ns)
+      loadDictionary(locale, dict as Dictionary, ns)
+      loadingState[key] = 'loaded'
+    } catch (error) {
+      loadingState[key] = 'error'
+      throw error
+    } finally {
+      loadingPromises.delete(key)
+    }
+  })()
+
+  loadingPromises.set(key, promise)
+  return promise
+}
+
+/**
+ * Check if a dictionary has been loaded for a locale/namespace
+ * @param locale - Locale to check
+ * @param namespace - Optional namespace (defaults to 'default')
+ */
+export function isLoaded(locale: Locale, namespace?: string): boolean {
+  const ns = namespace || DEFAULT_NAMESPACE
+  const key = getLoadingKey(locale, ns)
+  return loadingState[key] === 'loaded'
 }
 
 /**

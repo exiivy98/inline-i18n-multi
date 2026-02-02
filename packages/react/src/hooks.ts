@@ -1,6 +1,6 @@
-import { useCallback } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { useLocaleContext } from './context'
-import { t as coreT } from 'inline-i18n-multi'
+import { t as coreT, loadAsync, isLoaded } from 'inline-i18n-multi'
 import type { Locale, TranslationVars } from 'inline-i18n-multi'
 
 /**
@@ -25,4 +25,44 @@ export function useT(): (key: string, vars?: TranslationVars) => string {
     (key: string, vars?: TranslationVars) => coreT(key, vars, locale),
     [locale]
   )
+}
+
+/**
+ * Hook for lazy loading dictionaries
+ * Automatically loads dictionaries when locale or namespace changes
+ *
+ * @example
+ * function Dashboard() {
+ *   const { isLoading, error } = useLoadDictionaries('ko', 'dashboard')
+ *   if (isLoading) return <Spinner />
+ *   if (error) return <Error message={error.message} />
+ *   return <Content />
+ * }
+ */
+export function useLoadDictionaries(
+  locale: Locale,
+  namespace?: string
+): { isLoading: boolean; error: Error | null } {
+  const [isLoading, setIsLoading] = useState(() => !isLoaded(locale, namespace))
+  const [error, setError] = useState<Error | null>(null)
+
+  useEffect(() => {
+    if (isLoaded(locale, namespace)) {
+      setIsLoading(false)
+      setError(null)
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
+
+    loadAsync(locale, namespace)
+      .then(() => setIsLoading(false))
+      .catch((err) => {
+        setError(err instanceof Error ? err : new Error(String(err)))
+        setIsLoading(false)
+      })
+  }, [locale, namespace])
+
+  return { isLoading, error }
 }

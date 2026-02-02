@@ -11,6 +11,8 @@ import {
   getLoadedLocales,
   getDictionary,
   getLoadedNamespaces,
+  loadAsync,
+  isLoaded,
   it_ja,
   en_zh,
   configure,
@@ -683,6 +685,115 @@ describe('Debug mode (v0.4.0)', () => {
       setLocale('ko')
       const result = t('hello')
       expect(result).toBe('[ko=>en] Hello')
+    })
+  })
+
+  // ============================================================================
+  // Lazy Loading (v0.5.0)
+  // ============================================================================
+
+  describe('Lazy loading (v0.5.0)', () => {
+    test('loadAsync throws if no loader configured', async () => {
+      await expect(loadAsync('en')).rejects.toThrow('No loader configured')
+    })
+
+    test('loadAsync calls loader with locale and namespace', async () => {
+      const loader = vi.fn().mockResolvedValue({ hello: 'Hello' })
+      configure({ loader })
+
+      await loadAsync('en', 'common')
+      expect(loader).toHaveBeenCalledWith('en', 'common')
+    })
+
+    test('loadAsync loads into default namespace when namespace omitted', async () => {
+      const loader = vi.fn().mockResolvedValue({ hello: 'Hello' })
+      configure({ loader })
+
+      await loadAsync('en')
+      expect(loader).toHaveBeenCalledWith('en', 'default')
+      expect(t('hello')).toBe('Hello')
+    })
+
+    test('loadAsync deduplicates concurrent calls', async () => {
+      const loader = vi.fn().mockResolvedValue({ hello: 'Hello' })
+      configure({ loader })
+
+      const p1 = loadAsync('en', 'common')
+      const p2 = loadAsync('en', 'common')
+      await Promise.all([p1, p2])
+
+      expect(loader).toHaveBeenCalledTimes(1)
+    })
+
+    test('isLoaded returns false before loading', () => {
+      expect(isLoaded('en')).toBe(false)
+      expect(isLoaded('en', 'common')).toBe(false)
+    })
+
+    test('isLoaded returns true after successful load', async () => {
+      const loader = vi.fn().mockResolvedValue({ hello: 'Hello' })
+      configure({ loader })
+
+      await loadAsync('en', 'common')
+      expect(isLoaded('en', 'common')).toBe(true)
+    })
+
+    test('isLoaded returns false after error', async () => {
+      const loader = vi.fn().mockRejectedValue(new Error('Network error'))
+      configure({ loader })
+
+      await expect(loadAsync('en', 'common')).rejects.toThrow('Network error')
+      expect(isLoaded('en', 'common')).toBe(false)
+    })
+
+    test('loadAsync error is thrown to caller', async () => {
+      const loader = vi.fn().mockRejectedValue(new Error('Failed to fetch'))
+      configure({ loader })
+
+      await expect(loadAsync('ko')).rejects.toThrow('Failed to fetch')
+    })
+
+    test('clearDictionaries resets loading state', async () => {
+      const loader = vi.fn().mockResolvedValue({ hello: 'Hello' })
+      configure({ loader })
+
+      await loadAsync('en', 'common')
+      expect(isLoaded('en', 'common')).toBe(true)
+
+      clearDictionaries()
+      expect(isLoaded('en', 'common')).toBe(false)
+    })
+
+    test('clearDictionaries with namespace resets only that namespace loading state', async () => {
+      const loader = vi.fn().mockResolvedValue({ hello: 'Hello' })
+      configure({ loader })
+
+      await loadAsync('en', 'common')
+      await loadAsync('en', 'settings')
+      expect(isLoaded('en', 'common')).toBe(true)
+      expect(isLoaded('en', 'settings')).toBe(true)
+
+      clearDictionaries('common')
+      expect(isLoaded('en', 'common')).toBe(false)
+      expect(isLoaded('en', 'settings')).toBe(true)
+    })
+
+    test('t() works with lazily loaded dictionaries', async () => {
+      const loader = vi.fn().mockResolvedValue({ greeting: 'Hello World' })
+      configure({ loader })
+
+      await loadAsync('en', 'app')
+      expect(t('app:greeting')).toBe('Hello World')
+    })
+
+    test('skips loading if already loaded', async () => {
+      const loader = vi.fn().mockResolvedValue({ hello: 'Hello' })
+      configure({ loader })
+
+      await loadAsync('en', 'common')
+      await loadAsync('en', 'common')
+
+      expect(loader).toHaveBeenCalledTimes(1)
     })
   })
 })

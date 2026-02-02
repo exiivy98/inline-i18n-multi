@@ -1,6 +1,7 @@
 export { LocaleProvider } from './provider'
-export { useLocale, useT } from './hooks'
+export { useLocale, useT, useLoadDictionaries } from './hooks'
 export { T } from './component'
+export { RichText, useRichText } from './richtext'
 
 // re-export from core for convenience
 export {
@@ -29,6 +30,11 @@ export {
   hasTranslation,
   getLoadedLocales,
   getDictionary,
+  loadAsync,
+  isLoaded,
+  // rich text parsing
+  parseRichText,
+  type RichTextSegment,
   // types
   type Locale,
   type Translations,

@@ -533,4 +533,181 @@ describe('ICU Message Format', () => {
       expect(result).toContain('5 items')
     })
   })
+
+  // ==========================================================================
+  // Currency Formatting (v0.5.0)
+  // ==========================================================================
+
+  describe('currency formatting (v0.5.0)', () => {
+    test('detects currency pattern', () => {
+      expect(hasICUPattern('{price, currency, USD}')).toBe(true)
+      expect(hasICUPattern('{price, currency}')).toBe(true)
+      expect(hasICUPattern('{price, currency, KRW}')).toBe(true)
+    })
+
+    test('formats USD for en-US', () => {
+      const result = interpolateICU(
+        '{price, currency, USD}',
+        { price: 42000 },
+        'en-US'
+      )
+      expect(result).toBe('$42,000.00')
+    })
+
+    test('formats KRW for ko-KR', () => {
+      const result = interpolateICU(
+        '{price, currency, KRW}',
+        { price: 42000 },
+        'ko-KR'
+      )
+      expect(result).toContain('42,000')
+      expect(result).toContain('₩')
+    })
+
+    test('formats EUR for de-DE', () => {
+      const result = interpolateICU(
+        '{price, currency, EUR}',
+        { price: 1234.5 },
+        'de-DE'
+      )
+      expect(result).toContain('1.234,50')
+      expect(result).toContain('€')
+    })
+
+    test('defaults to USD when no currency code specified', () => {
+      const result = interpolateICU(
+        '{price, currency}',
+        { price: 100 },
+        'en-US'
+      )
+      expect(result).toBe('$100.00')
+    })
+
+    test('missing value returns placeholder', () => {
+      const result = interpolateICU(
+        '{price, currency, USD}',
+        {},
+        'en-US'
+      )
+      expect(result).toBe('{price}')
+    })
+
+    test('non-numeric value returns placeholder', () => {
+      const result = interpolateICU(
+        '{price, currency, USD}',
+        { price: 'abc' as unknown as number },
+        'en-US'
+      )
+      expect(result).toBe('{price}')
+    })
+
+    test('combined with text', () => {
+      const result = interpolateICU(
+        'Total: {price, currency, USD}',
+        { price: 42000 },
+        'en-US'
+      )
+      expect(result).toBe('Total: $42,000.00')
+    })
+
+    test('combined with other ICU formats', () => {
+      const result = interpolateICU(
+        '{count, plural, one {# item} other {# items}} for {price, currency, USD}',
+        { count: 3, price: 29.99 },
+        'en-US'
+      )
+      expect(result).toContain('3 items')
+      expect(result).toContain('$29.99')
+    })
+
+    test('multiple currencies in same template', () => {
+      const result = interpolateICU(
+        '{usd, currency, USD} / {krw, currency, KRW}',
+        { usd: 100, krw: 130000 },
+        'en-US'
+      )
+      expect(result).toContain('$100.00')
+      expect(result).toContain('₩130,000')
+    })
+  })
+
+  // ==========================================================================
+  // Compact Number Formatting (v0.5.0)
+  // ==========================================================================
+
+  describe('compact number formatting (v0.5.0)', () => {
+    test('formats compact number in en-US', () => {
+      const result = interpolateICU(
+        '{count, number, compact}',
+        { count: 1500000 },
+        'en-US'
+      )
+      expect(result).toMatch(/1\.5M/)
+    })
+
+    test('formats compact number in ko-KR', () => {
+      const result = interpolateICU(
+        '{count, number, compact}',
+        { count: 1500000 },
+        'ko-KR'
+      )
+      expect(result).toContain('만')
+    })
+
+    test('formats compactLong in en-US', () => {
+      const result = interpolateICU(
+        '{count, number, compactLong}',
+        { count: 1500000 },
+        'en-US'
+      )
+      expect(result).toMatch(/million/i)
+    })
+
+    test('formats small number without compaction', () => {
+      const result = interpolateICU(
+        '{count, number, compact}',
+        { count: 100 },
+        'en-US'
+      )
+      expect(result).toBe('100')
+    })
+
+    test('formats compact for de-DE', () => {
+      const result = interpolateICU(
+        '{count, number, compact}',
+        { count: 1500000 },
+        'de-DE'
+      )
+      // German uses "Mio." or similar
+      expect(result).toBeTruthy()
+    })
+
+    test('missing value returns placeholder', () => {
+      const result = interpolateICU(
+        '{count, number, compact}',
+        {},
+        'en-US'
+      )
+      expect(result).toBe('{count}')
+    })
+
+    test('combined with text', () => {
+      const result = interpolateICU(
+        '{count, number, compact} views',
+        { count: 1500000 },
+        'en-US'
+      )
+      expect(result).toMatch(/1\.5M views/)
+    })
+
+    test('combined with currency', () => {
+      const result = interpolateICU(
+        '{count, number, compact} items for {price, currency, USD}',
+        { count: 1500000, price: 99.99 },
+        'en-US'
+      )
+      expect(result).toMatch(/1\.5M items/)
+      expect(result).toContain('$99.99')
+    })
+  })
 })

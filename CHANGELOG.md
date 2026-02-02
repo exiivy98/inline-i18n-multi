@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2026-02-02
+
+### Added
+
+- **Currency Formatting** - Locale-aware currency display
+  - ICU format: `{price, currency, USD}` → "$42,000.00"
+  - Auto-detects currency symbol per locale: `{price, currency, KRW}` → "₩42,000"
+  - Defaults to USD when currency code omitted
+  - Locale-aware via `Intl.NumberFormat`
+- **Compact Number Formatting** - Short number display
+  - ICU format: `{count, number, compact}` → "1.5M" / "150만"
+  - Long format: `{count, number, compactLong}` → "1.5 million"
+  - Locale-aware via `Intl.NumberFormat` with compact notation
+- **Rich Text Interpolation** - Embed React components in translations
+  - Core: `parseRichText()` framework-agnostic parser
+  - React: `<RichText>` component and `useRichText()` hook
+  - Tag syntax: `<link>text</link>` mapped to component renderers
+  - Works with variable interpolation (`{name}` + `<bold>text</bold>`)
+- **Lazy Loading** - Async dictionary loading on demand
+  - Configure loader: `configure({ loader: (locale, ns) => import(...) })`
+  - Load async: `await loadAsync('ko', 'dashboard')`
+  - Check state: `isLoaded('ko', 'dashboard')`
+  - Promise deduplication for concurrent calls
+  - React: `useLoadDictionaries(locale, namespace?)` hook with `{ isLoading, error }`
+- New core exports: `loadAsync`, `isLoaded`, `parseRichText`, `RichTextSegment`
+- New React exports: `RichText`, `useRichText`, `useLoadDictionaries`
+
 ## [0.4.0] - 2025-01-26
 
 ### Added

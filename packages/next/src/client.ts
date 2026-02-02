@@ -30,6 +30,15 @@ export {
   hasTranslation,
   getLoadedLocales,
   getDictionary,
+  // rich text (v0.5.0)
+  RichText,
+  useRichText,
+  // lazy loading (v0.5.0)
+  loadAsync,
+  isLoaded,
+  useLoadDictionaries,
+  // rich text parsing
+  parseRichText,
   // types
   type Locale,
   type Translations,
@@ -37,4 +46,5 @@ export {
   type Dictionary,
   type Dictionaries,
   type PluralRules,
+  type RichTextSegment,
 } from 'inline-i18n-multi-react'

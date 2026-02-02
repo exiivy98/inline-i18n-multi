@@ -61,6 +61,10 @@
 - **缺失翻译警告** - 可自定义处理程序的开发时诊断
 - **命名空间支持** - 为大型应用组织翻译（`t('common:greeting')`）
 - **调试模式** - 缺失/回退翻译的可视化指示
+- **货币格式化** - 语言环境感知的货币显示（`{price, currency, USD}`）
+- **紧凑数字格式化** - 短数字显示（`{count, number, compact}`）
+- **富文本插值** - 在翻译中嵌入React组件（`<link>text</link>`）
+- **懒加载** - 按需异步字典加载（`loadAsync()`）
 
 ---
 
@@ -507,7 +511,7 @@ it({
 ```
 
 **支持的样式:**
-- `number`: `decimal`, `percent`, `integer`, `currency`
+- `number`: `decimal`, `percent`, `integer`, `currency`, `compact`, `compactLong`
 - `date`: `short`, `medium`, `long`, `full`
 - `time`: `short`, `medium`, `long`, `full`
 
@@ -551,6 +555,50 @@ it({ zh: '{options, list, disjunction}' }, { options: ['A', 'B', 'C'] })
 // Unit（无连词）
 it({ zh: '{items, list, unit}' }, { items: ['10kg', '5m', '3L'] })
 // → "10kg、5m、3L"
+```
+
+### 货币格式化
+
+语言环境感知的货币格式化与自动符号检测：
+
+```typescript
+// 货币格式化
+it({
+  en: 'Total: {price, currency, USD}',
+  zh: '合计: {price, currency, USD}'
+}, { price: 42000 })
+// en → "Total: $42,000.00"
+// zh → "合计: $42,000.00"
+
+// 韩元
+it({ ko: '{price, currency, KRW}' }, { price: 42000 })
+// → "₩42,000"
+
+// 欧元（德语语言环境）
+it({ de: '{price, currency, EUR}' }, { price: 1234.5 })
+// → "1.234,50 €"
+
+// 省略货币代码时默认使用USD
+it({ en: '{price, currency}' }, { price: 100 })
+// → "$100.00"
+```
+
+### 紧凑数字格式化
+
+用于大数值的短数字显示：
+
+```typescript
+// 紧凑（短）
+it({
+  en: '{count, number, compact} views',
+  ko: '{count, number, compact} 조회'
+}, { count: 1500000 })
+// en → "1.5M views"
+// ko → "150만 조회"
+
+// 紧凑（长）
+it({ en: '{count, number, compactLong}' }, { count: 1500000 })
+// → "1.5 million"
 ```
 
 ---
@@ -623,6 +671,71 @@ configure({
     fallbackPrefixFormat: (from, to) => `[${from}=>${to}] `,
   }
 })
+```
+
+---
+
+## 富文本插值
+
+在翻译中嵌入React组件：
+
+```tsx
+import { RichText, useRichText } from 'inline-i18n-multi-react'
+
+// 组件语法
+<RichText
+  translations={{
+    en: 'Read <link>terms</link> and <bold>agree</bold>',
+    zh: '阅读<link>条款</link>并<bold>同意</bold>',
+    ko: '<link>약관</link>을 읽고 <bold>동의</bold>해주세요'
+  }}
+  components={{
+    link: (text) => <a href="/terms">{text}</a>,
+    bold: (text) => <strong>{text}</strong>
+  }}
+/>
+
+// 钩子语法
+const richT = useRichText({
+  link: (text) => <a href="/terms">{text}</a>,
+  bold: (text) => <strong>{text}</strong>
+})
+richT({ en: 'Click <link>here</link>', zh: '点击<link>这里</link>' })
+```
+
+---
+
+## 懒加载
+
+按需异步加载字典：
+
+```typescript
+import { configure, loadAsync, isLoaded, t } from 'inline-i18n-multi'
+
+// 配置加载器
+configure({
+  loader: (locale, namespace) => import(`./locales/${locale}/${namespace}.json`)
+})
+
+// 按需加载
+await loadAsync('zh', 'dashboard')
+t('dashboard:title')
+
+// 检查加载状态
+isLoaded('zh', 'dashboard')  // → true
+```
+
+### React钩子
+
+```tsx
+import { useLoadDictionaries } from 'inline-i18n-multi-react'
+
+function Dashboard() {
+  const { isLoading, error } = useLoadDictionaries('zh', 'dashboard')
+  if (isLoading) return <Spinner />
+  if (error) return <Error message={error.message} />
+  return <Content />
+}
 ```
 
 ---
@@ -880,6 +993,9 @@ pnpm --filter inline-i18n-multi-nextjs-example dev
 | `configure(options)` | 全局设置（回退、警告、调试） |
 | `getConfig()` | 获取当前配置 |
 | `resetConfig()` | 重置配置为默认值 |
+| `loadAsync(locale, namespace?)` | 使用配置的加载器异步加载字典 |
+| `isLoaded(locale, namespace?)` | 检查字典是否已加载 |
+| `parseRichText(template, names)` | 将富文本模板解析为段落 |
 
 ### React钩子和组件
 
@@ -889,6 +1005,9 @@ pnpm --filter inline-i18n-multi-nextjs-example dev
 | `useLocale()` | 返回`[locale, setLocale]`的钩子 |
 | `useT()` | 返回绑定到当前语言环境的`t`函数的钩子 |
 | `T` | 翻译组件 |
+| `RichText` | 支持嵌入组件的富文本翻译组件 |
+| `useRichText(components)` | 返回富文本翻译函数的钩子 |
+| `useLoadDictionaries(locale, ns?)` | 带加载状态的字典懒加载钩子 |
 
 ### 类型
 
@@ -905,6 +1024,7 @@ interface Config {
   warnOnMissing?: boolean
   onMissingTranslation?: WarningHandler
   debugMode?: boolean | DebugModeOptions
+  loader?: (locale: Locale, namespace: string) => Promise<Record<string, unknown>>
 }
 
 interface DebugModeOptions {
@@ -923,6 +1043,12 @@ interface TranslationWarning {
 }
 
 type WarningHandler = (warning: TranslationWarning) => void
+
+interface RichTextSegment {
+  type: 'text' | 'component'
+  content: string
+  componentName?: string
+}
 ```
 
 ---
