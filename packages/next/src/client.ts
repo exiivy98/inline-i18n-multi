@@ -39,6 +39,15 @@ export {
   useLoadDictionaries,
   // rich text parsing
   parseRichText,
+  // custom formatters (v0.6.0)
+  registerFormatter,
+  clearFormatters,
+  type CustomFormatter,
+  // locale detection (v0.6.0)
+  detectLocale,
+  useDetectedLocale,
+  type DetectLocaleOptions,
+  type DetectSource,
   // types
   type Locale,
   type Translations,

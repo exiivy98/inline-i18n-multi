@@ -51,7 +51,6 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Inline translations** - Write translations right where you use them
 - **Instant search** - Find any text in your codebase immediately
 - **Type-safe** - Full TypeScript support with variable type checking
-- **Build-time optimization** - Zero runtime overhead with Babel/SWC plugins
 - **Multiple languages** - Support for any number of locales
 - **Framework support** - React, Next.js (App Router & Pages Router)
 - **Developer tools** - CLI for validation, VSCode extension for navigation
@@ -65,6 +64,10 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Compact Number Formatting** - Short number display (`{count, number, compact}`)
 - **Rich Text Interpolation** - Embed React components in translations (`<link>text</link>`)
 - **Lazy Loading** - Async dictionary loading on demand (`loadAsync()`)
+- **Custom Formatter Registry** - Register custom ICU formatters (`registerFormatter('phone', fn)` → `{num, phone}`)
+- **Interpolation Guards** - Handle missing variables gracefully (`configure({ missingVarHandler })`)
+- **Locale Detection** - Automatic locale detection from cookies/navigator (`detectLocale()` + React `useDetectedLocale()`)
+- **Selectordinal** - Full ICU `selectordinal` support for ordinal plurals (`{n, selectordinal, ...}`)
 
 ---
 
@@ -76,8 +79,6 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 | [`inline-i18n-multi-react`](./packages/react) | React hooks & components |
 | [`inline-i18n-multi-next`](./packages/next) | Next.js integration |
 | [`@inline-i18n-multi/cli`](./packages/cli) | CLI tools |
-| [`@inline-i18n-multi/babel-plugin`](./packages/babel-plugin) | Babel plugin |
-| [`@inline-i18n-multi/swc-plugin`](./packages/swc-plugin) | SWC plugin |
 | [`inline-i18n-multi-vscode`](./packages/vscode) | VSCode extension |
 
 ---
@@ -702,6 +703,81 @@ function Dashboard() {
 
 ---
 
+## Custom Formatter Registry
+
+Register custom ICU format functions for domain-specific formatting:
+
+```typescript
+import { registerFormatter, it } from 'inline-i18n-multi'
+
+registerFormatter('phone', (value, locale, style?) => {
+  const s = String(value)
+  return `(${s.slice(0,3)}) ${s.slice(3,6)}-${s.slice(6)}`
+})
+
+it({ en: 'Call {num, phone}' }, { num: '2125551234' })
+// → "Call (212) 555-1234"
+```
+
+Once registered, custom formatters can be used in any ICU message pattern with the syntax `{variable, formatterName}`.
+
+---
+
+## Interpolation Guards
+
+Handle missing variables gracefully instead of leaving raw `{varName}` placeholders:
+
+```typescript
+import { configure, it } from 'inline-i18n-multi'
+
+configure({
+  missingVarHandler: (varName, locale) => `[${varName}]`
+})
+
+it({ en: 'Hello {name}' })
+// → "Hello [name]" (instead of "Hello {name}")
+```
+
+This is useful in development to catch missing variables early, or in production to provide a safe fallback display.
+
+---
+
+## Locale Detection
+
+Automatically detect the user's preferred locale from multiple sources:
+
+```typescript
+import { detectLocale, setLocale } from 'inline-i18n-multi'
+
+const locale = detectLocale({
+  supportedLocales: ['en', 'ko', 'ja'],
+  defaultLocale: 'en',
+  sources: ['cookie', 'navigator'],
+  cookieName: 'NEXT_LOCALE',
+})
+setLocale(locale)
+```
+
+### React Hook
+
+```tsx
+import { useDetectedLocale } from 'inline-i18n-multi-react'
+
+function App() {
+  useDetectedLocale({
+    supportedLocales: ['en', 'ko'],
+    defaultLocale: 'en',
+    sources: ['cookie', 'navigator'],
+  })
+}
+```
+
+**Detection sources** (checked in order):
+- `cookie` - Read from a named cookie (e.g., `NEXT_LOCALE`)
+- `navigator` - Read from `navigator.languages` / `navigator.language`
+
+---
+
 ## Configuration
 
 Configure global settings for fallback behavior and warnings:
@@ -790,50 +866,6 @@ configure({
 
 setLocale('fr')
 it({ en: 'Hello', ko: '안녕하세요' })  // Warns: Missing translation for fr
-```
-
----
-
-## Build-Time Optimization
-
-Transform `it()` calls at build time for better performance.
-
-### Babel Plugin
-
-```bash
-npm install -D @inline-i18n-multi/babel-plugin
-```
-
-```javascript
-// babel.config.js
-module.exports = {
-  plugins: ['@inline-i18n-multi/babel-plugin'],
-}
-```
-
-### SWC Plugin (Next.js 13+)
-
-```bash
-npm install -D @inline-i18n-multi/swc-plugin
-```
-
-```javascript
-// next.config.js
-module.exports = {
-  experimental: {
-    swcPlugins: [['@inline-i18n-multi/swc-plugin', {}]],
-  },
-}
-```
-
-**Before (source):**
-```typescript
-it('안녕하세요', 'Hello')
-```
-
-**After (build output):**
-```typescript
-__i18n_lookup('a1b2c3d4', { ko: '안녕하세요', en: 'Hello' })
 ```
 
 ---
@@ -979,9 +1011,11 @@ See [Testing Documentation](./docs/test.md) for more details.
 | `getLoadedNamespaces()` | Get array of loaded namespace names |
 | `getDictionary(locale, namespace?)` | Get dictionary for a specific locale and namespace |
 | `clearDictionaries(namespace?)` | Clear dictionaries (all or specific namespace) |
-| `configure(options)` | Configure global settings (fallback, warnings, debug) |
+| `configure(options)` | Configure global settings (fallback, warnings, debug, missingVarHandler) |
 | `getConfig()` | Get current configuration |
 | `resetConfig()` | Reset configuration to defaults |
+| `registerFormatter(name, fn)` | Register a custom ICU formatter |
+| `detectLocale(options)` | Detect locale from cookies/navigator |
 | `loadAsync(locale, namespace?)` | Asynchronously load dictionary using configured loader |
 | `isLoaded(locale, namespace?)` | Check if dictionary has been loaded |
 | `parseRichText(template, names)` | Parse rich text template into segments |
@@ -997,6 +1031,7 @@ See [Testing Documentation](./docs/test.md) for more details.
 | `RichText` | Rich text translation component with embedded components |
 | `useRichText(components)` | Hook returning function for rich text translations |
 | `useLoadDictionaries(locale, ns?)` | Hook for lazy loading dictionaries with loading state |
+| `useDetectedLocale(options)` | Hook for automatic locale detection and setting |
 
 ### Types
 
@@ -1014,6 +1049,7 @@ interface Config {
   onMissingTranslation?: WarningHandler
   debugMode?: boolean | DebugModeOptions
   loader?: (locale: Locale, namespace: string) => Promise<Record<string, unknown>>
+  missingVarHandler?: (varName: string, locale: string) => string
 }
 
 interface DebugModeOptions {

@@ -1,5 +1,5 @@
 export { LocaleProvider } from './provider'
-export { useLocale, useT, useLoadDictionaries } from './hooks'
+export { useLocale, useT, useLoadDictionaries, useDetectedLocale } from './hooks'
 export { T } from './component'
 export { RichText, useRichText } from './richtext'
 
@@ -32,9 +32,21 @@ export {
   getDictionary,
   loadAsync,
   isLoaded,
+  // configuration
+  configure,
+  getConfig,
+  resetConfig,
   // rich text parsing
   parseRichText,
   type RichTextSegment,
+  // custom formatters (v0.6.0)
+  registerFormatter,
+  clearFormatters,
+  type CustomFormatter,
+  // locale detection (v0.6.0)
+  detectLocale,
+  type DetectLocaleOptions,
+  type DetectSource,
   // types
   type Locale,
   type Translations,

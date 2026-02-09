@@ -1,5 +1,6 @@
 import type { TranslationVars } from './types'
-import { hasICUPattern, interpolateICU } from './icu'
+import { getConfig } from './config'
+import { hasICUPattern, hasCustomFormatter, interpolateICU } from './icu'
 
 const VARIABLE_PATTERN = /\{(\w+)\}/g
 
@@ -8,16 +9,39 @@ export function interpolate(
   vars?: TranslationVars,
   locale?: string,
 ): string {
-  if (!vars) return template
+  const resolvedLocale = locale || 'en'
 
-  // ICU Message Format (plural, select)
-  if (hasICUPattern(template)) {
-    return interpolateICU(template, vars, locale || 'en')
+  // ICU Message Format (plural, select) or custom formatters
+  if (hasICUPattern(template) || hasCustomFormatter(template)) {
+    if (!vars) {
+      // Even without vars, handler should process missing variables
+      const cfg = getConfig()
+      if (cfg.missingVarHandler) {
+        return interpolateICU(template, {}, resolvedLocale)
+      }
+      return template
+    }
+    return interpolateICU(template, vars, resolvedLocale)
   }
 
   // Simple variable substitution
+  if (!vars) {
+    const cfg = getConfig()
+    if (cfg.missingVarHandler) {
+      return template.replace(VARIABLE_PATTERN, (_, key) => {
+        return cfg.missingVarHandler!(key, resolvedLocale)
+      })
+    }
+    return template
+  }
+
   return template.replace(VARIABLE_PATTERN, (_, key) => {
     const value = vars[key]
-    return value !== undefined ? String(value) : `{${key}}`
+    if (value !== undefined) return String(value)
+    const cfg = getConfig()
+    if (cfg.missingVarHandler) {
+      return cfg.missingVarHandler(key, resolvedLocale)
+    }
+    return `{${key}}`
   })
 }

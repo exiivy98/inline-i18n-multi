@@ -19,7 +19,6 @@ Thank you for your interest in contributing! This guide will help you get starte
 
 - Node.js 18+
 - pnpm 9+
-- Rust (only for SWC plugin development)
 
 ### Getting Started
 
@@ -41,21 +40,6 @@ pnpm test
 pnpm typecheck
 ```
 
-### Setting Up Rust (for SWC plugin only)
-
-If you need to modify the SWC plugin:
-
-```bash
-# Install Rust
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-# Install nightly toolchain
-rustup install nightly-2024-12-01
-
-# Add WASM target
-rustup target add wasm32-wasip1 --toolchain nightly-2024-12-01
-```
-
 ---
 
 ## Project Structure
@@ -67,9 +51,7 @@ inline-i18n-multi/
 │   ├── react/          # React hooks & components
 │   ├── next/           # Next.js integration
 │   ├── cli/            # CLI tools
-│   ├── vscode/         # VSCode extension
-│   ├── babel-plugin/   # Babel plugin
-│   └── swc-plugin/     # SWC plugin (Rust)
+│   └── vscode/         # VSCode extension
 ├── docs/               # Internal documentation (not published)
 ├── turbo.json          # Turborepo configuration
 ├── pnpm-workspace.yaml # pnpm workspace configuration
@@ -86,8 +68,6 @@ react (depends on core)
 next (depends on react)
 
 cli (depends on core)
-babel-plugin (standalone)
-swc-plugin (standalone, Rust)
 vscode (standalone)
 ```
 
@@ -107,13 +87,6 @@ pnpm --filter @inline-i18n-multi/cli test
 
 # Watch mode (if available)
 pnpm --filter inline-i18n-multi dev
-```
-
-### Building the SWC Plugin
-
-```bash
-cd packages/swc-plugin
-cargo build --release --target wasm32-wasip1
 ```
 
 ### Running the Full Build
@@ -161,8 +134,6 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 | `next` | Next.js package |
 | `cli` | CLI package |
 | `vscode` | VSCode extension |
-| `babel` | Babel plugin |
-| `swc` | SWC plugin |
 | `deps` | Dependencies |
 
 ### Examples
@@ -214,7 +185,7 @@ feat(core): add support for plural forms
 
 ### TypeScript
 
-- Use TypeScript for all packages (except SWC plugin)
+- Use TypeScript for all packages
 - Enable strict mode
 - Prefer `interface` over `type` for object shapes
 - Use JSDoc comments for public APIs
@@ -230,18 +201,6 @@ feat(core): add support for plural forms
 export function it(ko: string, en: string, vars?: TranslationVars): string {
   // ...
 }
-```
-
-### Rust (SWC Plugin)
-
-- Follow standard Rust conventions
-- Use `rustfmt` for formatting
-- Use `clippy` for linting
-
-```bash
-cd packages/swc-plugin
-cargo fmt
-cargo clippy
 ```
 
 ### Comments

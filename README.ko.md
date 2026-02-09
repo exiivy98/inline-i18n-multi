@@ -52,7 +52,6 @@
 - **인라인 번역** - 사용하는 곳에서 바로 번역 작성
 - **즉시 검색** - 코드베이스에서 모든 텍스트를 즉시 검색
 - **타입 안전** - 변수 타입 체크를 포함한 완벽한 TypeScript 지원
-- **빌드 타임 최적화** - Babel/SWC 플러그인으로 런타임 오버헤드 제로
 - **다국어 지원** - 원하는 만큼의 로케일 지원
 - **프레임워크 지원** - React, Next.js (App Router & Pages Router)
 - **개발자 도구** - 검증용 CLI, 탐색용 VSCode 확장
@@ -66,6 +65,10 @@
 - **축약 숫자 포맷팅** - 큰 숫자의 축약 표시 (`{count, number, compact}`)
 - **리치 텍스트 보간** - 번역에 React 컴포넌트 삽입 (`<link>텍스트</link>`)
 - **지연 로딩** - 비동기 딕셔너리 로딩 (`loadAsync()`)
+- **커스텀 포맷터 레지스트리** - 커스텀 ICU 포맷터 등록 (`registerFormatter('phone', fn)` → `{num, phone}`)
+- **보간 가드** - 누락된 변수를 우아하게 처리 (`configure({ missingVarHandler })`)
+- **로케일 감지** - 쿠키/브라우저에서 자동 로케일 감지 (`detectLocale()` + React `useDetectedLocale()`)
+- **Selectordinal** - 서수 복수형을 위한 완전한 ICU `selectordinal` 지원 (`{n, selectordinal, ...}`)
 
 ---
 
@@ -77,8 +80,6 @@
 | [`inline-i18n-multi-react`](./packages/react)                | React 훅 & 컴포넌트 |
 | [`inline-i18n-multi-next`](./packages/next)                  | Next.js 통합        |
 | [`@inline-i18n-multi/cli`](./packages/cli)                   | CLI 도구            |
-| [`@inline-i18n-multi/babel-plugin`](./packages/babel-plugin) | Babel 플러그인      |
-| [`@inline-i18n-multi/swc-plugin`](./packages/swc-plugin)     | SWC 플러그인        |
 | [`inline-i18n-multi-vscode`](./packages/vscode)              | VSCode 확장         |
 
 ---
@@ -743,6 +744,81 @@ function Dashboard() {
 
 ---
 
+## 커스텀 포맷터 레지스트리
+
+도메인별 포맷팅을 위한 커스텀 ICU 포맷 함수를 등록합니다:
+
+```typescript
+import { registerFormatter, it } from 'inline-i18n-multi'
+
+registerFormatter('phone', (value, locale, style?) => {
+  const s = String(value)
+  return `(${s.slice(0,3)}) ${s.slice(3,6)}-${s.slice(6)}`
+})
+
+it({ en: 'Call {num, phone}' }, { num: '2125551234' })
+// → "Call (212) 555-1234"
+```
+
+등록된 커스텀 포맷터는 `{variable, formatterName}` 구문으로 모든 ICU 메시지 패턴에서 사용할 수 있습니다.
+
+---
+
+## 보간 가드
+
+누락된 변수를 원시 `{varName}` 플레이스홀더 대신 우아하게 처리합니다:
+
+```typescript
+import { configure, it } from 'inline-i18n-multi'
+
+configure({
+  missingVarHandler: (varName, locale) => `[${varName}]`
+})
+
+it({ en: 'Hello {name}' })
+// → "Hello [name]" ("Hello {name}" 대신)
+```
+
+개발 시 누락된 변수를 조기에 발견하거나, 프로덕션에서 안전한 폴백 표시를 제공하는 데 유용합니다.
+
+---
+
+## 로케일 감지
+
+여러 소스에서 사용자의 선호 로케일을 자동으로 감지합니다:
+
+```typescript
+import { detectLocale, setLocale } from 'inline-i18n-multi'
+
+const locale = detectLocale({
+  supportedLocales: ['en', 'ko', 'ja'],
+  defaultLocale: 'en',
+  sources: ['cookie', 'navigator'],
+  cookieName: 'NEXT_LOCALE',
+})
+setLocale(locale)
+```
+
+### React 훅
+
+```tsx
+import { useDetectedLocale } from 'inline-i18n-multi-react'
+
+function App() {
+  useDetectedLocale({
+    supportedLocales: ['en', 'ko'],
+    defaultLocale: 'en',
+    sources: ['cookie', 'navigator'],
+  })
+}
+```
+
+**감지 소스** (순서대로 확인):
+- `cookie` - 지정된 쿠키에서 읽기 (예: `NEXT_LOCALE`)
+- `navigator` - `navigator.languages` / `navigator.language`에서 읽기
+
+---
+
 ## 설정
 
 폴백 동작과 경고에 대한 전역 설정을 구성합니다:
@@ -831,52 +907,6 @@ configure({
 
 setLocale('fr')
 it({ en: 'Hello', ko: '안녕하세요' })  // 경고: fr에 대한 번역 누락
-```
-
----
-
-## 빌드 타임 최적화
-
-더 나은 성능을 위해 빌드 시 `it()` 호출을 변환합니다.
-
-### Babel 플러그인
-
-```bash
-npm install -D @inline-i18n-multi/babel-plugin
-```
-
-```javascript
-// babel.config.js
-module.exports = {
-  plugins: ["@inline-i18n-multi/babel-plugin"],
-};
-```
-
-### SWC 플러그인 (Next.js 13+)
-
-```bash
-npm install -D @inline-i18n-multi/swc-plugin
-```
-
-```javascript
-// next.config.js
-module.exports = {
-  experimental: {
-    swcPlugins: [["@inline-i18n-multi/swc-plugin", {}]],
-  },
-};
-```
-
-**변환 전 (소스):**
-
-```typescript
-it("안녕하세요", "Hello");
-```
-
-**변환 후 (빌드 출력):**
-
-```typescript
-__i18n_lookup("a1b2c3d4", { ko: "안녕하세요", en: "Hello" });
 ```
 
 ---
@@ -995,9 +1025,11 @@ VSCode 마켓플레이스에서 `inline-i18n-multi-vscode`를 설치하세요.
 | `getLoadedNamespaces()`        | 로드된 네임스페이스 이름 배열 반환      |
 | `getDictionary(locale, namespace?)` | 특정 로케일과 네임스페이스의 딕셔너리 반환 |
 | `clearDictionaries(namespace?)` | 딕셔너리 삭제 (전체 또는 특정 네임스페이스) |
-| `configure(options)`           | 전역 설정 (폴백, 경고, 디버그)          |
+| `configure(options)`           | 전역 설정 (폴백, 경고, 디버그, missingVarHandler) |
 | `getConfig()`                  | 현재 설정 조회                          |
 | `resetConfig()`                | 설정을 기본값으로 리셋                  |
+| `registerFormatter(name, fn)`  | 커스텀 ICU 포맷터 등록                  |
+| `detectLocale(options)`        | 쿠키/브라우저에서 로케일 감지           |
 | `loadAsync(locale, namespace?)` | 설정된 로더를 사용하여 비동기 딕셔너리 로드 |
 | `isLoaded(locale, namespace?)` | 딕셔너리 로드 여부 확인 |
 | `parseRichText(template, names)` | 리치 텍스트 템플릿을 세그먼트로 파싱 |
@@ -1013,6 +1045,7 @@ VSCode 마켓플레이스에서 `inline-i18n-multi-vscode`를 설치하세요.
 | `RichText` | 컴포넌트 삽입이 가능한 리치 텍스트 번역 컴포넌트 |
 | `useRichText(components)` | 리치 텍스트 번역 함수를 반환하는 훅 |
 | `useLoadDictionaries(locale, ns?)` | 로딩 상태를 포함한 지연 로딩 훅 |
+| `useDetectedLocale(options)` | 자동 로케일 감지 및 설정 훅 |
 
 ### 타입
 
@@ -1030,6 +1063,7 @@ interface Config {
   onMissingTranslation?: WarningHandler
   debugMode?: boolean | DebugModeOptions
   loader?: (locale: string, namespace: string) => Promise<any>
+  missingVarHandler?: (varName: string, locale: string) => string
 }
 
 interface DebugModeOptions {

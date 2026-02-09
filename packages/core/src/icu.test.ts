@@ -1,5 +1,6 @@
-import { describe, expect, test } from 'vitest'
-import { interpolateICU, hasICUPattern } from './icu'
+import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest'
+import { interpolateICU, hasICUPattern, registerFormatter, clearFormatters } from './icu'
+import { configure, resetConfig } from './config'
 
 describe('ICU Message Format', () => {
   describe('hasICUPattern', () => {
@@ -124,6 +125,84 @@ describe('ICU Message Format', () => {
         'en'
       )
       expect(result).toBe('Tom is a good boy')
+    })
+  })
+
+  // ==========================================================================
+  // Selectordinal (v0.6.0)
+  // ==========================================================================
+
+  describe('selectordinal', () => {
+    test('1st (one)', () => {
+      const result = interpolateICU(
+        '{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}',
+        { rank: 1 },
+        'en'
+      )
+      expect(result).toBe('1st')
+    })
+
+    test('2nd (two)', () => {
+      const result = interpolateICU(
+        '{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}',
+        { rank: 2 },
+        'en'
+      )
+      expect(result).toBe('2nd')
+    })
+
+    test('3rd (few)', () => {
+      const result = interpolateICU(
+        '{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}',
+        { rank: 3 },
+        'en'
+      )
+      expect(result).toBe('3rd')
+    })
+
+    test('4th (other)', () => {
+      const result = interpolateICU(
+        '{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}',
+        { rank: 4 },
+        'en'
+      )
+      expect(result).toBe('4th')
+    })
+
+    test('11th is other (not one)', () => {
+      const result = interpolateICU(
+        '{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}',
+        { rank: 11 },
+        'en'
+      )
+      expect(result).toBe('11th')
+    })
+
+    test('21st is one', () => {
+      const result = interpolateICU(
+        '{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}',
+        { rank: 21 },
+        'en'
+      )
+      expect(result).toBe('21st')
+    })
+
+    test('combined with text', () => {
+      const result = interpolateICU(
+        'You finished {rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} place!',
+        { rank: 3 },
+        'en'
+      )
+      expect(result).toBe('You finished 3rd place!')
+    })
+
+    test('missing value returns placeholder', () => {
+      const result = interpolateICU(
+        '{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}',
+        {},
+        'en'
+      )
+      expect(result).toBe('{rank}')
     })
   })
 
@@ -708,6 +787,175 @@ describe('ICU Message Format', () => {
       )
       expect(result).toMatch(/1\.5M items/)
       expect(result).toContain('$99.99')
+    })
+  })
+
+  // ==========================================================================
+  // Interpolation Guards with ICU (v0.6.0)
+  // ==========================================================================
+
+  describe('missingVarHandler with ICU (v0.6.0)', () => {
+    beforeEach(() => {
+      resetConfig()
+    })
+
+    afterEach(() => {
+      resetConfig()
+    })
+
+    test('handler called for missing number format var', () => {
+      configure({ missingVarHandler: (v) => `[${v}]` })
+      const result = interpolateICU('{price, number}', {}, 'en')
+      expect(result).toBe('[price]')
+    })
+
+    test('handler called for missing currency var', () => {
+      configure({ missingVarHandler: (v) => `[${v}]` })
+      const result = interpolateICU('{price, currency, USD}', {}, 'en-US')
+      expect(result).toBe('[price]')
+    })
+
+    test('handler called for missing compact number var', () => {
+      configure({ missingVarHandler: (v) => `[${v}]` })
+      const result = interpolateICU('{count, number, compact}', {}, 'en-US')
+      expect(result).toBe('[count]')
+    })
+
+    test('handler called for missing date var', () => {
+      configure({ missingVarHandler: (v) => `[${v}]` })
+      const result = interpolateICU('{d, date}', {}, 'en')
+      expect(result).toBe('[d]')
+    })
+
+    test('handler called for missing time var', () => {
+      configure({ missingVarHandler: (v) => `[${v}]` })
+      const result = interpolateICU('{t, time}', {}, 'en')
+      expect(result).toBe('[t]')
+    })
+
+    test('handler called for missing select var', () => {
+      configure({ missingVarHandler: (v) => `[${v}]` })
+      const result = interpolateICU(
+        '{gender, select, male {He} female {She} other {They}}',
+        {},
+        'en'
+      )
+      // select with undefined value falls through to 'other' branch
+      expect(result).toBe('They')
+    })
+
+    test('handler called for missing argument element', () => {
+      configure({ missingVarHandler: (v) => `[${v}]` })
+      const result = interpolateICU(
+        '{count, plural, one {# item for {name}} other {# items for {name}}}',
+        { count: 3 },
+        'en'
+      )
+      expect(result).toBe('3 items for [name]')
+    })
+
+    test('handler receives correct locale', () => {
+      const handler = vi.fn().mockReturnValue('??')
+      configure({ missingVarHandler: handler })
+      interpolateICU('{val, number}', {}, 'ko-KR')
+      expect(handler).toHaveBeenCalledWith('val', 'ko-KR')
+    })
+  })
+
+  // ==========================================================================
+  // Custom Formatter Registry (v0.6.0)
+  // ==========================================================================
+
+  describe('custom formatter registry (v0.6.0)', () => {
+    afterEach(() => {
+      clearFormatters()
+      resetConfig()
+    })
+
+    test('register and use custom formatter', () => {
+      registerFormatter('phone', (value) => {
+        const s = String(value)
+        return `(${s.slice(0, 3)}) ${s.slice(3, 6)}-${s.slice(6)}`
+      })
+      const result = interpolateICU(
+        'Call {num, phone}',
+        { num: '2125551234' },
+        'en'
+      )
+      expect(result).toBe('Call (212) 555-1234')
+    })
+
+    test('custom formatter with style arg', () => {
+      registerFormatter('mask', (value, _locale, style) => {
+        const s = String(value)
+        if (style === 'last4') return '****' + s.slice(-4)
+        return '****'
+      })
+      const result = interpolateICU(
+        'Card: {card, mask, last4}',
+        { card: '4111111111111234' },
+        'en'
+      )
+      expect(result).toBe('Card: ****1234')
+    })
+
+    test('custom formatter receives locale', () => {
+      const formatter = vi.fn().mockReturnValue('formatted')
+      registerFormatter('test', formatter)
+      interpolateICU('{val, test}', { val: 'hello' }, 'ko-KR')
+      expect(formatter).toHaveBeenCalledWith('hello', 'ko-KR', undefined)
+    })
+
+    test('unregistered name falls through to ICU', () => {
+      // 'number' is a built-in ICU type, not a custom formatter
+      const result = interpolateICU('{count, number}', { count: 1234 }, 'en')
+      expect(result).toBe('1,234')
+    })
+
+    test('missing variable returns placeholder', () => {
+      registerFormatter('phone', (value) => String(value))
+      const result = interpolateICU('Call {num, phone}', {}, 'en')
+      expect(result).toBe('Call {num}')
+    })
+
+    test('missing variable uses missingVarHandler', () => {
+      registerFormatter('phone', (value) => String(value))
+      configure({ missingVarHandler: (v) => `[${v}]` })
+      const result = interpolateICU('Call {num, phone}', {}, 'en')
+      expect(result).toBe('Call [num]')
+    })
+
+    test('clearFormatters works', () => {
+      registerFormatter('phone', (value) => `(${String(value)})`)
+      clearFormatters()
+      // After clearing, {num, phone} is not recognized as custom formatter
+      // so it falls through to ICU parser (which will treat it as unknown)
+      const result = interpolateICU('Call {num}', { num: '123' }, 'en')
+      expect(result).toBe('Call 123')
+    })
+
+    test('combined with built-in ICU formats', () => {
+      registerFormatter('phone', (value) => {
+        const s = String(value)
+        return `(${s.slice(0, 3)}) ${s.slice(3, 6)}-${s.slice(6)}`
+      })
+      const result = interpolateICU(
+        '{count, plural, one {# call} other {# calls}} to {num, phone}',
+        { count: 3, num: '2125551234' },
+        'en'
+      )
+      expect(result).toBe('3 calls to (212) 555-1234')
+    })
+
+    test('rejects reserved formatter names', () => {
+      expect(() => registerFormatter('plural', () => '')).toThrow('reserved ICU type name')
+      expect(() => registerFormatter('select', () => '')).toThrow('reserved ICU type name')
+      expect(() => registerFormatter('number', () => '')).toThrow('reserved ICU type name')
+      expect(() => registerFormatter('date', () => '')).toThrow('reserved ICU type name')
+      expect(() => registerFormatter('time', () => '')).toThrow('reserved ICU type name')
+      expect(() => registerFormatter('currency', () => '')).toThrow('reserved ICU type name')
+      expect(() => registerFormatter('relativeTime', () => '')).toThrow('reserved ICU type name')
+      expect(() => registerFormatter('list', () => '')).toThrow('reserved ICU type name')
     })
   })
 })

@@ -63,6 +63,10 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Compact Number Formatting** - Short number display (`{count, number, compact}`)
 - **Rich Text Interpolation** - Embed React components in translations (`<link>text</link>`)
 - **Lazy Loading** - Async dictionary loading on demand (`loadAsync()`)
+- **Custom Formatter Registry** - Register custom ICU-style formatters (`registerFormatter('phone', fn)`)
+- **Interpolation Guards** - Handle missing variables gracefully (`missingVarHandler`)
+- **Locale Detection** - Auto-detect user locale from navigator, cookie, URL, or header (`detectLocale()`)
+- **Selectordinal** - Ordinal plural formatting (`{rank, selectordinal, one {#st} two {#nd} ...}`)
 
 ---
 
@@ -206,7 +210,10 @@ it({
 }, { price: 1234.56 })  // → "Price: 1,234.56"
 ```
 
-**Supported ICU styles:**
+**Supported ICU types:**
+- `plural`: `zero`, `one`, `two`, `few`, `many`, `other` (and exact matches like `=0`, `=1`)
+- `select`: match on string values
+- `selectordinal`: ordinal plural categories (`one`, `two`, `few`, `other`)
 - `number`: `decimal`, `percent`, `integer`, `currency`, `compact`, `compactLong`
 - `date`: `short`, `medium`, `long`, `full`
 - `time`: `short`, `medium`, `long`, `full`
@@ -370,6 +377,180 @@ function Dashboard() {
 
 ---
 
+## Custom Formatter Registry
+
+Register custom ICU-style formatters for domain-specific formatting:
+
+```typescript
+import { registerFormatter, clearFormatters, it, setLocale } from 'inline-i18n-multi'
+
+setLocale('en')
+
+// Register a phone number formatter
+registerFormatter('phone', (value, locale, style?) => {
+  const s = String(value)
+  if (locale === 'ko') return `${s.slice(0, 3)}-${s.slice(3, 7)}-${s.slice(7)}`
+  return `(${s.slice(0, 3)}) ${s.slice(3, 6)}-${s.slice(6)}`
+})
+
+// Use in translations
+it({
+  en: 'Call {num, phone}',
+  ko: '전화: {num, phone}'
+}, { num: '2125551234' })
+// → "Call (212) 555-1234"
+
+// Register a formatter with style support
+registerFormatter('mask', (value, locale, style?) => {
+  const s = String(value)
+  if (style === 'email') {
+    const [user, domain] = s.split('@')
+    return `${user[0]}***@${domain}`
+  }
+  return s.slice(0, 2) + '***' + s.slice(-2)
+})
+
+it({ en: 'Email: {email, mask, email}' }, { email: 'john@example.com' })
+// → "Email: j***@example.com"
+
+// Clear all custom formatters
+clearFormatters()
+```
+
+Reserved names (`plural`, `select`, `selectordinal`, `number`, `date`, `time`, `relativeTime`, `list`, `currency`) cannot be used as custom formatter names and will throw an error.
+
+---
+
+## Interpolation Guards
+
+Handle missing interpolation variables gracefully with a custom handler:
+
+```typescript
+import { configure, it, setLocale } from 'inline-i18n-multi'
+
+setLocale('en')
+
+// Configure a missing variable handler
+configure({
+  missingVarHandler: (varName, locale) => {
+    console.warn(`Missing variable "${varName}" for locale "${locale}"`)
+    return `[${varName}]`
+  }
+})
+
+// When a variable is missing, the handler is called instead of leaving {varName}
+it({ en: 'Hello, {name}!' })
+// logs: Missing variable "name" for locale "en"
+// → "Hello, [name]!"
+
+// Works with ICU patterns too
+it({ en: '{count, plural, one {# item} other {# items}}' })
+// logs: Missing variable "count" for locale "en"
+// → "{count}"
+
+// Without a handler, missing variables are left as-is: {varName}
+```
+
+---
+
+## Locale Detection
+
+Auto-detect the user's locale from multiple sources:
+
+```typescript
+import { detectLocale, setLocale } from 'inline-i18n-multi'
+
+// Basic detection from browser navigator
+const locale = detectLocale({
+  supportedLocales: ['en', 'ko', 'ja'],
+  defaultLocale: 'en',
+})
+setLocale(locale)
+
+// Multiple sources in priority order
+const detected = detectLocale({
+  supportedLocales: ['en', 'ko', 'ja'],
+  defaultLocale: 'en',
+  sources: ['cookie', 'url', 'navigator'],
+  cookieName: 'NEXT_LOCALE',  // default
+})
+
+// Server-side detection from Accept-Language header
+const ssrLocale = detectLocale({
+  supportedLocales: ['en', 'ko', 'ja'],
+  defaultLocale: 'en',
+  sources: ['header'],
+  headerValue: 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
+})
+// → "ko"
+
+// BCP 47 parent matching (en-US matches en)
+const matched = detectLocale({
+  supportedLocales: ['en', 'ko'],
+  defaultLocale: 'en',
+  sources: ['navigator'],
+})
+// Browser reports "en-US" → matches "en"
+```
+
+**Detection sources:**
+
+| Source | Description |
+|--------|-------------|
+| `navigator` | Browser `navigator.languages` / `navigator.language` |
+| `cookie` | Reads locale from `document.cookie` (configurable name) |
+| `url` | First path segment (e.g., `/ko/about` matches `ko`) |
+| `header` | Parses `Accept-Language` header value (for SSR) |
+
+Sources are tried in order; the first match wins. If no source matches, `defaultLocale` is returned.
+
+---
+
+## Selectordinal
+
+Ordinal plural formatting for ranking and ordering (e.g., 1st, 2nd, 3rd):
+
+```typescript
+import { it, setLocale } from 'inline-i18n-multi'
+
+setLocale('en')
+
+// Ordinal suffixes
+it({
+  en: '{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}'
+}, { rank: 1 })   // → "1st"
+
+it({
+  en: '{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}'
+}, { rank: 2 })   // → "2nd"
+
+it({
+  en: '{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}'
+}, { rank: 3 })   // → "3rd"
+
+it({
+  en: '{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}'
+}, { rank: 4 })   // → "4th"
+
+// Handles English irregulars correctly
+it({
+  en: '{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}'
+}, { rank: 11 })  // → "11th" (not "11st")
+
+it({
+  en: '{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}'
+}, { rank: 21 })  // → "21st"
+
+// Combined with text
+it({
+  en: 'You finished {rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} place!'
+}, { rank: 3 })   // → "You finished 3rd place!"
+```
+
+Uses `Intl.PluralRules` with `{ type: 'ordinal' }` for locale-aware ordinal categories.
+
+---
+
 ## Configuration
 
 Configure global settings for fallback behavior and warnings:
@@ -455,12 +636,25 @@ Available helpers:
 
 | Function | Description |
 |----------|-------------|
-| `configure(options)` | Configure global settings (fallback, warnings, debug) |
+| `configure(options)` | Configure global settings (fallback, warnings, debug, missingVarHandler) |
 | `getConfig()` | Get current configuration |
 | `resetConfig()` | Reset configuration to defaults |
 | `loadAsync(locale, namespace?)` | Asynchronously load dictionary using configured loader |
 | `isLoaded(locale, namespace?)` | Check if dictionary has been loaded |
 | `parseRichText(template, names)` | Parse rich text template into segments |
+
+### Custom Formatters
+
+| Function | Description |
+|----------|-------------|
+| `registerFormatter(name, formatter)` | Register a custom ICU-style formatter |
+| `clearFormatters()` | Clear all custom formatters |
+
+### Locale Detection
+
+| Function | Description |
+|----------|-------------|
+| `detectLocale(options)` | Auto-detect user's locale from multiple sources |
 
 ### React Hooks & Components
 
@@ -486,6 +680,7 @@ interface Config {
   onMissingTranslation?: WarningHandler
   debugMode?: boolean | DebugModeOptions
   loader?: (locale: Locale, namespace: string) => Promise<Record<string, unknown>>
+  missingVarHandler?: (varName: string, locale: string) => string
 }
 
 interface DebugModeOptions {
@@ -504,6 +699,23 @@ interface TranslationWarning {
 }
 
 type WarningHandler = (warning: TranslationWarning) => void
+
+type CustomFormatter = (value: unknown, locale: string, style?: string) => string
+
+type DetectSource = 'navigator' | 'cookie' | 'url' | 'header'
+
+interface DetectLocaleOptions {
+  /** Locales your app supports */
+  supportedLocales: Locale[]
+  /** Fallback when no source matches */
+  defaultLocale: Locale
+  /** Detection sources in priority order (default: ['navigator']) */
+  sources?: DetectSource[]
+  /** Cookie name to read (default: 'NEXT_LOCALE') */
+  cookieName?: string
+  /** Accept-Language header value (for SSR) */
+  headerValue?: string
+}
 
 interface RichTextSegment {
   type: 'text' | 'component'
@@ -564,30 +776,6 @@ npm install inline-i18n-multi-next
 
 ---
 
-## Build-Time Optimization
-
-### Babel Plugin
-
-Transform `it()` calls at build time for better performance. Extracts translations for static analysis and enables dead code elimination for unused locales.
-
-```bash
-npm install -D @inline-i18n-multi/babel-plugin
-```
-
-[View Babel plugin →](https://www.npmjs.com/package/@inline-i18n-multi/babel-plugin)
-
-### SWC Plugin
-
-SWC plugin for Next.js 13+ projects. Faster than Babel with the same optimization benefits. Configure in `next.config.js` under `experimental.swcPlugins`.
-
-```bash
-npm install -D @inline-i18n-multi/swc-plugin
-```
-
-[View SWC plugin →](https://www.npmjs.com/package/@inline-i18n-multi/swc-plugin)
-
----
-
 ## Developer Tools
 
 ### CLI
@@ -614,7 +802,6 @@ npm install -D @inline-i18n-multi/cli
 **Please read the [full documentation on GitHub](https://github.com/exiivy98/inline-i18n-multi)** for:
 - Complete API reference
 - Framework integrations (React, Next.js)
-- Build-time optimization
 - CLI tools
 - Best practices and examples
 

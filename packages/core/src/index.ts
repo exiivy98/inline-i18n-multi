@@ -1,6 +1,7 @@
 // Inline translations
 export { it } from './translate'
 export { setLocale, getLocale } from './context'
+/** @deprecated Will be removed in v1.0.0 */
 export { __i18n_lookup } from './runtime'
 export {
   it_ja,
@@ -34,6 +35,12 @@ export {
 
 // Configuration
 export { configure, getConfig, resetConfig } from './config'
+
+// Custom formatters (v0.6.0)
+export { registerFormatter, clearFormatters, type CustomFormatter } from './icu'
+
+// Locale detection (v0.6.0)
+export { detectLocale, type DetectLocaleOptions, type DetectSource } from './detect'
 
 // Rich text parsing
 export { parseRichText, type RichTextSegment } from './richtext'

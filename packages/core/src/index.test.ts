@@ -1,4 +1,4 @@
-import { describe, it as test, expect, beforeEach, vi } from 'vitest'
+import { describe, it as test, expect, beforeEach, afterEach, vi } from 'vitest'
 import {
   it,
   setLocale,
@@ -17,6 +17,8 @@ import {
   en_zh,
   configure,
   resetConfig,
+  registerFormatter,
+  clearFormatters,
 } from './index'
 
 describe('setLocale / getLocale', () => {
@@ -795,5 +797,116 @@ describe('Debug mode (v0.4.0)', () => {
 
       expect(loader).toHaveBeenCalledTimes(1)
     })
+  })
+})
+
+// ============================================================================
+// Interpolation Guards (v0.6.0)
+// ============================================================================
+
+describe('Interpolation Guards (v0.6.0)', () => {
+  beforeEach(() => {
+    resetConfig()
+    setLocale('en')
+    clearDictionaries()
+  })
+
+  test('default: missing var returns {name} placeholder', () => {
+    const result = it({ en: 'Hello {name}' })
+    expect(result).toBe('Hello {name}')
+  })
+
+  test('custom handler formats missing vars', () => {
+    configure({
+      missingVarHandler: (varName) => `[${varName}]`,
+    })
+    const result = it({ en: 'Hello {name}' })
+    expect(result).toBe('Hello [name]')
+  })
+
+  test('handler receives locale', () => {
+    const handler = vi.fn().mockReturnValue('??')
+    configure({ missingVarHandler: handler })
+    setLocale('ko')
+    it({ ko: 'Hello {name}' })
+    expect(handler).toHaveBeenCalledWith('name', 'ko')
+  })
+
+  test('handler works with partially provided vars', () => {
+    configure({
+      missingVarHandler: (varName) => `<${varName}>`,
+    })
+    const result = it({ en: 'Hello {name}, age {age}' }, { name: 'World' })
+    expect(result).toBe('Hello World, age <age>')
+  })
+
+  test('handler works with t() dictionary lookup', () => {
+    configure({
+      missingVarHandler: (varName) => `[${varName}]`,
+    })
+    loadDictionaries({ en: { greeting: 'Hello {name}' } })
+    const result = t('greeting')
+    expect(result).toBe('Hello [name]')
+  })
+
+  test('handler works with ICU plural templates', () => {
+    configure({
+      missingVarHandler: (varName) => `[${varName}]`,
+    })
+    const result = it({ en: '{count, plural, one {# item} other {# items}}' })
+    expect(result).toBe('[count]')
+  })
+
+  test('resetConfig restores default behavior', () => {
+    configure({
+      missingVarHandler: (varName) => `[${varName}]`,
+    })
+    resetConfig()
+    const result = it({ en: 'Hello {name}' })
+    expect(result).toBe('Hello {name}')
+  })
+
+  test('handler not called when vars are provided', () => {
+    const handler = vi.fn().mockReturnValue('??')
+    configure({ missingVarHandler: handler })
+    const result = it({ en: 'Hello {name}' }, { name: 'World' })
+    expect(result).toBe('Hello World')
+    expect(handler).not.toHaveBeenCalled()
+  })
+})
+
+// ============================================================================
+// Custom Formatter Registry (v0.6.0)
+// ============================================================================
+
+describe('Custom Formatter Registry (v0.6.0)', () => {
+  beforeEach(() => {
+    resetConfig()
+    setLocale('en')
+    clearFormatters()
+  })
+
+  afterEach(() => {
+    clearFormatters()
+  })
+
+  test('it() works with custom formatter', () => {
+    registerFormatter('phone', (value) => {
+      const s = String(value)
+      return `(${s.slice(0, 3)}) ${s.slice(3, 6)}-${s.slice(6)}`
+    })
+    const result = it({ en: 'Call {num, phone}' }, { num: '2125551234' })
+    expect(result).toBe('Call (212) 555-1234')
+  })
+
+  test('t() works with custom formatter', () => {
+    registerFormatter('phone', (value) => {
+      const s = String(value)
+      return `(${s.slice(0, 3)}) ${s.slice(3, 6)}-${s.slice(6)}`
+    })
+    loadDictionaries({ en: { contact: 'Call {num, phone}' } })
+    const result = t('contact', { num: '2125551234' })
+    expect(result).toBe('Call (212) 555-1234')
+    clearDictionaries()
   })
 })

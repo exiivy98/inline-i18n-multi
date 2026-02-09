@@ -35,7 +35,7 @@ function isDevMode(): boolean {
   }
 }
 
-type FullConfig = Required<Omit<Config, 'loader'>> & Pick<Config, 'loader'>
+type FullConfig = Required<Omit<Config, 'loader' | 'missingVarHandler'>> & Pick<Config, 'loader' | 'missingVarHandler'>
 
 const defaultConfig: FullConfig = {
   defaultLocale: 'en',

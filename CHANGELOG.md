@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2026-02-09
+
+### Added
+
+- **Custom Formatter Registry** - Register custom ICU-style formatters
+  - Register: `registerFormatter('phone', (value, locale, style?) => formatted)`
+  - Use in templates: `{num, phone}` or `{card, mask, last4}`
+  - Rejects reserved ICU type names (plural, select, number, etc.)
+  - `clearFormatters()` to reset registry
+  - Works with `it()`, `t()`, and all ICU combinations
+- **Interpolation Guards** - Custom handler for missing variables
+  - Configure: `configure({ missingVarHandler: (varName, locale) => '[missing]' })`
+  - Applies to simple `{var}` interpolation and all ICU format types
+  - Default behavior unchanged (`{varName}` placeholder)
+- **Locale Detection** - Auto-detect user's locale from multiple sources
+  - `detectLocale({ supportedLocales, defaultLocale, sources })`
+  - Sources: `navigator`, `cookie`, `url`, `header` (tried in priority order)
+  - BCP 47 parent matching (e.g., `en-US` → `en`)
+  - SSR-safe with `typeof` guards
+  - Cookie name configurable (default: `NEXT_LOCALE`)
+  - Accept-Language header parsing with quality weights
+  - React: `useDetectedLocale()` hook for auto-setting locale on mount
+- **Selectordinal** - Ordinal plural rules (1st, 2nd, 3rd, 4th...)
+  - Already supported via ICU parser — now with full test coverage
+  - `{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}`
+- New core exports: `registerFormatter`, `clearFormatters`, `detectLocale`, `CustomFormatter`, `DetectLocaleOptions`, `DetectSource`
+- New React exports: `useDetectedLocale`
+
+### Removed
+
+- **babel-plugin package** — Removed unused placeholder package
+- **swc-plugin package** — Removed unused placeholder package
+- Removed `@swc/cli` and `@swc/core` root dependencies
+
+### Changed
+
+- `missingVarHandler` added to `Config` type (optional)
+- `__i18n_lookup` marked as `@deprecated` — will be removed in v1.0.0
+
 ## [0.5.0] - 2026-02-02
 
 ### Added

@@ -4,10 +4,9 @@ import { interpolate } from './interpolation'
 import { buildFallbackChain, emitWarning } from './config'
 
 /**
- * Runtime lookup function for plugin-transformed code.
- * This is called by code that has been processed by @inline-i18n-multi/babel-plugin
- * or @inline-i18n-multi/swc-plugin.
+ * Runtime lookup function for build-tool-transformed code.
  *
+ * @deprecated Will be removed in v1.0.0
  * @param _hash - Content hash (for caching/debugging, unused at runtime)
  * @param translations - Translation map with locale keys
  * @param vars - Variables for interpolation
@@ -55,8 +54,8 @@ export function __i18n_lookup(
   )
 }
 
-// Register __i18n_lookup globally for plugin transformations
-// This makes it available without explicit import after bundle
+// @deprecated - Will be removed in v1.0.0
+// Register __i18n_lookup globally for backward compatibility
 if (typeof globalThis !== 'undefined') {
   (globalThis as Record<string, unknown>).__i18n_lookup = __i18n_lookup
 }

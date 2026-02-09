@@ -16,7 +16,101 @@ import {
   isTimeElement,
 } from '@formatjs/icu-messageformat-parser'
 
+import { getConfig } from './config'
+
 export type ICUVars = Record<string, string | number | Date | string[]>
+
+/**
+ * Handle a missing variable — uses custom handler if configured, otherwise returns {varName}
+ */
+function handleMissingVar(varName: string, locale: string): string {
+  const cfg = getConfig()
+  if (cfg.missingVarHandler) {
+    return cfg.missingVarHandler(varName, locale)
+  }
+  return `{${varName}}`
+}
+
+// ============================================================================
+// Custom Formatter Registry (v0.6.0)
+// ============================================================================
+
+export type CustomFormatter = (value: unknown, locale: string, style?: string) => string
+
+const customFormatters = new Map<string, CustomFormatter>()
+
+const RESERVED_FORMATTER_NAMES = new Set([
+  'plural', 'select', 'selectordinal',
+  'number', 'date', 'time',
+  'relativeTime', 'list', 'currency',
+])
+
+/**
+ * Register a custom formatter
+ *
+ * @example
+ * registerFormatter('phone', (value, locale, style?) => {
+ *   const s = String(value)
+ *   return `(${s.slice(0,3)}) ${s.slice(3,6)}-${s.slice(6)}`
+ * })
+ */
+export function registerFormatter(name: string, formatter: CustomFormatter): void {
+  if (RESERVED_FORMATTER_NAMES.has(name)) {
+    throw new Error(`Cannot register formatter "${name}": reserved ICU type name`)
+  }
+  customFormatters.set(name, formatter)
+}
+
+/**
+ * Clear all custom formatters
+ */
+export function clearFormatters(): void {
+  customFormatters.clear()
+}
+
+interface CustomFormatterReplacement {
+  variable: string
+  formatterName: string
+  style?: string
+}
+
+/**
+ * Build a regex that matches custom formatter patterns
+ */
+function buildCustomFormatterPattern(): RegExp | null {
+  if (customFormatters.size === 0) return null
+  const names = [...customFormatters.keys()].map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')
+  return new RegExp(`\\{(\\w+),\\s*(${names})(?:,\\s*(\\w+))?\\}`, 'g')
+}
+
+/**
+ * Preprocess custom formatter patterns before ICU parsing
+ */
+function preprocessCustomFormatters(template: string): {
+  processed: string
+  replacements: Map<string, CustomFormatterReplacement>
+} {
+  const replacements = new Map<string, CustomFormatterReplacement>()
+  const pattern = buildCustomFormatterPattern()
+  if (!pattern) return { processed: template, replacements }
+
+  let counter = 0
+  const processed = template.replace(pattern, (_, variable, formatterName, style) => {
+    const placeholder = `__CUSTOM_${counter++}__`
+    replacements.set(placeholder, { variable, formatterName, style })
+    return `{${placeholder}}`
+  })
+  return { processed, replacements }
+}
+
+/**
+ * Check if template contains custom formatter patterns
+ */
+export function hasCustomFormatter(template: string): boolean {
+  const pattern = buildCustomFormatterPattern()
+  if (!pattern) return false
+  return pattern.test(template)
+}
 
 /**
  * Map ICU date style names to Intl.DateTimeFormat options
@@ -91,12 +185,12 @@ function formatNumberElement(
 ): string {
   const value = vars[el.value]
   if (value === undefined) {
-    return `{${el.value}}`
+    return handleMissingVar(el.value, locale)
   }
 
   const num = typeof value === 'number' ? value : Number(value)
   if (isNaN(num)) {
-    return `{${el.value}}`
+    return handleMissingVar(el.value, locale)
   }
 
   let options: Intl.NumberFormatOptions = {}
@@ -132,7 +226,7 @@ function formatDateElement(
 ): string {
   const value = vars[el.value]
   if (value === undefined) {
-    return `{${el.value}}`
+    return handleMissingVar(el.value, locale)
   }
 
   let options: Intl.DateTimeFormatOptions = {}
@@ -150,7 +244,7 @@ function formatDateElement(
     const date = toDate(value as string | number | Date)
     return new Intl.DateTimeFormat(locale, options).format(date)
   } catch {
-    return `{${el.value}}`
+    return handleMissingVar(el.value, locale)
   }
 }
 
@@ -164,7 +258,7 @@ function formatTimeElement(
 ): string {
   const value = vars[el.value]
   if (value === undefined) {
-    return `{${el.value}}`
+    return handleMissingVar(el.value, locale)
   }
 
   let options: Intl.DateTimeFormatOptions = {}
@@ -182,7 +276,7 @@ function formatTimeElement(
     const date = toDate(value as string | number | Date)
     return new Intl.DateTimeFormat(locale, options).format(date)
   } catch {
-    return `{${el.value}}`
+    return handleMissingVar(el.value, locale)
   }
 }
 
@@ -225,12 +319,12 @@ function formatCurrencyValue(
 ): string {
   const value = vars[variableName]
   if (value === undefined) {
-    return `{${variableName}}`
+    return handleMissingVar(variableName, locale)
   }
 
   const num = typeof value === 'number' ? value : Number(value)
   if (isNaN(num)) {
-    return `{${variableName}}`
+    return handleMissingVar(variableName, locale)
   }
 
   try {
@@ -285,12 +379,12 @@ function formatCompactNumber(
 ): string {
   const value = vars[variableName]
   if (value === undefined) {
-    return `{${variableName}}`
+    return handleMissingVar(variableName, locale)
   }
 
   const num = typeof value === 'number' ? value : Number(value)
   if (isNaN(num)) {
-    return `{${variableName}}`
+    return handleMissingVar(variableName, locale)
   }
 
   try {
@@ -369,7 +463,7 @@ function formatRelativeTimeValue(
 ): string {
   const value = vars[variableName]
   if (value === undefined) {
-    return `{${variableName}}`
+    return handleMissingVar(variableName, locale)
   }
 
   try {
@@ -378,7 +472,7 @@ function formatRelativeTimeValue(
     const options = (style && RELATIVE_TIME_STYLES[style]) || RELATIVE_TIME_STYLES.long
     return new Intl.RelativeTimeFormat(locale, options).format(relValue, unit)
   } catch {
-    return `{${variableName}}`
+    return handleMissingVar(variableName, locale)
   }
 }
 
@@ -435,7 +529,7 @@ function formatListValue(
 ): string {
   const value = vars[variableName]
   if (value === undefined || !Array.isArray(value)) {
-    return `{${variableName}}`
+    return handleMissingVar(variableName, locale)
   }
 
   const options: Intl.ListFormatOptions = {
@@ -459,13 +553,27 @@ export function interpolateICU(
   locale: string
 ): string {
   // Pre-process custom formats (not natively supported by ICU parser)
-  const { processed: afterCurrency, replacements: currencyReplacements } = preprocessCurrency(template)
+  const { processed: afterCustom, replacements: customReplacements } = preprocessCustomFormatters(template)
+  const { processed: afterCurrency, replacements: currencyReplacements } = preprocessCurrency(afterCustom)
   const { processed: afterCompact, replacements: compactReplacements } = preprocessCompactNumber(afterCurrency)
   const { processed: afterRelTime, replacements: relTimeReplacements } = preprocessRelativeTime(afterCompact)
   const { processed: afterList, replacements: listReplacements } = preprocessList(afterRelTime)
 
   const ast = parse(afterList)
   let result = formatElements(ast, vars, locale, null)
+
+  // Post-process custom formatter placeholders
+  for (const [placeholder, { variable, formatterName, style }] of customReplacements) {
+    const value = vars[variable]
+    let formatted: string
+    if (value === undefined) {
+      formatted = handleMissingVar(variable, locale)
+    } else {
+      const formatter = customFormatters.get(formatterName)
+      formatted = formatter ? formatter(value, locale, style) : String(value)
+    }
+    result = result.replace(`{${placeholder}}`, formatted)
+  }
 
   // Post-process currency placeholders
   for (const [placeholder, { variable, currencyCode }] of currencyReplacements) {
@@ -517,7 +625,13 @@ function formatElement(
 
   if (isArgumentElement(el)) {
     const value = vars[el.value]
-    return value !== undefined ? String(value) : `{${el.value}}`
+    if (value !== undefined) return String(value)
+    // Preprocessor placeholders (__CURRENCY_0__, __COMPACT_0__, etc.) must keep
+    // their {placeholder} format so postprocessing can find and replace them
+    if (el.value.startsWith('__') && el.value.endsWith('__')) {
+      return `{${el.value}}`
+    }
+    return handleMissingVar(el.value, locale)
   }
 
   if (isPoundElement(el)) {
@@ -556,7 +670,7 @@ function formatPlural(
 ): string {
   const value = vars[el.value]
   if (typeof value !== 'number') {
-    return `{${el.value}}`
+    return handleMissingVar(el.value, locale)
   }
 
   const adjustedValue = value - el.offset
@@ -579,7 +693,7 @@ function formatPlural(
     return formatElements(el.options.other.value, vars, locale, adjustedValue)
   }
 
-  return `{${el.value}}`
+  return handleMissingVar(el.value, locale)
 }
 
 function formatSelect(
@@ -600,7 +714,7 @@ function formatSelect(
     return formatElements(el.options.other.value, vars, locale, null)
   }
 
-  return `{${el.value}}`
+  return handleMissingVar(el.value, locale)
 }
 
 // Pattern to detect ICU format (plural, select, selectordinal, number, date, time, relativeTime, list)

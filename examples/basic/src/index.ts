@@ -15,6 +15,9 @@
  * - Currency Formatting (v0.5.0)
  * - Compact Number Formatting (v0.5.0)
  * - Lazy Loading (v0.5.0)
+ * - Custom Formatter Registry (v0.6.0)
+ * - Interpolation Guards (v0.6.0)
+ * - Locale Detection (v0.6.0)
  */
 
 import {
@@ -38,6 +41,11 @@ import {
   // Lazy loading (v0.5.0)
   loadAsync,
   isLoaded,
+  // Custom formatters (v0.6.0)
+  registerFormatter,
+  clearFormatters,
+  // Locale detection (v0.6.0)
+  detectLocale,
 } from 'inline-i18n-multi'
 
 // ============================================
@@ -409,6 +417,91 @@ setLocale('ko')
 console.log(t('dashboard:title'))  // → "대시보드"
 
 // ============================================
+// 14. Custom Formatter Registry (v0.6.0)
+// ============================================
+
+console.log('\n=== Custom Formatter Registry (v0.6.0) ===\n')
+
+resetConfig()
+setLocale('en')
+
+// Register a phone number formatter
+registerFormatter('phone', (value) => {
+  const s = String(value)
+  return `(${s.slice(0, 3)}) ${s.slice(3, 6)}-${s.slice(6)}`
+})
+
+console.log(it({ en: 'Call {num, phone}' }, { num: '2125551234' }))
+// → "Call (212) 555-1234"
+
+// Register a credit card mask formatter with style
+registerFormatter('mask', (value, _locale, style) => {
+  const s = String(value)
+  if (style === 'last4') return '****' + s.slice(-4)
+  return '****'
+})
+
+console.log(it({ en: 'Card: {card, mask, last4}' }, { card: '4111111111111234' }))
+// → "Card: ****1234"
+
+// Combined with built-in ICU
+console.log(it(
+  { en: '{count, plural, one {# call} other {# calls}} to {num, phone}' },
+  { count: 3, num: '2125551234' }
+))
+// → "3 calls to (212) 555-1234"
+
+clearFormatters()
+
+// ============================================
+// 15. Interpolation Guards (v0.6.0)
+// ============================================
+
+console.log('\n=== Interpolation Guards (v0.6.0) ===\n')
+
+// Default behavior: missing var shows {name}
+console.log('Default:', it({ en: 'Hello {name}' }))
+// → "Hello {name}"
+
+// Custom handler
+configure({
+  missingVarHandler: (varName, locale) => `[${varName}:${locale}]`
+})
+
+console.log('With handler:', it({ en: 'Hello {name}' }))
+// → "Hello [name:en]"
+
+// Works with partial vars
+console.log('Partial:', it({ en: 'Hi {name}, age {age}' }, { name: 'World' }))
+// → "Hi World, age [age:en]"
+
+resetConfig()
+
+// ============================================
+// 16. Locale Detection (v0.6.0)
+// ============================================
+
+console.log('\n=== Locale Detection (v0.6.0) ===\n')
+
+// Detect from Accept-Language header (useful for SSR)
+const detected = detectLocale({
+  supportedLocales: ['en', 'ko', 'ja'],
+  defaultLocale: 'en',
+  sources: ['header'],
+  headerValue: 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
+})
+console.log('Detected locale:', detected)  // → "ko"
+
+// No matching source → falls back to default
+const fallback = detectLocale({
+  supportedLocales: ['en', 'ko'],
+  defaultLocale: 'en',
+  sources: ['header'],
+  headerValue: 'fr-FR,fr;q=0.9',
+})
+console.log('Fallback locale:', fallback)  // → "en"
+
+// ============================================
 // Summary
 // ============================================
 
@@ -443,4 +536,10 @@ v0.5.0 features:
 - Compact number formatting ({count, number, compact})
 - Lazy loading (loadAsync(), isLoaded())
 - Rich Text interpolation (React only - see react example)
+
+v0.6.0 features:
+- Custom Formatter Registry (registerFormatter(), clearFormatters())
+- Interpolation Guards (missingVarHandler)
+- Locale Detection (detectLocale())
+- Selectordinal (ordinal plural rules)
 `)

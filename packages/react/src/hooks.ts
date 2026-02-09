@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect } from 'react'
 import { useLocaleContext } from './context'
-import { t as coreT, loadAsync, isLoaded } from 'inline-i18n-multi'
-import type { Locale, TranslationVars } from 'inline-i18n-multi'
+import { t as coreT, loadAsync, isLoaded, detectLocale, setLocale } from 'inline-i18n-multi'
+import type { Locale, TranslationVars, DetectLocaleOptions } from 'inline-i18n-multi'
 
 /**
  * Get current locale and setter
@@ -65,4 +65,29 @@ export function useLoadDictionaries(
   }, [locale, namespace])
 
   return { isLoading, error }
+}
+
+/**
+ * Hook that auto-detects and sets locale on mount
+ *
+ * @example
+ * function App() {
+ *   useDetectedLocale({
+ *     supportedLocales: ['en', 'ko', 'ja'],
+ *     defaultLocale: 'en',
+ *     sources: ['cookie', 'navigator'],
+ *   })
+ *   return <Content />
+ * }
+ */
+export function useDetectedLocale(options: DetectLocaleOptions): void {
+  const { setLocale: setContextLocale } = useLocaleContext()
+
+  useEffect(() => {
+    const detected = detectLocale(options)
+    setLocale(detected)
+    setContextLocale(detected)
+    // Run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 }

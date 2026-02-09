@@ -51,7 +51,6 @@
 - **内联翻译** - 在使用的地方直接编写翻译
 - **即时搜索** - 在代码库中立即搜索任何文本
 - **类型安全** - 包含变量类型检查的完整TypeScript支持
-- **构建时优化** - 使用Babel/SWC插件实现零运行时开销
 - **多语言支持** - 支持任意数量的语言环境
 - **框架支持** - React、Next.js（App Router和Pages Router）
 - **开发者工具** - 用于验证的CLI，用于导航的VSCode扩展
@@ -65,6 +64,10 @@
 - **紧凑数字格式化** - 短数字显示（`{count, number, compact}`）
 - **富文本插值** - 在翻译中嵌入React组件（`<link>text</link>`）
 - **懒加载** - 按需异步字典加载（`loadAsync()`）
+- **自定义格式化器注册** - 注册自定义ICU格式化器（`registerFormatter('phone', fn)` → `{num, phone}`）
+- **插值守卫** - 优雅地处理缺失变量（`configure({ missingVarHandler })`）
+- **语言环境检测** - 从Cookie/浏览器自动检测语言环境（`detectLocale()` + React `useDetectedLocale()`）
+- **Selectordinal** - 完整的ICU `selectordinal`序数复数支持（`{n, selectordinal, ...}`）
 
 ---
 
@@ -76,8 +79,6 @@
 | [`inline-i18n-multi-react`](./packages/react) | React钩子和组件 |
 | [`inline-i18n-multi-next`](./packages/next) | Next.js集成 |
 | [`@inline-i18n-multi/cli`](./packages/cli) | CLI工具 |
-| [`@inline-i18n-multi/babel-plugin`](./packages/babel-plugin) | Babel插件 |
-| [`@inline-i18n-multi/swc-plugin`](./packages/swc-plugin) | SWC插件 |
 | [`inline-i18n-multi-vscode`](./packages/vscode) | VSCode扩展 |
 
 ---
@@ -740,6 +741,81 @@ function Dashboard() {
 
 ---
 
+## 自定义格式化器注册
+
+注册自定义ICU格式化函数，用于特定领域的格式化：
+
+```typescript
+import { registerFormatter, it } from 'inline-i18n-multi'
+
+registerFormatter('phone', (value, locale, style?) => {
+  const s = String(value)
+  return `(${s.slice(0,3)}) ${s.slice(3,6)}-${s.slice(6)}`
+})
+
+it({ en: 'Call {num, phone}' }, { num: '2125551234' })
+// → "Call (212) 555-1234"
+```
+
+注册后，自定义格式化器可以在任何ICU消息模式中使用 `{variable, formatterName}` 语法。
+
+---
+
+## 插值守卫
+
+优雅地处理缺失变量，而不是留下原始的 `{varName}` 占位符：
+
+```typescript
+import { configure, it } from 'inline-i18n-multi'
+
+configure({
+  missingVarHandler: (varName, locale) => `[${varName}]`
+})
+
+it({ en: 'Hello {name}' })
+// → "Hello [name]"（而不是 "Hello {name}"）
+```
+
+这在开发时有助于尽早发现缺失变量，或在生产环境中提供安全的回退显示。
+
+---
+
+## 语言环境检测
+
+从多个来源自动检测用户的首选语言环境：
+
+```typescript
+import { detectLocale, setLocale } from 'inline-i18n-multi'
+
+const locale = detectLocale({
+  supportedLocales: ['en', 'ko', 'ja'],
+  defaultLocale: 'en',
+  sources: ['cookie', 'navigator'],
+  cookieName: 'NEXT_LOCALE',
+})
+setLocale(locale)
+```
+
+### React钩子
+
+```tsx
+import { useDetectedLocale } from 'inline-i18n-multi-react'
+
+function App() {
+  useDetectedLocale({
+    supportedLocales: ['en', 'ko'],
+    defaultLocale: 'en',
+    sources: ['cookie', 'navigator'],
+  })
+}
+```
+
+**检测来源**（按顺序检查）：
+- `cookie` - 从指定的Cookie读取（例如 `NEXT_LOCALE`）
+- `navigator` - 从 `navigator.languages` / `navigator.language` 读取
+
+---
+
 ## 配置
 
 配置回退行为和警告的全局设置：
@@ -828,50 +904,6 @@ configure({
 
 setLocale('fr')
 it({ en: 'Hello', ko: '안녕하세요' })  // 警告: 缺失fr的翻译
-```
-
----
-
-## 构建时优化
-
-为了更好的性能，在构建时转换`it()`调用。
-
-### Babel插件
-
-```bash
-npm install -D @inline-i18n-multi/babel-plugin
-```
-
-```javascript
-// babel.config.js
-module.exports = {
-  plugins: ['@inline-i18n-multi/babel-plugin'],
-}
-```
-
-### SWC插件（Next.js 13+）
-
-```bash
-npm install -D @inline-i18n-multi/swc-plugin
-```
-
-```javascript
-// next.config.js
-module.exports = {
-  experimental: {
-    swcPlugins: [['@inline-i18n-multi/swc-plugin', {}]],
-  },
-}
-```
-
-**转换前（源代码）：**
-```typescript
-it('안녕하세요', 'Hello')
-```
-
-**转换后（构建输出）：**
-```typescript
-__i18n_lookup('a1b2c3d4', { ko: '안녕하세요', en: 'Hello' })
 ```
 
 ---
@@ -990,9 +1022,11 @@ pnpm --filter inline-i18n-multi-nextjs-example dev
 | `getLoadedNamespaces()` | 返回已加载的命名空间名称数组 |
 | `getDictionary(locale, namespace?)` | 返回特定语言环境和命名空间的字典 |
 | `clearDictionaries(namespace?)` | 清除字典（全部或特定命名空间） |
-| `configure(options)` | 全局设置（回退、警告、调试） |
+| `configure(options)` | 全局设置（回退、警告、调试、missingVarHandler） |
 | `getConfig()` | 获取当前配置 |
 | `resetConfig()` | 重置配置为默认值 |
+| `registerFormatter(name, fn)` | 注册自定义ICU格式化器 |
+| `detectLocale(options)` | 从Cookie/浏览器检测语言环境 |
 | `loadAsync(locale, namespace?)` | 使用配置的加载器异步加载字典 |
 | `isLoaded(locale, namespace?)` | 检查字典是否已加载 |
 | `parseRichText(template, names)` | 将富文本模板解析为段落 |
@@ -1008,6 +1042,7 @@ pnpm --filter inline-i18n-multi-nextjs-example dev
 | `RichText` | 支持嵌入组件的富文本翻译组件 |
 | `useRichText(components)` | 返回富文本翻译函数的钩子 |
 | `useLoadDictionaries(locale, ns?)` | 带加载状态的字典懒加载钩子 |
+| `useDetectedLocale(options)` | 自动语言环境检测和设置钩子 |
 
 ### 类型
 
@@ -1025,6 +1060,7 @@ interface Config {
   onMissingTranslation?: WarningHandler
   debugMode?: boolean | DebugModeOptions
   loader?: (locale: Locale, namespace: string) => Promise<Record<string, unknown>>
+  missingVarHandler?: (varName: string, locale: string) => string
 }
 
 interface DebugModeOptions {

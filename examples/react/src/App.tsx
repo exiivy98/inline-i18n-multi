@@ -1,4 +1,4 @@
-import { useLocale, useT, it, T, RichText } from 'inline-i18n-multi-react'
+import { useLocale, useT, it, T, RichText, registerFormatter, clearFormatters, configure, resetConfig } from 'inline-i18n-multi-react'
 
 export default function App() {
   const [locale, setLocale] = useLocale()
@@ -112,6 +112,34 @@ export default function App() {
             en: '{count, number, compact} views',
             ja: '{count, number, compact} 回視聴',
           }, { count: 1500000 })}
+        </p>
+      </div>
+
+      {/* v0.6.0: Custom Formatter */}
+      <div className="section">
+        <h2>{it('커스텀 포맷터 (v0.6.0)', 'Custom Formatter (v0.6.0)')}</h2>
+        <p>
+          {(() => {
+            clearFormatters()
+            registerFormatter('phone', (value) => {
+              const s = String(value)
+              return `(${s.slice(0, 3)}) ${s.slice(3, 6)}-${s.slice(6)}`
+            })
+            return it({ en: 'Call {num, phone}', ko: '전화: {num, phone}' }, { num: '2125551234' })
+          })()}
+        </p>
+      </div>
+
+      {/* v0.6.0: Interpolation Guards */}
+      <div className="section">
+        <h2>{it('보간 가드 (v0.6.0)', 'Interpolation Guards (v0.6.0)')}</h2>
+        <p>
+          {(() => {
+            configure({ missingVarHandler: (v: string) => `[${v}]` })
+            const result = it({ en: 'Hello {name}, your role is {role}', ko: '안녕 {name}, 역할은 {role}' }, { name: 'User' })
+            resetConfig()
+            return result
+          })()}
         </p>
       </div>
     </div>

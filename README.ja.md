@@ -51,7 +51,6 @@
 - **インライン翻訳** - 使う場所で直接翻訳を書く
 - **即時検索** - コードベースで全てのテキストを即座に検索
 - **型安全** - 変数の型チェックを含む完全なTypeScriptサポート
-- **ビルド時最適化** - Babel/SWCプラグインでランタイムオーバーヘッドゼロ
 - **多言語対応** - 任意の数のロケールをサポート
 - **フレームワーク対応** - React、Next.js（App Router & Pages Router）
 - **開発者ツール** - 検証用CLI、ナビゲーション用VSCode拡張機能
@@ -65,6 +64,10 @@
 - **コンパクト数値フォーマット** - 大きな数値の短縮表示（`{count, number, compact}`）
 - **リッチテキスト補間** - 翻訳にReactコンポーネントを埋め込み（`<link>テキスト</link>`）
 - **遅延読み込み** - 非同期辞書ロード（`loadAsync()`）
+- **カスタムフォーマッターレジストリ** - カスタムICUフォーマッターの登録（`registerFormatter('phone', fn)` → `{num, phone}`）
+- **補間ガード** - 欠落した変数の安全な処理（`configure({ missingVarHandler })`）
+- **ロケール検出** - Cookie/ブラウザからの自動ロケール検出（`detectLocale()` + React `useDetectedLocale()`）
+- **Selectordinal** - 序数複数形のための完全なICU `selectordinal`サポート（`{n, selectordinal, ...}`）
 
 ---
 
@@ -76,8 +79,6 @@
 | [`inline-i18n-multi-react`](./packages/react) | Reactフック＆コンポーネント |
 | [`inline-i18n-multi-next`](./packages/next) | Next.js統合 |
 | [`@inline-i18n-multi/cli`](./packages/cli) | CLIツール |
-| [`@inline-i18n-multi/babel-plugin`](./packages/babel-plugin) | Babelプラグイン |
-| [`@inline-i18n-multi/swc-plugin`](./packages/swc-plugin) | SWCプラグイン |
 | [`inline-i18n-multi-vscode`](./packages/vscode) | VSCode拡張機能 |
 
 ---
@@ -731,6 +732,81 @@ function Dashboard() {
 
 ---
 
+## カスタムフォーマッターレジストリ
+
+ドメイン固有のフォーマットのためにカスタムICUフォーマット関数を登録します：
+
+```typescript
+import { registerFormatter, it } from 'inline-i18n-multi'
+
+registerFormatter('phone', (value, locale, style?) => {
+  const s = String(value)
+  return `(${s.slice(0,3)}) ${s.slice(3,6)}-${s.slice(6)}`
+})
+
+it({ en: 'Call {num, phone}' }, { num: '2125551234' })
+// → "Call (212) 555-1234"
+```
+
+登録されたカスタムフォーマッターは、`{variable, formatterName}`構文で任意のICUメッセージパターンで使用できます。
+
+---
+
+## 補間ガード
+
+欠落した変数を生の`{varName}`プレースホルダーの代わりに安全に処理します：
+
+```typescript
+import { configure, it } from 'inline-i18n-multi'
+
+configure({
+  missingVarHandler: (varName, locale) => `[${varName}]`
+})
+
+it({ en: 'Hello {name}' })
+// → "Hello [name]"（"Hello {name}"の代わり）
+```
+
+開発時に欠落した変数を早期に発見したり、本番環境で安全なフォールバック表示を提供するのに便利です。
+
+---
+
+## ロケール検出
+
+複数のソースからユーザーの優先ロケールを自動的に検出します：
+
+```typescript
+import { detectLocale, setLocale } from 'inline-i18n-multi'
+
+const locale = detectLocale({
+  supportedLocales: ['en', 'ko', 'ja'],
+  defaultLocale: 'en',
+  sources: ['cookie', 'navigator'],
+  cookieName: 'NEXT_LOCALE',
+})
+setLocale(locale)
+```
+
+### Reactフック
+
+```tsx
+import { useDetectedLocale } from 'inline-i18n-multi-react'
+
+function App() {
+  useDetectedLocale({
+    supportedLocales: ['en', 'ko'],
+    defaultLocale: 'en',
+    sources: ['cookie', 'navigator'],
+  })
+}
+```
+
+**検出ソース**（順番にチェック）：
+- `cookie` - 指定されたCookieから読み取り（例：`NEXT_LOCALE`）
+- `navigator` - `navigator.languages` / `navigator.language`から読み取り
+
+---
+
 ## 設定
 
 フォールバック動作と警告のグローバル設定を構成します：
@@ -819,50 +895,6 @@ configure({
 
 setLocale('fr')
 it({ en: 'Hello', ko: '안녕하세요' })  // 警告: frの翻訳が欠落しています
-```
-
----
-
-## ビルド時最適化
-
-パフォーマンス向上のため、ビルド時に`it()`呼び出しを変換します。
-
-### Babelプラグイン
-
-```bash
-npm install -D @inline-i18n-multi/babel-plugin
-```
-
-```javascript
-// babel.config.js
-module.exports = {
-  plugins: ['@inline-i18n-multi/babel-plugin'],
-}
-```
-
-### SWCプラグイン（Next.js 13+）
-
-```bash
-npm install -D @inline-i18n-multi/swc-plugin
-```
-
-```javascript
-// next.config.js
-module.exports = {
-  experimental: {
-    swcPlugins: [['@inline-i18n-multi/swc-plugin', {}]],
-  },
-}
-```
-
-**変換前（ソース）:**
-```typescript
-it('안녕하세요', 'Hello')
-```
-
-**変換後（ビルド出力）:**
-```typescript
-__i18n_lookup('a1b2c3d4', { ko: '안녕하세요', en: 'Hello' })
 ```
 
 ---
@@ -981,9 +1013,11 @@ VSCodeマーケットプレイスから`inline-i18n-multi-vscode`をインスト
 | `getLoadedNamespaces()` | ロードされた名前空間名の配列を返す |
 | `getDictionary(locale, namespace?)` | 特定ロケールと名前空間の辞書を返す |
 | `clearDictionaries(namespace?)` | 辞書をクリア（全てまたは特定の名前空間） |
-| `configure(options)` | グローバル設定（フォールバック、警告、デバッグ） |
+| `configure(options)` | グローバル設定（フォールバック、警告、デバッグ、missingVarHandler） |
 | `getConfig()` | 現在の設定を取得 |
 | `resetConfig()` | 設定をデフォルトにリセット |
+| `registerFormatter(name, fn)` | カスタムICUフォーマッターを登録 |
+| `detectLocale(options)` | Cookie/ブラウザからロケールを検出 |
 | `loadAsync(locale, namespace?)` | 設定されたローダーを使用して非同期辞書ロード |
 | `isLoaded(locale, namespace?)` | 辞書がロードされているか確認 |
 | `parseRichText(template, names)` | リッチテキストテンプレートをセグメントに解析 |
@@ -999,6 +1033,7 @@ VSCodeマーケットプレイスから`inline-i18n-multi-vscode`をインスト
 | `RichText` | コンポーネント埋め込み対応のリッチテキスト翻訳コンポーネント |
 | `useRichText(components)` | リッチテキスト翻訳関数を返すフック |
 | `useLoadDictionaries(locale, ns?)` | ロード状態付きの遅延読み込みフック |
+| `useDetectedLocale(options)` | 自動ロケール検出・設定フック |
 
 ### 型
 
@@ -1016,6 +1051,7 @@ interface Config {
   onMissingTranslation?: WarningHandler
   debugMode?: boolean | DebugModeOptions
   loader?: (locale: string, namespace?: string) => Promise<any>
+  missingVarHandler?: (varName: string, locale: string) => string
 }
 
 interface DebugModeOptions {

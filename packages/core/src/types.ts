@@ -78,4 +78,6 @@ export interface Config {
   debugMode?: boolean | DebugModeOptions
   /** Async loader function for lazy loading dictionaries */
   loader?: (locale: Locale, namespace: string) => Promise<Record<string, unknown>>
+  /** Custom handler for missing interpolation variables (v0.6.0) */
+  missingVarHandler?: (varName: string, locale: string) => string
 }
