@@ -1,6 +1,6 @@
 import type { TranslationVars } from './types'
 import { getConfig } from './config'
-import { hasICUPattern, hasCustomFormatter, interpolateICU } from './icu'
+import { hasICUPattern, hasCustomFormatter, hasPluralShorthand, interpolateICU } from './icu'
 
 const VARIABLE_PATTERN = /\{(\w+)\}/g
 
@@ -12,7 +12,7 @@ export function interpolate(
   const resolvedLocale = locale || 'en'
 
   // ICU Message Format (plural, select) or custom formatters
-  if (hasICUPattern(template) || hasCustomFormatter(template)) {
+  if (hasICUPattern(template) || hasCustomFormatter(template) || hasPluralShorthand(template)) {
     if (!vars) {
       // Even without vars, handler should process missing variables
       const cfg = getConfig()

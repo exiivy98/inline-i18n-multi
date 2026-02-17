@@ -20,6 +20,43 @@ import { getConfig } from './config'
 
 export type ICUVars = Record<string, string | number | Date | string[]>
 
+// ============================================================================
+// ICU Parse Cache (v0.7.0)
+// ============================================================================
+
+const icuCache = new Map<string, MessageFormatElement[]>()
+
+/**
+ * Clear the ICU message AST cache
+ */
+export function clearICUCache(): void {
+  icuCache.clear()
+}
+
+/**
+ * Get a parsed AST from cache, or parse and cache it.
+ * Respects the configured icuCacheSize limit (FIFO eviction).
+ */
+function cachedParse(template: string): MessageFormatElement[] {
+  const cached = icuCache.get(template)
+  if (cached) return cached
+
+  const ast = parse(template)
+
+  const cfg = getConfig()
+  if (cfg.icuCacheSize > 0) {
+    if (icuCache.size >= cfg.icuCacheSize) {
+      const firstKey = icuCache.keys().next().value
+      if (firstKey !== undefined) {
+        icuCache.delete(firstKey)
+      }
+    }
+    icuCache.set(template, ast)
+  }
+
+  return ast
+}
+
 /**
  * Handle a missing variable — uses custom handler if configured, otherwise returns {varName}
  */
@@ -544,6 +581,46 @@ function formatListValue(
   }
 }
 
+// ============================================================================
+// Plural Shorthand (v0.7.0)
+// ============================================================================
+
+const PLURAL_SHORTHAND_PATTERN = /\{(\w+),\s*p,\s*([^}]+)\}/g
+
+/**
+ * Check if template contains plural shorthand patterns
+ */
+export function hasPluralShorthand(template: string): boolean {
+  PLURAL_SHORTHAND_PATTERN.lastIndex = 0
+  return PLURAL_SHORTHAND_PATTERN.test(template)
+}
+
+/**
+ * Preprocess plural shorthand syntax before ICU parsing.
+ *
+ * {count, p, item|items}         -> {count, plural, one {# item} other {# items}}
+ * {count, p, none|item|items}    -> {count, plural, =0 {none} one {# item} other {# items}}
+ */
+function preprocessPluralShorthand(template: string): string {
+  PLURAL_SHORTHAND_PATTERN.lastIndex = 0
+  return template.replace(PLURAL_SHORTHAND_PATTERN, (_, variable, args) => {
+    const parts = args.split('|').map((s: string) => s.trim())
+
+    if (parts.length === 2) {
+      const [singular, plural] = parts
+      return `{${variable}, plural, one {# ${singular}} other {# ${plural}}}`
+    }
+
+    if (parts.length === 3) {
+      const [zero, singular, plural] = parts
+      return `{${variable}, plural, =0 {${zero}} one {# ${singular}} other {# ${plural}}}`
+    }
+
+    // If not 2 or 3 parts, return original
+    return `{${variable}, p, ${args}}`
+  })
+}
+
 /**
  * Parse and format an ICU Message Format string
  */
@@ -552,14 +629,17 @@ export function interpolateICU(
   vars: ICUVars,
   locale: string
 ): string {
+  // Expand plural shorthand to standard ICU plural (must be first)
+  const afterPluralShorthand = preprocessPluralShorthand(template)
+
   // Pre-process custom formats (not natively supported by ICU parser)
-  const { processed: afterCustom, replacements: customReplacements } = preprocessCustomFormatters(template)
+  const { processed: afterCustom, replacements: customReplacements } = preprocessCustomFormatters(afterPluralShorthand)
   const { processed: afterCurrency, replacements: currencyReplacements } = preprocessCurrency(afterCustom)
   const { processed: afterCompact, replacements: compactReplacements } = preprocessCompactNumber(afterCurrency)
   const { processed: afterRelTime, replacements: relTimeReplacements } = preprocessRelativeTime(afterCompact)
   const { processed: afterList, replacements: listReplacements } = preprocessList(afterRelTime)
 
-  const ast = parse(afterList)
+  const ast = cachedParse(afterList)
   let result = formatElements(ast, vars, locale, null)
 
   // Post-process custom formatter placeholders
@@ -718,7 +798,7 @@ function formatSelect(
 }
 
 // Pattern to detect ICU format (plural, select, selectordinal, number, date, time, relativeTime, list)
-export const ICU_PATTERN = /\{[^}]+,\s*(plural|select|selectordinal|number|date|time|relativeTime|list|currency)\s*[,}]/
+export const ICU_PATTERN = /\{[^}]+,\s*(plural|select|selectordinal|number|date|time|relativeTime|list|currency|p)\s*[,}]/
 
 /**
  * Check if a template contains ICU Message Format patterns

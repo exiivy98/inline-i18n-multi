@@ -69,6 +69,10 @@
 - **보간 가드** - 누락된 변수를 우아하게 처리 (`configure({ missingVarHandler })`)
 - **로케일 감지** - 쿠키/브라우저에서 자동 로케일 감지 (`detectLocale()` + React `useDetectedLocale()`)
 - **Selectordinal** - 서수 복수형을 위한 완전한 ICU `selectordinal` 지원 (`{n, selectordinal, ...}`)
+- **ICU Message Cache** - 파싱된 ICU AST 메모이제이션으로 성능 최적화 (`configure({ icuCacheSize: 500 })`)
+- **Plural Shorthand** - 간결한 복수형 문법 (`{count, p, item|items}`)
+- **Locale Persistence** - 로케일 자동 저장/복원 (`configure({ persistLocale: { storage: 'cookie' } })`)
+- **CLI `--strict` 모드** - ICU 타입 일관성 검증 (`npx inline-i18n validate --strict`)
 
 ---
 
@@ -819,6 +823,132 @@ function App() {
 
 ---
 
+## ICU Message Cache
+
+파싱된 ICU AST를 메모이제이션하여 반복 호출 시 성능을 최적화합니다:
+
+```typescript
+import { configure, clearICUCache, it } from 'inline-i18n-multi'
+
+// 캐시 크기 설정 (기본값: 500)
+configure({ icuCacheSize: 500 })
+
+// 동일한 ICU 패턴을 반복 호출해도 한 번만 파싱됨
+it({
+  en: '{count, plural, one {# item} other {# items}}',
+  ko: '{count, plural, other {#개}}'
+}, { count: 5 })
+
+// 캐시 비활성화 (0으로 설정)
+configure({ icuCacheSize: 0 })
+
+// 캐시 수동 초기화
+clearICUCache()
+```
+
+캐시가 `icuCacheSize`에 도달하면 FIFO(선입선출) 방식으로 가장 오래된 항목부터 제거됩니다.
+
+---
+
+## Plural Shorthand
+
+ICU `plural` 구문의 간결한 대안:
+
+```typescript
+import { it, setLocale } from 'inline-i18n-multi'
+
+setLocale('en')
+
+// 2파트: {변수, p, 단수형|복수형}
+it({
+  en: '{count, p, item|items}',
+  ko: '{count, p, 개|개}'
+}, { count: 1 })   // → "1 item"
+
+it({
+  en: '{count, p, item|items}',
+  ko: '{count, p, 개|개}'
+}, { count: 5 })   // → "5 items"
+
+// 3파트: {변수, p, 영|단수형|복수형}
+it({
+  en: '{count, p, none|item|items}',
+  ko: '{count, p, 없음|개|개}'
+}, { count: 0 })   // → "none"
+
+it({
+  en: '{count, p, none|item|items}',
+  ko: '{count, p, 없음|개|개}'
+}, { count: 1 })   // → "1 item"
+
+it({
+  en: '{count, p, none|item|items}',
+  ko: '{count, p, 없음|개|개}'
+}, { count: 5 })   // → "5 items"
+```
+
+`{count, p, item|items}`는 내부적으로 `{count, plural, one {# item} other {# items}}`로 변환됩니다.
+
+---
+
+## Locale Persistence
+
+로케일을 쿠키 또는 `localStorage`에 자동으로 저장하고 복원합니다:
+
+```typescript
+import { configure, setLocale, restoreLocale } from 'inline-i18n-multi'
+
+// 쿠키에 저장
+configure({
+  persistLocale: {
+    storage: 'cookie',
+    key: 'LOCALE',       // 쿠키/localStorage 키 (기본값: 'LOCALE')
+    expires: 365          // 쿠키 만료일 (일 단위, 기본값: 365)
+  }
+})
+
+// setLocale() 호출 시 자동으로 저장소에 저장
+setLocale('ko')  // → 쿠키에 LOCALE=ko 저장
+
+// 저장소에서 로케일 복원
+const locale = restoreLocale()  // → 'ko' (저장소에서 읽기)
+
+// localStorage에 저장
+configure({
+  persistLocale: {
+    storage: 'localStorage',
+    key: 'LOCALE'
+  }
+})
+
+setLocale('en')  // → localStorage에 LOCALE=en 저장
+```
+
+---
+
+## CLI `--strict` 모드
+
+ICU 타입 일관성을 검증하는 엄격 모드:
+
+```bash
+npx inline-i18n validate --strict
+
+# 출력:
+# ❌ ICU 타입 불일치
+#    src/Header.tsx:12
+#    en: {count, plural, one {# item} other {# items}}  (plural)
+#    ko: {count}개                                        (simple)
+#
+# ❌ 변수 누락
+#    src/About.tsx:8
+#    en: Hello, {name}!  (변수: name)
+#    ko: 안녕하세요!     (변수: 없음)
+```
+
+`--strict` 플래그는 기존 `validate` 명령어에 추가로 ICU 메시지 타입(plural, select, number 등)이 모든 로케일에서 일관되게 사용되는지 검증합니다.
+
+---
+
 ## 설정
 
 폴백 동작과 경고에 대한 전역 설정을 구성합니다:
@@ -845,6 +975,16 @@ configure({
   // 커스텀 경고 핸들러
   onMissingTranslation: (warning) => {
     console.warn(`누락: ${warning.requestedLocale}`, warning)
+  },
+
+  // ICU 파싱 캐시 크기 (기본값: 500, 0으로 비활성화)
+  icuCacheSize: 500,
+
+  // 로케일 자동 저장/복원
+  persistLocale: {
+    storage: 'cookie',    // 'cookie' | 'localStorage'
+    key: 'LOCALE',        // 저장소 키 (기본값: 'LOCALE')
+    expires: 365           // 쿠키 만료일 (기본값: 365)
   },
 })
 
@@ -1025,7 +1165,7 @@ VSCode 마켓플레이스에서 `inline-i18n-multi-vscode`를 설치하세요.
 | `getLoadedNamespaces()`        | 로드된 네임스페이스 이름 배열 반환      |
 | `getDictionary(locale, namespace?)` | 특정 로케일과 네임스페이스의 딕셔너리 반환 |
 | `clearDictionaries(namespace?)` | 딕셔너리 삭제 (전체 또는 특정 네임스페이스) |
-| `configure(options)`           | 전역 설정 (폴백, 경고, 디버그, missingVarHandler) |
+| `configure(options)`           | 전역 설정 (폴백, 경고, 디버그, missingVarHandler, icuCacheSize, persistLocale) |
 | `getConfig()`                  | 현재 설정 조회                          |
 | `resetConfig()`                | 설정을 기본값으로 리셋                  |
 | `registerFormatter(name, fn)`  | 커스텀 ICU 포맷터 등록                  |
@@ -1033,6 +1173,8 @@ VSCode 마켓플레이스에서 `inline-i18n-multi-vscode`를 설치하세요.
 | `loadAsync(locale, namespace?)` | 설정된 로더를 사용하여 비동기 딕셔너리 로드 |
 | `isLoaded(locale, namespace?)` | 딕셔너리 로드 여부 확인 |
 | `parseRichText(template, names)` | 리치 텍스트 템플릿을 세그먼트로 파싱 |
+| `clearICUCache()`             | ICU 파싱 캐시 초기화                    |
+| `restoreLocale()`             | 저장소(쿠키/localStorage)에서 로케일 복원 |
 
 ### React 훅 & 컴포넌트
 
@@ -1064,6 +1206,14 @@ interface Config {
   debugMode?: boolean | DebugModeOptions
   loader?: (locale: string, namespace: string) => Promise<any>
   missingVarHandler?: (varName: string, locale: string) => string
+  icuCacheSize?: number
+  persistLocale?: PersistLocaleOptions
+}
+
+interface PersistLocaleOptions {
+  storage: 'cookie' | 'localStorage'
+  key?: string       // 기본값: 'LOCALE'
+  expires?: number   // 쿠키 만료일 (일 단위, 기본값: 365)
 }
 
 interface DebugModeOptions {

@@ -9,6 +9,15 @@ Basic TypeScript example demonstrating core `inline-i18n-multi` features.
 - Variable interpolation
 - Plural support
 - Language pair helpers (`it_ja`, `en_zh`, etc.)
+- ICU Message Format (date, number, time, relativeTime, list)
+- Locale Fallback Chain (BCP 47)
+- Namespace support, Debug mode
+- Currency & Compact number formatting
+- Custom Formatter Registry, Interpolation Guards
+- Locale Detection
+- ICU Message Cache (v0.7.0)
+- Plural Shorthand (v0.7.0)
+- Locale Persistence (v0.7.0)
 
 ## Run
 

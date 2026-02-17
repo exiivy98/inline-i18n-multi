@@ -1,6 +1,6 @@
 {
   "name": "inline-i18n-multi",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": true,
   "description": "Inline i18n - write translations inline, support multiple languages",
   "repository": {

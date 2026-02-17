@@ -15,7 +15,7 @@ npm install inline-i18n-multi-next
 | Entry point | Environment | Key exports |
 |---|---|---|
 | `inline-i18n-multi-next/server` | Server Components | `it`, `t`, `configureI18n`, `generateLocaleParams`, `createMetadata`, `getAlternates`, `createI18nMiddleware` |
-| `inline-i18n-multi-next/client` | Client Components | `LocaleProvider`, `useLocale`, `useT`, `it`, `T`, `RichText`, `useRichText`, `useLoadDictionaries`, `useDetectedLocale`, `registerFormatter`, `clearFormatters`, `detectLocale`, `configure`, `resetConfig` |
+| `inline-i18n-multi-next/client` | Client Components | `LocaleProvider`, `useLocale`, `useT`, `it`, `T`, `RichText`, `useRichText`, `useLoadDictionaries`, `useDetectedLocale`, `registerFormatter`, `clearFormatters`, `detectLocale`, `clearICUCache`, `restoreLocale`, `configure`, `resetConfig` |
 
 ## Quick Start
 
@@ -227,6 +227,43 @@ export async function generateMetadata({ params }) {
     '/about'
   )
 }
+```
+
+## Plural Shorthand (v0.7.0)
+
+Concise plural syntax:
+
+```tsx
+// Server Component
+export default async function Page() {
+  return (
+    <p>
+      {await it({
+        en: '{count, p, item|items}',
+        ko: '{count}개',
+      }, { count: 5 })}
+    </p>
+  )
+}
+
+// Client Component - also supports 3-part (zero|singular|plural)
+<T en="{count, p, no items|item|items}" ko="{count, p, 없음|개|개}" count={0} />
+```
+
+## Locale Persistence (v0.7.0)
+
+Auto-save and restore locale:
+
+```tsx
+'use client'
+import { configure, restoreLocale } from 'inline-i18n-multi-next/client'
+
+configure({
+  persistLocale: { storage: 'cookie', key: 'LOCALE', expires: 365 }
+})
+
+// Restore on app init
+const saved = restoreLocale() // returns locale string or undefined
 ```
 
 ## Custom Formatters

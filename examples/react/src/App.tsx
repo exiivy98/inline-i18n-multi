@@ -142,6 +142,23 @@ export default function App() {
           })()}
         </p>
       </div>
+
+      {/* v0.7.0: Plural Shorthand */}
+      <div className="section">
+        <h2>{it('복수형 축약 (v0.7.0)', 'Plural Shorthand (v0.7.0)')}</h2>
+        <p>
+          {it({ en: '{count, p, item|items}', ko: '{count}개 항목' }, { count: 1 })}
+          {' | '}
+          {it({ en: '{count, p, item|items}', ko: '{count}개 항목' }, { count: 5 })}
+        </p>
+        <p>
+          {it({ en: '{count, p, no messages|message|messages}', ko: '{count, p, 메시지 없음|개 메시지|개 메시지}' }, { count: 0 })}
+          {' | '}
+          {it({ en: '{count, p, no messages|message|messages}', ko: '{count, p, 메시지 없음|개 메시지|개 메시지}' }, { count: 1 })}
+          {' | '}
+          {it({ en: '{count, p, no messages|message|messages}', ko: '{count, p, 메시지 없음|개 메시지|개 메시지}' }, { count: 42 })}
+        </p>
+      </div>
     </div>
   )
 }

@@ -68,6 +68,10 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Interpolation Guards** - Handle missing variables gracefully (`configure({ missingVarHandler })`)
 - **Locale Detection** - Automatic locale detection from cookies/navigator (`detectLocale()` + React `useDetectedLocale()`)
 - **Selectordinal** - Full ICU `selectordinal` support for ordinal plurals (`{n, selectordinal, ...}`)
+- **ICU Message Cache** - Memoize parsed ICU ASTs for performance (`configure({ icuCacheSize: 500 })`)
+- **Plural Shorthand** - Concise plural syntax (`{count, p, item|items}`)
+- **Locale Persistence** - Auto-save/restore locale to cookie or localStorage
+- **CLI `--strict` Mode** - ICU type consistency checking (`npx inline-i18n validate --strict`)
 
 ---
 
@@ -778,6 +782,129 @@ function App() {
 
 ---
 
+## ICU Message Cache
+
+Memoize parsed ICU ASTs to avoid re-parsing the same message patterns:
+
+```typescript
+import { configure, clearICUCache } from 'inline-i18n-multi'
+
+// Configure cache size (default: 500, set 0 to disable)
+configure({ icuCacheSize: 500 })
+
+// Uses FIFO eviction when the cache is full
+// Repeated messages are served from cache for better performance
+
+// Manually clear the cache
+clearICUCache()
+```
+
+The cache is enabled by default with a size of 500 entries. When the cache is full, the oldest entry is evicted (FIFO). Set `icuCacheSize: 0` to disable caching entirely.
+
+---
+
+## Plural Shorthand
+
+A concise syntax for common plural patterns, using `p` as the type:
+
+```typescript
+import { it, setLocale } from 'inline-i18n-multi'
+
+setLocale('en')
+
+// 2-part: singular | plural
+it({
+  en: '{count, p, item|items}',
+  ko: '{count, p, 항목|항목}'
+}, { count: 1 })  // → "1 item"
+
+it({
+  en: '{count, p, item|items}',
+  ko: '{count, p, 항목|항목}'
+}, { count: 5 })  // → "5 items"
+
+// 3-part: zero | singular | plural
+it({
+  en: '{count, p, none|item|items}',
+  ko: '{count, p, 없음|항목|항목}'
+}, { count: 0 })  // → "none"
+
+it({
+  en: '{count, p, none|item|items}',
+  ko: '{count, p, 없음|항목|항목}'
+}, { count: 1 })  // → "1 item"
+
+it({
+  en: '{count, p, none|item|items}',
+  ko: '{count, p, 없음|항목|항목}'
+}, { count: 5 })  // → "5 items"
+```
+
+The `p` type is syntactic sugar over ICU `plural`. The 2-part form `{count, p, item|items}` expands to `{count, plural, one {# item} other {# items}}`, and the 3-part form adds a `=0` branch.
+
+---
+
+## Locale Persistence
+
+Automatically save and restore the user's locale preference:
+
+```typescript
+import { configure, setLocale, restoreLocale } from 'inline-i18n-multi'
+
+// Configure persistence
+configure({
+  persistLocale: {
+    storage: 'cookie',       // 'cookie' | 'localStorage'
+    key: 'LOCALE',           // storage key name
+    expires: 365,            // cookie expiry in days (cookie only)
+  }
+})
+
+// Restore locale from storage (returns saved locale or undefined)
+const saved = restoreLocale()
+if (!saved) {
+  setLocale('en')  // default if nothing saved
+}
+
+// setLocale() auto-saves to configured storage
+setLocale('ko')  // saves 'ko' to cookie/localStorage
+```
+
+### localStorage
+
+```typescript
+configure({
+  persistLocale: {
+    storage: 'localStorage',
+    key: 'APP_LOCALE',
+  }
+})
+```
+
+When `persistLocale` is configured, every `setLocale()` call automatically writes the locale to the specified storage. Use `restoreLocale()` at app startup to read the saved value.
+
+---
+
+## CLI `--strict` Mode
+
+Validate ICU type consistency across all translations:
+
+```bash
+npx inline-i18n validate --strict
+
+# Output:
+# ❌ ICU type mismatch in src/Dashboard.tsx:25
+#    en: {count, plural, one {# item} other {# items}}
+#    ko: {count, number}
+#    Variable "count" used as "plural" in en but "number" in ko
+#
+# ✅ 148 translations checked, 1 error found
+```
+
+The `--strict` flag ensures that ICU variable types (`plural`, `select`, `number`, `date`, etc.) are consistent across all locale variants of each translation. This catches subtle bugs where a variable is treated as a different type in different languages.
+
+---
+
 ## Configuration
 
 Configure global settings for fallback behavior and warnings:
@@ -796,6 +923,16 @@ configure({
   // Custom fallback chains for specific locales
   fallbackChain: {
     'pt-BR': ['pt', 'es', 'en'],  // Portuguese (Brazil) → Portuguese → Spanish → English
+  },
+
+  // ICU message cache size (default: 500, 0 to disable)
+  icuCacheSize: 500,
+
+  // Locale persistence (auto-save/restore)
+  persistLocale: {
+    storage: 'cookie',    // 'cookie' | 'localStorage'
+    key: 'LOCALE',
+    expires: 365,         // cookie expiry in days (cookie only)
   },
 
   // Enable missing translation warnings (default: true in dev mode)
@@ -1011,9 +1148,11 @@ See [Testing Documentation](./docs/test.md) for more details.
 | `getLoadedNamespaces()` | Get array of loaded namespace names |
 | `getDictionary(locale, namespace?)` | Get dictionary for a specific locale and namespace |
 | `clearDictionaries(namespace?)` | Clear dictionaries (all or specific namespace) |
-| `configure(options)` | Configure global settings (fallback, warnings, debug, missingVarHandler) |
+| `configure(options)` | Configure global settings (fallback, warnings, debug, cache, persistence) |
 | `getConfig()` | Get current configuration |
 | `resetConfig()` | Reset configuration to defaults |
+| `clearICUCache()` | Clear the ICU message parse cache |
+| `restoreLocale()` | Restore locale from configured storage (cookie/localStorage) |
 | `registerFormatter(name, fn)` | Register a custom ICU formatter |
 | `detectLocale(options)` | Detect locale from cookies/navigator |
 | `loadAsync(locale, namespace?)` | Asynchronously load dictionary using configured loader |
@@ -1050,6 +1189,14 @@ interface Config {
   debugMode?: boolean | DebugModeOptions
   loader?: (locale: Locale, namespace: string) => Promise<Record<string, unknown>>
   missingVarHandler?: (varName: string, locale: string) => string
+  icuCacheSize?: number
+  persistLocale?: PersistLocaleOptions
+}
+
+interface PersistLocaleOptions {
+  storage: 'cookie' | 'localStorage'
+  key?: string       // default: 'LOCALE'
+  expires?: number   // cookie expiry in days (default: 365, cookie only)
 }
 
 interface DebugModeOptions {

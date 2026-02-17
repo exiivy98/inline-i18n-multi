@@ -80,4 +80,15 @@ export interface Config {
   loader?: (locale: Locale, namespace: string) => Promise<Record<string, unknown>>
   /** Custom handler for missing interpolation variables (v0.6.0) */
   missingVarHandler?: (varName: string, locale: string) => string
+  /** Maximum number of parsed ICU ASTs to cache (default: 500, 0 to disable) (v0.7.0) */
+  icuCacheSize?: number
+  /** Locale persistence configuration (v0.7.0) */
+  persistLocale?: {
+    /** Storage mechanism */
+    storage: 'cookie' | 'localStorage'
+    /** Storage key name (default: 'LOCALE') */
+    key?: string
+    /** Cookie expiry in days (default: 365). Only applies to cookie storage. */
+    expires?: number
+  }
 }

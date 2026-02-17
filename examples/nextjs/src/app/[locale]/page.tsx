@@ -221,6 +221,33 @@ export default async function Home({
         </p>
       </div>
 
+      {/* v0.7.0 Features */}
+      <div className="section">
+        <h2>🆕 v0.7.0 {await it('기능', 'Features')}</h2>
+        <p>
+          <strong>{await it('복수형 축약', 'Plural Shorthand')}:</strong>{' '}
+          {await it({ en: '{count, p, item|items}', ko: '{count}개 항목', ja: '{count}件' }, { count: 1 })}
+          {' | '}
+          {await it({ en: '{count, p, item|items}', ko: '{count}개 항목', ja: '{count}件' }, { count: 5 })}
+        </p>
+        <p>
+          <strong>{await it('3파트 축약', '3-Part Shorthand')}:</strong>{' '}
+          {await it({ en: '{count, p, none|item|items}', ko: '{count, p, 없음|개|개}', ja: '{count, p, なし|件|件}' }, { count: 0 })}
+          {' | '}
+          {await it({ en: '{count, p, none|item|items}', ko: '{count, p, 없음|개|개}', ja: '{count, p, なし|件|件}' }, { count: 1 })}
+          {' | '}
+          {await it({ en: '{count, p, none|item|items}', ko: '{count, p, 없음|개|개}', ja: '{count, p, なし|件|件}' }, { count: 5 })}
+        </p>
+        <p>
+          <strong>ICU Cache:</strong>{' '}
+          <code>configure({'{'}icuCacheSize: 500{'}'})</code> → {await it('파싱된 ICU AST 메모이제이션', 'Memoize parsed ICU ASTs for performance')}
+        </p>
+        <p>
+          <strong>{await it('로케일 지속성', 'Locale Persistence')}:</strong>{' '}
+          <code>configure({'{'}persistLocale: {'{'}storage: &apos;cookie&apos;{'}'}{'}'})</code> → {await it('로케일 자동 저장/복원', 'Auto-save/restore locale')}
+        </p>
+      </div>
+
       {/* Client Component Example */}
       <ClientSection />
 

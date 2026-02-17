@@ -68,6 +68,10 @@
 - **插值守卫** - 优雅地处理缺失变量（`configure({ missingVarHandler })`）
 - **语言环境检测** - 从Cookie/浏览器自动检测语言环境（`detectLocale()` + React `useDetectedLocale()`）
 - **Selectordinal** - 完整的ICU `selectordinal`序数复数支持（`{n, selectordinal, ...}`）
+- **ICU消息缓存** - 解析后的ICU AST缓存，提升性能（`configure({ icuCacheSize: 500 })`）
+- **复数简写** - 简洁的复数语法（`{count, p, item|items}`）
+- **语言环境持久化** - 自动保存/恢复语言环境到Cookie或localStorage
+- **CLI `--strict`模式** - ICU类型一致性检查（`npx inline-i18n validate --strict`）
 
 ---
 
@@ -816,6 +820,103 @@ function App() {
 
 ---
 
+## ICU消息缓存
+
+解析后的ICU AST缓存，避免重复解析相同的消息模式，提升性能：
+
+```typescript
+import { configure, clearICUCache } from 'inline-i18n-multi'
+
+// 设置缓存大小（默认: 500）
+configure({ icuCacheSize: 500 })
+
+// 禁用缓存
+configure({ icuCacheSize: 0 })
+
+// 手动清除缓存
+clearICUCache()
+```
+
+缓存使用FIFO（先进先出）淘汰策略。当缓存达到上限时，最早的条目会被自动移除。
+
+---
+
+## 复数简写
+
+无需编写冗长的ICU复数语法，使用简洁的 `p` 简写：
+
+```typescript
+import { it, setLocale } from 'inline-i18n-multi'
+
+setLocale('en')
+
+// 双参数: singular|plural
+it({ en: '{count, p, item|items}' }, { count: 1 })   // → "1 item"
+it({ en: '{count, p, item|items}' }, { count: 5 })   // → "5 items"
+
+// 三参数: zero|singular|plural
+it({ en: '{count, p, none|item|items}' }, { count: 0 })  // → "none"
+it({ en: '{count, p, none|item|items}' }, { count: 1 })  // → "1 item"
+it({ en: '{count, p, none|item|items}' }, { count: 5 })  // → "5 items"
+
+// 多语言示例
+it({
+  en: '{count, p, item|items}',
+  zh: '{count, p, 个项目|个项目}',
+  ko: '{count, p, 개|개}'
+}, { count: 3 })
+```
+
+---
+
+## 语言环境持久化
+
+自动保存和恢复用户的语言环境设置：
+
+```typescript
+import { configure, restoreLocale, setLocale } from 'inline-i18n-multi'
+
+// 配置持久化
+configure({
+  persistLocale: {
+    storage: 'cookie',        // 'cookie' | 'localStorage'
+    key: 'LOCALE',            // 存储键名
+    expires: 365              // Cookie过期天数（仅cookie）
+  }
+})
+
+// 从存储中恢复语言环境
+restoreLocale()
+
+// setLocale() 会自动保存到配置的存储中
+setLocale('zh')  // 自动保存到Cookie或localStorage
+```
+
+**存储选项：**
+- `cookie` - 保存到Cookie，支持设置过期天数，适合服务端渲染
+- `localStorage` - 保存到localStorage，适合纯客户端应用
+
+---
+
+## CLI `--strict`模式
+
+使用 `--strict` 标志检查ICU消息中的类型一致性：
+
+```bash
+npx inline-i18n validate --strict
+
+# 输出:
+# ⚠️  ICU类型不一致: "count"
+#    src/Header.tsx:12  en: plural
+#    src/Header.tsx:12  zh: select
+#
+# ✅ 所有ICU类型一致（无--strict错误）
+```
+
+严格模式会验证同一变量在不同语言环境中是否使用了一致的ICU类型（如 `plural`、`select`、`number` 等）。
+
+---
+
 ## 配置
 
 配置回退行为和警告的全局设置：
@@ -1030,6 +1131,8 @@ pnpm --filter inline-i18n-multi-nextjs-example dev
 | `loadAsync(locale, namespace?)` | 使用配置的加载器异步加载字典 |
 | `isLoaded(locale, namespace?)` | 检查字典是否已加载 |
 | `parseRichText(template, names)` | 将富文本模板解析为段落 |
+| `clearICUCache()` | 清除ICU消息解析缓存 |
+| `restoreLocale()` | 从持久化存储中恢复语言环境 |
 
 ### React钩子和组件
 
@@ -1061,6 +1164,14 @@ interface Config {
   debugMode?: boolean | DebugModeOptions
   loader?: (locale: Locale, namespace: string) => Promise<Record<string, unknown>>
   missingVarHandler?: (varName: string, locale: string) => string
+  icuCacheSize?: number
+  persistLocale?: PersistLocaleOptions
+}
+
+interface PersistLocaleOptions {
+  storage: 'cookie' | 'localStorage'
+  key?: string
+  expires?: number
 }
 
 interface DebugModeOptions {

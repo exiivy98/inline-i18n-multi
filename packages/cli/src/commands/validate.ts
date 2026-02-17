@@ -4,16 +4,96 @@ import { parseProject, type TranslationEntry } from '../parser'
 interface ValidateOptions {
   cwd?: string
   locales?: string[]
+  strict?: boolean
 }
 
 interface Issue {
-  type: 'inconsistent' | 'missing' | 'variable_mismatch'
+  type: 'inconsistent' | 'missing' | 'variable_mismatch' | 'icu_type_mismatch'
   message: string
   entries: TranslationEntry[]
+  details?: string[]
+}
+
+function checkVariableConsistency(entry: TranslationEntry): Issue | null {
+  const varsByLocale: { locale: string; vars: string[] }[] = []
+
+  for (const [locale, text] of Object.entries(entry.translations)) {
+    const matches = text.match(/\{(\w+)\}/g) || []
+    const varNames = [...new Set(matches.map((v) => v.slice(1, -1)))].sort()
+    varsByLocale.push({ locale, vars: varNames })
+  }
+
+  if (varsByLocale.length < 2) return null
+
+  const reference = varsByLocale[0]!
+  const details: string[] = []
+
+  for (let i = 1; i < varsByLocale.length; i++) {
+    const current = varsByLocale[i]!
+    const refSet = new Set(reference.vars)
+    const curSet = new Set(current.vars)
+
+    const onlyInRef = reference.vars.filter((v) => !curSet.has(v))
+    const onlyInCur = current.vars.filter((v) => !refSet.has(v))
+
+    if (onlyInRef.length > 0) {
+      details.push(
+        `${reference.locale} has {${onlyInRef.join('}, {')}} missing in ${current.locale}`,
+      )
+    }
+    if (onlyInCur.length > 0) {
+      details.push(
+        `${current.locale} has {${onlyInCur.join('}, {')}} missing in ${reference.locale}`,
+      )
+    }
+  }
+
+  if (details.length === 0) return null
+
+  return {
+    type: 'variable_mismatch',
+    message: 'Variable mismatch between translations',
+    entries: [entry],
+    details,
+  }
+}
+
+function checkICUTypeConsistency(entry: TranslationEntry): Issue | null {
+  if (!entry.icuTypes) return null
+
+  const locales = Object.keys(entry.icuTypes)
+  if (locales.length < 2) return null
+
+  const details: string[] = []
+  const reference = locales[0]!
+  const refTypes = entry.icuTypes[reference]!
+
+  for (let i = 1; i < locales.length; i++) {
+    const locale = locales[i]!
+    const curTypes = entry.icuTypes[locale]!
+
+    for (const refType of refTypes) {
+      const match = curTypes.find((t: { variable: string; type: string }) => t.variable === refType.variable)
+      if (match && match.type !== refType.type) {
+        details.push(
+          `{${refType.variable}} is "${refType.type}" in ${reference} but "${match.type}" in ${locale}`,
+        )
+      }
+    }
+  }
+
+  if (details.length === 0) return null
+
+  return {
+    type: 'icu_type_mismatch',
+    message: 'ICU type mismatch between translations',
+    entries: [entry],
+    details,
+  }
 }
 
 export async function validate(options: ValidateOptions = {}): Promise<void> {
-  const { cwd, locales } = options
+  const { cwd, locales, strict } = options
 
   console.log(chalk.blue('\nValidating translations...\n'))
 
@@ -62,21 +142,17 @@ export async function validate(options: ValidateOptions = {}): Promise<void> {
     }
   }
 
-  // check for variable mismatches
+  // check for variable name consistency (enhanced in v0.7.0)
   for (const entry of entries) {
-    const variableSets = Object.entries(entry.translations).map(([locale, text]) => {
-      const vars = text.match(/\{(\w+)\}/g) || []
-      return { locale, vars: vars.sort().join(',') }
-    })
+    const issue = checkVariableConsistency(entry)
+    if (issue) issues.push(issue)
+  }
 
-    const uniqueVarSets = [...new Set(variableSets.map((v) => v.vars))]
-
-    if (uniqueVarSets.length > 1) {
-      issues.push({
-        type: 'variable_mismatch',
-        message: 'Variable mismatch between translations',
-        entries: [entry],
-      })
+  // check for ICU type consistency (strict mode, v0.7.0)
+  if (strict) {
+    for (const entry of entries) {
+      const issue = checkICUTypeConsistency(entry)
+      if (issue) issues.push(issue)
     }
   }
 
@@ -84,6 +160,9 @@ export async function validate(options: ValidateOptions = {}): Promise<void> {
   if (issues.length === 0) {
     console.log(chalk.green('✅ All translations are valid!\n'))
     console.log(chalk.gray(`Checked ${entries.length} translation(s)`))
+    if (strict) {
+      console.log(chalk.gray('(strict mode enabled)'))
+    }
     return
   }
 
@@ -91,8 +170,13 @@ export async function validate(options: ValidateOptions = {}): Promise<void> {
 
   for (const issue of issues) {
     const icon =
-      issue.type === 'inconsistent' ? '⚠️' :
-      issue.type === 'missing' ? '📭' : '🔀'
+      issue.type === 'inconsistent'
+        ? '⚠️'
+        : issue.type === 'missing'
+          ? '📭'
+          : issue.type === 'icu_type_mismatch'
+            ? '🔧'
+            : '🔀'
 
     console.log(`${icon}  ${chalk.yellow(issue.message)}`)
 
@@ -104,6 +188,13 @@ export async function validate(options: ValidateOptions = {}): Promise<void> {
         console.log(`     ${chalk.cyan(locale)}: ${text}`)
       }
     }
+
+    if (issue.details && issue.details.length > 0) {
+      for (const detail of issue.details) {
+        console.log(chalk.gray(`     → ${detail}`))
+      }
+    }
+
     console.log()
   }
 

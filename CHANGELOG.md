@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - 2026-02-17
+
+### Added
+
+- **ICU Message Cache** - Memoize parsed ICU ASTs for performance
+  - Automatic caching with configurable size: `configure({ icuCacheSize: 500 })`
+  - FIFO eviction when cache limit reached
+  - Cache key = preprocessed template (locale/variable independent)
+  - `clearICUCache()` to manually reset cache
+  - Set `icuCacheSize: 0` to disable caching
+- **Plural Shorthand** - Concise plural syntax sugar
+  - 2-part: `{count, p, item|items}` → "1 item" / "5 items"
+  - 3-part: `{count, p, none|item|items}` → "none" / "1 item" / "5 items"
+  - Preprocessed to standard ICU plural format before parsing
+  - Works with `it()`, `t()`, and all existing ICU features
+- **Locale Persistence** - Auto-save/restore locale to storage
+  - Configure: `configure({ persistLocale: { storage: 'cookie' | 'localStorage' } })`
+  - `setLocale()` auto-saves to configured storage
+  - `restoreLocale()` reads from storage and sets locale
+  - Custom key: `{ key: 'MY_LOCALE' }` (default: `'LOCALE'`)
+  - Cookie expiry: `{ expires: 365 }` (default: 365 days)
+  - SSR-safe with `typeof` guards
+- **CLI Validation Enhancement** - ICU type consistency checking
+  - `--strict` flag enables ICU type mismatch detection
+  - Enhanced variable mismatch reporting with detailed diff output
+  - ICU type extraction from parsed translations
+- New core exports: `clearICUCache`, `restoreLocale`
+- New React/Next re-exports: `clearICUCache`, `restoreLocale`
+
+### Changed
+
+- `Config` type extended with `icuCacheSize` and `persistLocale` options
+- `FullConfig` updated to include `persistLocale` as optional field
+- CLI `validate` command now shows detailed variable mismatch info
+
 ## [0.6.0] - 2026-02-09
 
 ### Added

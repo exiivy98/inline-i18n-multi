@@ -1,6 +1,6 @@
 // Inline translations
 export { it } from './translate'
-export { setLocale, getLocale } from './context'
+export { setLocale, getLocale, restoreLocale } from './context'
 /** @deprecated Will be removed in v1.0.0 */
 export { __i18n_lookup } from './runtime'
 export {
@@ -36,8 +36,8 @@ export {
 // Configuration
 export { configure, getConfig, resetConfig } from './config'
 
-// Custom formatters (v0.6.0)
-export { registerFormatter, clearFormatters, type CustomFormatter } from './icu'
+// Custom formatters (v0.6.0) + ICU cache (v0.7.0)
+export { registerFormatter, clearFormatters, clearICUCache, type CustomFormatter } from './icu'
 
 // Locale detection (v0.6.0)
 export { detectLocale, type DetectLocaleOptions, type DetectSource } from './detect'

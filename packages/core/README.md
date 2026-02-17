@@ -67,6 +67,9 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Interpolation Guards** - Handle missing variables gracefully (`missingVarHandler`)
 - **Locale Detection** - Auto-detect user locale from navigator, cookie, URL, or header (`detectLocale()`)
 - **Selectordinal** - Ordinal plural formatting (`{rank, selectordinal, one {#st} two {#nd} ...}`)
+- **ICU Message Cache** - Memoize parsed ICU ASTs for performance (`icuCacheSize`, `clearICUCache()`)
+- **Plural Shorthand** - Concise plural syntax (`{count, p, item|items}`)
+- **Locale Persistence** - Auto-save/restore locale to cookie or localStorage (`persistLocale`, `restoreLocale()`)
 
 ---
 
@@ -551,6 +554,109 @@ Uses `Intl.PluralRules` with `{ type: 'ordinal' }` for locale-aware ordinal cate
 
 ---
 
+## ICU Message Cache
+
+Memoize parsed ICU ASTs to avoid re-parsing the same message patterns:
+
+```typescript
+import { configure, clearICUCache } from 'inline-i18n-multi'
+
+// Enable caching (default: 500 entries)
+configure({ icuCacheSize: 500 })
+
+// Disable caching
+configure({ icuCacheSize: 0 })
+
+// Manually clear the cache
+clearICUCache()
+```
+
+The cache uses FIFO (First-In, First-Out) eviction when the maximum size is reached. Repeated calls to `it()` or `t()` with the same ICU pattern will reuse the cached AST instead of re-parsing.
+
+---
+
+## Plural Shorthand
+
+Concise syntax for common plural patterns using `p` as a short type name:
+
+```typescript
+import { it, setLocale } from 'inline-i18n-multi'
+
+setLocale('en')
+
+// 2-part: singular|plural (value is prepended automatically)
+it({
+  en: '{count, p, item|items}',
+  ko: '{count, p, 개|개}'
+}, { count: 1 })   // → "1 item"
+
+it({
+  en: '{count, p, item|items}',
+  ko: '{count, p, 개|개}'
+}, { count: 5 })   // → "5 items"
+
+// 3-part: zero|singular|plural
+it({
+  en: '{count, p, no items|item|items}',
+  ko: '{count, p, 항목 없음|개|개}'
+}, { count: 0 })   // → "no items"
+
+it({
+  en: '{count, p, no items|item|items}',
+  ko: '{count, p, 항목 없음|개|개}'
+}, { count: 1 })   // → "1 item"
+
+it({
+  en: '{count, p, no items|item|items}',
+  ko: '{count, p, 항목 없음|개|개}'
+}, { count: 5 })   // → "5 items"
+```
+
+The shorthand is preprocessed into standard ICU `plural` syntax before parsing.
+
+---
+
+## Locale Persistence
+
+Auto-save and restore the user's locale to `cookie` or `localStorage`:
+
+```typescript
+import { configure, setLocale, restoreLocale } from 'inline-i18n-multi'
+
+// Configure persistence
+configure({
+  persistLocale: {
+    storage: 'cookie',         // 'cookie' | 'localStorage'
+    key: 'LOCALE',             // storage key (default: 'LOCALE')
+    expires: 365               // cookie expiry in days (default: 365)
+  }
+})
+
+// Restore locale from storage (returns the saved locale or undefined)
+const saved = restoreLocale()
+if (saved) {
+  // locale was restored from storage
+}
+
+// setLocale() automatically saves to the configured storage
+setLocale('ko')  // also saves 'ko' to cookie or localStorage
+```
+
+```typescript
+// localStorage example
+configure({
+  persistLocale: {
+    storage: 'localStorage',
+    key: 'APP_LOCALE'
+  }
+})
+
+restoreLocale()   // reads from localStorage
+setLocale('ja')   // saves 'ja' to localStorage
+```
+
+---
+
 ## Configuration
 
 Configure global settings for fallback behavior and warnings:
@@ -636,12 +742,14 @@ Available helpers:
 
 | Function | Description |
 |----------|-------------|
-| `configure(options)` | Configure global settings (fallback, warnings, debug, missingVarHandler) |
+| `configure(options)` | Configure global settings (fallback, warnings, debug, missingVarHandler, icuCacheSize, persistLocale) |
 | `getConfig()` | Get current configuration |
 | `resetConfig()` | Reset configuration to defaults |
 | `loadAsync(locale, namespace?)` | Asynchronously load dictionary using configured loader |
 | `isLoaded(locale, namespace?)` | Check if dictionary has been loaded |
 | `parseRichText(template, names)` | Parse rich text template into segments |
+| `clearICUCache()` | Clear the ICU message AST cache |
+| `restoreLocale()` | Restore locale from configured persistent storage (cookie or localStorage) |
 
 ### Custom Formatters
 
@@ -681,6 +789,17 @@ interface Config {
   debugMode?: boolean | DebugModeOptions
   loader?: (locale: Locale, namespace: string) => Promise<Record<string, unknown>>
   missingVarHandler?: (varName: string, locale: string) => string
+  icuCacheSize?: number
+  persistLocale?: PersistLocaleOptions
+}
+
+interface PersistLocaleOptions {
+  /** Storage backend */
+  storage: 'cookie' | 'localStorage'
+  /** Storage key (default: 'LOCALE') */
+  key?: string
+  /** Cookie expiry in days (default: 365, cookie only) */
+  expires?: number
 }
 
 interface DebugModeOptions {

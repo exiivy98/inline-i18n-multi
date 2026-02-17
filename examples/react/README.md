@@ -11,6 +11,10 @@ React example using `inline-i18n-multi-react` with Vite.
 - `T` component for JSX-friendly translations
 - Variable interpolation
 - Plural support
+- Rich Text (`RichText` component)
+- Currency & Compact number formatting
+- Custom Formatter, Interpolation Guards
+- Plural Shorthand (v0.7.0)
 
 ## Run
 

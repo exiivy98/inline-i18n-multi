@@ -68,6 +68,10 @@
 - **補間ガード** - 欠落した変数の安全な処理（`configure({ missingVarHandler })`）
 - **ロケール検出** - Cookie/ブラウザからの自動ロケール検出（`detectLocale()` + React `useDetectedLocale()`）
 - **Selectordinal** - 序数複数形のための完全なICU `selectordinal`サポート（`{n, selectordinal, ...}`）
+- **ICU Message Cache** - パース済みICU ASTのメモ化によるパフォーマンス最適化（`configure({ icuCacheSize: 500 })`）
+- **Plural Shorthand** - 簡潔な複数形構文（`{count, p, item|items}`）
+- **Locale Persistence** - ロケール自動保存・復元（`configure({ persistLocale: { storage: 'cookie' } })`）
+- **CLI `--strict`モード** - ICU型整合性チェック（`npx inline-i18n validate --strict`）
 
 ---
 
@@ -807,6 +811,132 @@ function App() {
 
 ---
 
+## ICU Message Cache
+
+パース済みICU ASTをメモ化して繰り返し呼び出し時のパフォーマンスを最適化します：
+
+```typescript
+import { configure, clearICUCache, it } from 'inline-i18n-multi'
+
+// キャッシュサイズを設定（デフォルト: 500）
+configure({ icuCacheSize: 500 })
+
+// 同じICUパターンを繰り返し呼び出しても一度だけパースされる
+it({
+  en: '{count, plural, one {# item} other {# items}}',
+  ja: '{count, plural, other {#件}}'
+}, { count: 5 })
+
+// キャッシュ無効化（0に設定）
+configure({ icuCacheSize: 0 })
+
+// キャッシュの手動クリア
+clearICUCache()
+```
+
+キャッシュが`icuCacheSize`に達するとFIFO（先入先出）方式で最も古いエントリから削除されます。
+
+---
+
+## Plural Shorthand
+
+ICU `plural`構文の簡潔な代替：
+
+```typescript
+import { it, setLocale } from 'inline-i18n-multi'
+
+setLocale('en')
+
+// 2パート: {変数, p, 単数形|複数形}
+it({
+  en: '{count, p, item|items}',
+  ja: '{count, p, 件|件}'
+}, { count: 1 })   // → "1 item"
+
+it({
+  en: '{count, p, item|items}',
+  ja: '{count, p, 件|件}'
+}, { count: 5 })   // → "5 items"
+
+// 3パート: {変数, p, ゼロ|単数形|複数形}
+it({
+  en: '{count, p, none|item|items}',
+  ja: '{count, p, なし|件|件}'
+}, { count: 0 })   // → "none"
+
+it({
+  en: '{count, p, none|item|items}',
+  ja: '{count, p, なし|件|件}'
+}, { count: 1 })   // → "1 item"
+
+it({
+  en: '{count, p, none|item|items}',
+  ja: '{count, p, なし|件|件}'
+}, { count: 5 })   // → "5 items"
+```
+
+`{count, p, item|items}`は内部的に`{count, plural, one {# item} other {# items}}`に変換されます。
+
+---
+
+## Locale Persistence
+
+ロケールをCookieまたは`localStorage`に自動で保存・復元します：
+
+```typescript
+import { configure, setLocale, restoreLocale } from 'inline-i18n-multi'
+
+// Cookieに保存
+configure({
+  persistLocale: {
+    storage: 'cookie',
+    key: 'LOCALE',       // Cookie/localStorageキー（デフォルト: 'LOCALE'）
+    expires: 365          // Cookie有効期限（日数、デフォルト: 365）
+  }
+})
+
+// setLocale()呼び出し時に自動でストレージに保存
+setLocale('ja')  // → CookieにLOCALE=ja保存
+
+// ストレージからロケールを復元
+const locale = restoreLocale()  // → 'ja'（ストレージから読み取り）
+
+// localStorageに保存
+configure({
+  persistLocale: {
+    storage: 'localStorage',
+    key: 'LOCALE'
+  }
+})
+
+setLocale('en')  // → localStorageにLOCALE=en保存
+```
+
+---
+
+## CLI `--strict`モード
+
+ICU型整合性を検証する厳格モード：
+
+```bash
+npx inline-i18n validate --strict
+
+# 出力:
+# ❌ ICU型不一致
+#    src/Header.tsx:12
+#    en: {count, plural, one {# item} other {# items}}  (plural)
+#    ja: {count}件                                        (simple)
+#
+# ❌ 変数欠落
+#    src/About.tsx:8
+#    en: Hello, {name}!  (変数: name)
+#    ja: こんにちは！     (変数: なし)
+```
+
+`--strict`フラグは既存の`validate`コマンドに加えて、ICUメッセージ型（plural、select、numberなど）が全ロケールで一貫して使用されているか検証します。
+
+---
+
 ## 設定
 
 フォールバック動作と警告のグローバル設定を構成します：
@@ -1021,6 +1151,8 @@ VSCodeマーケットプレイスから`inline-i18n-multi-vscode`をインスト
 | `loadAsync(locale, namespace?)` | 設定されたローダーを使用して非同期辞書ロード |
 | `isLoaded(locale, namespace?)` | 辞書がロードされているか確認 |
 | `parseRichText(template, names)` | リッチテキストテンプレートをセグメントに解析 |
+| `clearICUCache()` | ICUパースキャッシュをクリア |
+| `restoreLocale()` | ストレージ（Cookie/localStorage）からロケールを復元 |
 
 ### Reactフック＆コンポーネント
 
@@ -1052,6 +1184,14 @@ interface Config {
   debugMode?: boolean | DebugModeOptions
   loader?: (locale: string, namespace?: string) => Promise<any>
   missingVarHandler?: (varName: string, locale: string) => string
+  icuCacheSize?: number
+  persistLocale?: PersistLocaleOptions
+}
+
+interface PersistLocaleOptions {
+  storage: 'cookie' | 'localStorage'
+  key?: string
+  expires?: number
 }
 
 interface DebugModeOptions {

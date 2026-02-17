@@ -35,7 +35,7 @@ function isDevMode(): boolean {
   }
 }
 
-type FullConfig = Required<Omit<Config, 'loader' | 'missingVarHandler'>> & Pick<Config, 'loader' | 'missingVarHandler'>
+type FullConfig = Required<Omit<Config, 'loader' | 'missingVarHandler' | 'persistLocale'>> & Pick<Config, 'loader' | 'missingVarHandler' | 'persistLocale'>
 
 const defaultConfig: FullConfig = {
   defaultLocale: 'en',
@@ -46,6 +46,7 @@ const defaultConfig: FullConfig = {
   onMissingTranslation: defaultWarningHandler,
   debugMode: false,
   loader: undefined,
+  icuCacheSize: 500,
 }
 
 let config: Config = { ...defaultConfig }

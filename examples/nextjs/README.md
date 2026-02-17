@@ -9,6 +9,9 @@ Next.js 15 App Router example with full SEO support using `inline-i18n-multi-nex
 - **Hreflang Links** - `getAlternates()` for proper language alternates
 - **Cookie Persistence** - Locale preference saved automatically
 - **URL-Based Routing** - `/[locale]/...` pattern for SEO-friendly URLs
+- **Plural Shorthand** (v0.7.0) - `{count, p, item|items}` concise syntax
+- **ICU Message Cache** (v0.7.0) - Parsed AST memoization
+- **Locale Persistence** (v0.7.0) - Auto-save/restore locale
 
 ## Run
 

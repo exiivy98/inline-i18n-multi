@@ -39,10 +39,13 @@ export {
   useLoadDictionaries,
   // rich text parsing
   parseRichText,
-  // custom formatters (v0.6.0)
+  // custom formatters (v0.6.0) + ICU cache (v0.7.0)
   registerFormatter,
   clearFormatters,
+  clearICUCache,
   type CustomFormatter,
+  // locale persistence (v0.7.0)
+  restoreLocale,
   // locale detection (v0.6.0)
   detectLocale,
   useDetectedLocale,

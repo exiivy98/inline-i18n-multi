@@ -110,6 +110,48 @@ function Dashboard() {
 }
 ```
 
+## Plural Shorthand (v0.7.0)
+
+Concise plural syntax sugar:
+
+```tsx
+function Items({ count }: { count: number }) {
+  return (
+    <p>
+      {it({
+        en: '{count, p, item|items}',
+        ko: '{count, p, 개|개}',
+      }, { count })}
+    </p>
+  )
+}
+// count=1 → "1 item", count=5 → "5 items"
+
+// 3-part with zero:
+// {count, p, none|item|items} → count=0: "none", count=1: "1 item", count=5: "5 items"
+```
+
+## Locale Persistence (v0.7.0)
+
+Auto-save and restore locale to cookie or localStorage:
+
+```tsx
+import { configure, restoreLocale } from 'inline-i18n-multi-react'
+
+// Save to cookie on setLocale()
+configure({
+  persistLocale: { storage: 'cookie', key: 'LOCALE', expires: 365 }
+})
+
+// Or use localStorage
+configure({
+  persistLocale: { storage: 'localStorage', key: 'LOCALE' }
+})
+
+// Restore saved locale
+const saved = restoreLocale()  // returns locale string or undefined
+```
+
 ## Automatic Locale Detection
 
 ```tsx
@@ -171,6 +213,9 @@ function AutoDetect() {
 
 **Locale detection:**
 `detectLocale`
+
+**ICU cache & persistence:**
+`clearICUCache`, `restoreLocale`
 
 ## Documentation
 

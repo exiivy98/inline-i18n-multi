@@ -18,6 +18,9 @@
  * - Custom Formatter Registry (v0.6.0)
  * - Interpolation Guards (v0.6.0)
  * - Locale Detection (v0.6.0)
+ * - ICU Message Cache (v0.7.0)
+ * - Plural Shorthand (v0.7.0)
+ * - Locale Persistence (v0.7.0)
  */
 
 import {
@@ -46,6 +49,10 @@ import {
   clearFormatters,
   // Locale detection (v0.6.0)
   detectLocale,
+  // ICU cache (v0.7.0)
+  clearICUCache,
+  // Locale persistence (v0.7.0)
+  restoreLocale,
 } from 'inline-i18n-multi'
 
 // ============================================
@@ -502,6 +509,91 @@ const fallback = detectLocale({
 console.log('Fallback locale:', fallback)  // → "en"
 
 // ============================================
+// 17. ICU Message Cache (v0.7.0)
+// ============================================
+
+console.log('\n=== ICU Message Cache (v0.7.0) ===\n')
+
+resetConfig()
+setLocale('en')
+
+// Cache is enabled by default (size: 500)
+// Same ICU template reuses cached AST for performance
+const template = { en: '{count, plural, one {# item} other {# items}}', ko: '{count, plural, other {#개}}' }
+console.log(it(template, { count: 1 }))  // → "1 item" (parse + cache)
+console.log(it(template, { count: 5 }))  // → "5 items" (cache hit!)
+
+// Configure cache size
+configure({ icuCacheSize: 100 })
+console.log('Cache size configured to 100')
+
+// Disable cache
+configure({ icuCacheSize: 0 })
+console.log('Cache disabled (icuCacheSize: 0)')
+
+// Clear cache manually
+configure({ icuCacheSize: 500 })
+clearICUCache()
+console.log('Cache cleared with clearICUCache()')
+
+// ============================================
+// 18. Plural Shorthand (v0.7.0)
+// ============================================
+
+console.log('\n=== Plural Shorthand (v0.7.0) ===\n')
+
+resetConfig()
+setLocale('en')
+
+// 2-part shorthand: {var, p, singular|plural}
+console.log(it({ en: '{count, p, item|items}' }, { count: 1 }))  // → "1 item"
+console.log(it({ en: '{count, p, item|items}' }, { count: 5 }))  // → "5 items"
+
+// 3-part shorthand: {var, p, zero|singular|plural}
+console.log(it({ en: '{count, p, none|item|items}' }, { count: 0 }))  // → "none"
+console.log(it({ en: '{count, p, none|item|items}' }, { count: 1 }))  // → "1 item"
+console.log(it({ en: '{count, p, none|item|items}' }, { count: 5 }))  // → "5 items"
+
+// Mixed with other text
+console.log(it({
+  en: 'You have {count, p, message|messages}',
+  ko: '{count, p, 메시지가 없습니다|개의 메시지|개의 메시지}',
+}, { count: 3 }))
+
+// ============================================
+// 19. Locale Persistence (v0.7.0)
+// ============================================
+
+console.log('\n=== Locale Persistence (v0.7.0) ===\n')
+
+resetConfig()
+
+// Note: localStorage/cookie are not available in Node.js
+// These examples show the API — they work in browser environments
+
+// Configure persistence (would work in browser)
+configure({
+  persistLocale: { storage: 'localStorage', key: 'MY_LOCALE' }
+})
+console.log('Configured persistLocale with localStorage')
+
+// restoreLocale() returns undefined in Node.js (no storage available)
+const saved = restoreLocale()
+console.log('restoreLocale() in Node.js:', saved)  // → undefined
+
+// In a browser environment:
+// setLocale('ko')          → auto-saves 'ko' to localStorage
+// restoreLocale()          → reads from localStorage, returns 'ko'
+
+// Cookie example
+configure({
+  persistLocale: { storage: 'cookie', key: 'LOCALE', expires: 365 }
+})
+console.log('Configured persistLocale with cookie (expires: 365 days)')
+
+resetConfig()
+
+// ============================================
 // Summary
 // ============================================
 
@@ -542,4 +634,9 @@ v0.6.0 features:
 - Interpolation Guards (missingVarHandler)
 - Locale Detection (detectLocale())
 - Selectordinal (ordinal plural rules)
+
+v0.7.0 features:
+- ICU Message Cache (cachedParse, clearICUCache())
+- Plural Shorthand ({count, p, item|items})
+- Locale Persistence (persistLocale, restoreLocale())
 `)

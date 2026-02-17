@@ -1,5 +1,5 @@
 import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest'
-import { interpolateICU, hasICUPattern, registerFormatter, clearFormatters } from './icu'
+import { interpolateICU, hasICUPattern, hasPluralShorthand, registerFormatter, clearFormatters, clearICUCache } from './icu'
 import { configure, resetConfig } from './config'
 
 describe('ICU Message Format', () => {
@@ -956,6 +956,100 @@ describe('ICU Message Format', () => {
       expect(() => registerFormatter('currency', () => '')).toThrow('reserved ICU type name')
       expect(() => registerFormatter('relativeTime', () => '')).toThrow('reserved ICU type name')
       expect(() => registerFormatter('list', () => '')).toThrow('reserved ICU type name')
+    })
+  })
+
+  // ===========================================================================
+  // ICU Message Cache (v0.7.0)
+  // ===========================================================================
+  describe('ICU message cache (v0.7.0)', () => {
+    afterEach(() => {
+      clearICUCache()
+      resetConfig()
+    })
+
+    test('cached parse returns same result as uncached', () => {
+      clearICUCache()
+      const r1 = interpolateICU('{count, plural, one {# item} other {# items}}', { count: 3 }, 'en')
+      const r2 = interpolateICU('{count, plural, one {# item} other {# items}}', { count: 3 }, 'en')
+      expect(r1).toBe('3 items')
+      expect(r2).toBe('3 items')
+    })
+
+    test('same template different vars uses cache', () => {
+      clearICUCache()
+      const r1 = interpolateICU('{count, plural, one {# item} other {# items}}', { count: 1 }, 'en')
+      const r2 = interpolateICU('{count, plural, one {# item} other {# items}}', { count: 5 }, 'en')
+      expect(r1).toBe('1 item')
+      expect(r2).toBe('5 items')
+    })
+
+    test('clearICUCache resets the cache', () => {
+      interpolateICU('{count, plural, one {# item} other {# items}}', { count: 1 }, 'en')
+      clearICUCache()
+      const result = interpolateICU('{count, plural, one {# item} other {# items}}', { count: 1 }, 'en')
+      expect(result).toBe('1 item')
+    })
+
+    test('cache respects icuCacheSize: 0 disables caching', () => {
+      configure({ icuCacheSize: 0 })
+      const r1 = interpolateICU('{count, plural, one {# item} other {# items}}', { count: 1 }, 'en')
+      const r2 = interpolateICU('{count, plural, one {# item} other {# items}}', { count: 5 }, 'en')
+      expect(r1).toBe('1 item')
+      expect(r2).toBe('5 items')
+    })
+
+    test('cache evicts oldest entry when at capacity', () => {
+      configure({ icuCacheSize: 2 })
+      clearICUCache()
+      interpolateICU('{a}', { a: '1' }, 'en')
+      interpolateICU('{b}', { b: '2' }, 'en')
+      interpolateICU('{c}', { c: '3' }, 'en')
+      expect(interpolateICU('{a}', { a: '1' }, 'en')).toBe('1')
+      expect(interpolateICU('{b}', { b: '2' }, 'en')).toBe('2')
+      expect(interpolateICU('{c}', { c: '3' }, 'en')).toBe('3')
+    })
+  })
+
+  // ===========================================================================
+  // Plural Shorthand (v0.7.0)
+  // ===========================================================================
+  describe('plural shorthand (v0.7.0)', () => {
+    test('hasPluralShorthand detects shorthand', () => {
+      expect(hasPluralShorthand('{count, p, item|items}')).toBe(true)
+      expect(hasPluralShorthand('{count, p, none|item|items}')).toBe(true)
+      expect(hasPluralShorthand('{count, plural, one {# item} other {# items}}')).toBe(false)
+      expect(hasPluralShorthand('Hello {name}')).toBe(false)
+    })
+
+    test('two-part shorthand (singular|plural)', () => {
+      expect(interpolateICU('{count, p, item|items}', { count: 1 }, 'en')).toBe('1 item')
+      expect(interpolateICU('{count, p, item|items}', { count: 5 }, 'en')).toBe('5 items')
+    })
+
+    test('three-part shorthand (zero|singular|plural)', () => {
+      expect(interpolateICU('{count, p, no items|item|items}', { count: 0 }, 'en')).toBe('no items')
+      expect(interpolateICU('{count, p, no items|item|items}', { count: 1 }, 'en')).toBe('1 item')
+      expect(interpolateICU('{count, p, no items|item|items}', { count: 5 }, 'en')).toBe('5 items')
+    })
+
+    test('combined with regular text', () => {
+      const result = interpolateICU('You have {count, p, item|items} in your cart', { count: 3 }, 'en')
+      expect(result).toBe('You have 3 items in your cart')
+    })
+
+    test('combined with other variables', () => {
+      const result = interpolateICU('{name} has {count, p, message|messages}', { name: 'Alice', count: 1 }, 'en')
+      expect(result).toBe('Alice has 1 message')
+    })
+
+    test('missing count variable', () => {
+      const result = interpolateICU('{count, p, item|items}', {}, 'en')
+      expect(result).toBe('{count}')
+    })
+
+    test('Korean locale (always other)', () => {
+      expect(interpolateICU('{count, p, 개|개}', { count: 5 }, 'ko')).toBe('5 개')
     })
   })
 })

@@ -19,6 +19,9 @@ import {
   resetConfig,
   registerFormatter,
   clearFormatters,
+  clearICUCache,
+  restoreLocale,
+  getConfig,
 } from './index'
 
 describe('setLocale / getLocale', () => {
@@ -908,5 +911,145 @@ describe('Custom Formatter Registry (v0.6.0)', () => {
     const result = t('contact', { num: '2125551234' })
     expect(result).toBe('Call (212) 555-1234')
     clearDictionaries()
+  })
+})
+
+// =============================================================================
+// Plural Shorthand (v0.7.0)
+// =============================================================================
+describe('Plural shorthand (v0.7.0)', () => {
+  beforeEach(() => {
+    setLocale('en')
+    resetConfig()
+  })
+
+  test('it() works with plural shorthand', () => {
+    expect(it({ en: '{count, p, item|items}' }, { count: 1 })).toBe('1 item')
+    expect(it({ en: '{count, p, item|items}' }, { count: 3 })).toBe('3 items')
+  })
+
+  test('it() works with three-part shorthand', () => {
+    expect(it({ en: '{count, p, nothing|item|items}' }, { count: 0 })).toBe('nothing')
+  })
+
+  test('t() works with plural shorthand', () => {
+    loadDictionaries({ en: { items: '{count, p, item|items}' } })
+    expect(t('items', { count: 1 })).toBe('1 item')
+    expect(t('items', { count: 5 })).toBe('5 items')
+    clearDictionaries()
+  })
+})
+
+// =============================================================================
+// Locale Persistence (v0.7.0)
+// =============================================================================
+describe('Locale persistence (v0.7.0)', () => {
+  beforeEach(() => {
+    resetConfig()
+    setLocale('en')
+  })
+
+  afterEach(() => {
+    resetConfig()
+    setLocale('en')
+    delete (globalThis as any).document
+    delete (globalThis as any).localStorage
+  })
+
+  test('setLocale writes cookie when persistLocale configured', () => {
+    let cookieStore = ''
+    Object.defineProperty(globalThis, 'document', {
+      value: {
+        get cookie() { return cookieStore },
+        set cookie(v: string) { cookieStore = v },
+      },
+      writable: true,
+      configurable: true,
+    })
+
+    configure({ persistLocale: { storage: 'cookie' } })
+    setLocale('ko')
+
+    expect(cookieStore).toContain('LOCALE=ko')
+  })
+
+  test('restoreLocale reads from cookie', () => {
+    Object.defineProperty(globalThis, 'document', {
+      value: { cookie: 'LOCALE=ja; other=val' },
+      writable: true,
+      configurable: true,
+    })
+
+    configure({ persistLocale: { storage: 'cookie' } })
+    const restored = restoreLocale()
+
+    expect(restored).toBe('ja')
+    expect(getLocale()).toBe('ja')
+  })
+
+  test('restoreLocale returns undefined when no cookie', () => {
+    Object.defineProperty(globalThis, 'document', {
+      value: { cookie: '' },
+      writable: true,
+      configurable: true,
+    })
+
+    configure({ persistLocale: { storage: 'cookie' } })
+    expect(restoreLocale()).toBeUndefined()
+  })
+
+  test('custom cookie key', () => {
+    let cookieStore = ''
+    Object.defineProperty(globalThis, 'document', {
+      value: {
+        get cookie() { return cookieStore },
+        set cookie(v: string) { cookieStore = v },
+      },
+      writable: true,
+      configurable: true,
+    })
+
+    configure({ persistLocale: { storage: 'cookie', key: 'MY_LANG' } })
+    setLocale('fr')
+
+    expect(cookieStore).toContain('MY_LANG=fr')
+  })
+
+  test('setLocale writes to localStorage when configured', () => {
+    const store: Record<string, string> = {}
+    Object.defineProperty(globalThis, 'localStorage', {
+      value: {
+        setItem: (k: string, v: string) => { store[k] = v },
+        getItem: (k: string) => store[k] ?? null,
+      },
+      writable: true,
+      configurable: true,
+    })
+
+    configure({ persistLocale: { storage: 'localStorage' } })
+    setLocale('zh')
+
+    expect(store['LOCALE']).toBe('zh')
+  })
+
+  test('restoreLocale reads from localStorage', () => {
+    Object.defineProperty(globalThis, 'localStorage', {
+      value: {
+        getItem: () => 'de',
+        setItem: () => {},
+      },
+      writable: true,
+      configurable: true,
+    })
+
+    configure({ persistLocale: { storage: 'localStorage' } })
+    const restored = restoreLocale()
+
+    expect(restored).toBe('de')
+    expect(getLocale()).toBe('de')
+  })
+
+  test('restoreLocale returns undefined when no persistLocale configured', () => {
+    expect(restoreLocale()).toBeUndefined()
   })
 })
