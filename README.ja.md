@@ -72,6 +72,9 @@
 - **Plural Shorthand** - 簡潔な複数形構文（`{count, p, item|items}`）
 - **Locale Persistence** - ロケール自動保存・復元（`configure({ persistLocale: { storage: 'cookie' } })`）
 - **CLI `--strict`モード** - ICU型整合性チェック（`npx inline-i18n validate --strict`）
+- **Translation Scope** - 名前空間スコープ用の`createScope`（`createScope('common')` → スコープ付き`t()`）
+- **未使用キー検出** - CLI `--unused`フラグで未使用の翻訳キーを検出
+- **TypeScript型生成** - `typegen`コマンドで翻訳キーの型定義を自動生成
 
 ---
 
@@ -922,18 +925,59 @@ ICU型整合性を検証する厳格モード：
 npx inline-i18n validate --strict
 
 # 出力:
-# ❌ ICU型不一致
+# ICU type mismatch
 #    src/Header.tsx:12
 #    en: {count, plural, one {# item} other {# items}}  (plural)
 #    ja: {count}件                                        (simple)
 #
-# ❌ 変数欠落
+# Variable mismatch
 #    src/About.tsx:8
 #    en: Hello, {name}!  (変数: name)
 #    ja: こんにちは！     (変数: なし)
 ```
 
 `--strict`フラグは既存の`validate`コマンドに加えて、ICUメッセージ型（plural、select、numberなど）が全ロケールで一貫して使用されているか検証します。
+
+---
+
+## Translation Scope
+
+`createScope`を使用して、名前空間にスコープされた翻訳関数を作成します：
+
+```typescript
+import { createScope, loadDictionaries } from 'inline-i18n-multi'
+
+loadDictionaries({ en: { greeting: 'Hello' }, ko: { greeting: '안녕하세요' } }, 'common')
+
+const tc = createScope('common')
+tc('greeting') // → "Hello"
+```
+
+名前空間プレフィックス（`t('common:greeting')`）を毎回書く必要がなくなり、コードがシンプルになります。
+
+---
+
+## 未使用キー検出
+
+`--unused`フラグで辞書に定義されているがコード内で使用されていない翻訳キーを検出します：
+
+```bash
+npx inline-i18n validate --unused
+```
+
+不要な翻訳を特定してクリーンアップするのに便利です。
+
+---
+
+## TypeScript型生成
+
+`typegen`コマンドで翻訳キーのTypeScript型定義ファイルを自動生成します：
+
+```bash
+npx inline-i18n typegen --output src/i18n.d.ts
+```
+
+生成された型定義により、`t()`関数のキー引数に対するオートコンプリートと型チェックが有効になります。
 
 ---
 
@@ -1056,11 +1100,11 @@ npx inline-i18n find "Hello"
 npx inline-i18n validate --locales ko,en,ja
 
 # 出力:
-# ⚠️  "안녕하세요"の一貫性のない翻訳
+# Inconsistent translations for "안녕하세요"
 #    src/Header.tsx:12  en: "Hello"
 #    src/Footer.tsx:8   en: "Hi"
 #
-# 📭 不足しているロケール: ja
+# Missing locales: ja
 #    src/About.tsx:15
 ```
 
@@ -1153,6 +1197,7 @@ VSCodeマーケットプレイスから`inline-i18n-multi-vscode`をインスト
 | `parseRichText(template, names)` | リッチテキストテンプレートをセグメントに解析 |
 | `clearICUCache()` | ICUパースキャッシュをクリア |
 | `restoreLocale()` | ストレージ（Cookie/localStorage）からロケールを復元 |
+| `createScope(namespace)` | 指定した名前空間にスコープされた翻訳関数を返す |
 
 ### Reactフック＆コンポーネント
 

@@ -1,10 +1,12 @@
 import chalk from 'chalk'
 import { parseProject, type TranslationEntry } from '../parser'
+import { unused } from './unused'
 
 interface ValidateOptions {
   cwd?: string
   locales?: string[]
   strict?: boolean
+  unused?: boolean
 }
 
 interface Issue {
@@ -93,7 +95,7 @@ function checkICUTypeConsistency(entry: TranslationEntry): Issue | null {
 }
 
 export async function validate(options: ValidateOptions = {}): Promise<void> {
-  const { cwd, locales, strict } = options
+  const { cwd, locales, strict, unused: checkUnused } = options
 
   console.log(chalk.blue('\nValidating translations...\n'))
 
@@ -156,29 +158,30 @@ export async function validate(options: ValidateOptions = {}): Promise<void> {
     }
   }
 
+  // unused key detection (v0.8.0)
+  let unusedCount = 0
+  if (checkUnused) {
+    const result = await unused({ cwd })
+    unusedCount = result.unusedKeys.length
+  }
+
   // print results
-  if (issues.length === 0) {
-    console.log(chalk.green('✅ All translations are valid!\n'))
+  if (issues.length === 0 && unusedCount === 0) {
+    console.log(chalk.green('All translations are valid!\n'))
     console.log(chalk.gray(`Checked ${entries.length} translation(s)`))
     if (strict) {
       console.log(chalk.gray('(strict mode enabled)'))
     }
+    if (checkUnused) {
+      console.log(chalk.gray('(unused key detection enabled)'))
+    }
     return
   }
 
-  console.log(chalk.red(`❌ Found ${issues.length} issue(s):\n`))
+  console.log(chalk.red(`Found ${issues.length} issue(s):\n`))
 
   for (const issue of issues) {
-    const icon =
-      issue.type === 'inconsistent'
-        ? '⚠️'
-        : issue.type === 'missing'
-          ? '📭'
-          : issue.type === 'icu_type_mismatch'
-            ? '🔧'
-            : '🔀'
-
-    console.log(`${icon}  ${chalk.yellow(issue.message)}`)
+    console.log(`  ${chalk.yellow(issue.message)}`)
 
     for (const entry of issue.entries) {
       const relativePath = entry.file.replace(process.cwd() + '/', '')
@@ -198,5 +201,7 @@ export async function validate(options: ValidateOptions = {}): Promise<void> {
     console.log()
   }
 
-  process.exit(1)
+  if (issues.length > 0 || unusedCount > 0) {
+    process.exit(1)
+  }
 }

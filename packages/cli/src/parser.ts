@@ -3,6 +3,21 @@ import traverse from '@babel/traverse'
 import * as fs from 'fs'
 import fg from 'fast-glob'
 
+// v0.8.0: Dictionary key and t() call extraction
+
+export interface DictionaryKeyEntry {
+  file: string
+  line: number
+  namespace: string
+  keys: string[]
+}
+
+export interface TCallEntry {
+  file: string
+  line: number
+  key: string
+}
+
 export interface ICUTypeInfo {
   variable: string
   type: string
@@ -151,6 +166,173 @@ function parseFile(filePath: string): TranslationEntry[] {
   })
 
   return entries
+}
+
+// v0.8.0: Flatten nested ObjectExpression to dot-notation keys
+function flattenObjectKeys(
+  node: { type: string; properties?: unknown[] },
+  prefix: string = '',
+): string[] {
+  const keys: string[] = []
+  if (node.type !== 'ObjectExpression' || !node.properties) return keys
+
+  for (const prop of node.properties as Array<{
+    type: string
+    key: { type: string; name?: string; value?: string }
+    value: { type: string; properties?: unknown[] }
+  }>) {
+    if (prop.type !== 'ObjectProperty') continue
+
+    let propName: string | undefined
+    if (prop.key.type === 'Identifier') propName = prop.key.name
+    else if (prop.key.type === 'StringLiteral') propName = prop.key.value
+
+    if (!propName) continue
+
+    const fullKey = prefix ? `${prefix}.${propName}` : propName
+
+    if (prop.value.type === 'StringLiteral') {
+      keys.push(fullKey)
+    } else if (prop.value.type === 'ObjectExpression') {
+      keys.push(...flattenObjectKeys(prop.value, fullKey))
+    }
+  }
+  return keys
+}
+
+// v0.8.0: Extract dictionary keys from loadDictionaries() calls
+export function parseDictionaryKeys(filePath: string): DictionaryKeyEntry[] {
+  const entries: DictionaryKeyEntry[] = []
+  const code = fs.readFileSync(filePath, 'utf-8')
+
+  let ast
+  try {
+    ast = parse(code, {
+      sourceType: 'module',
+      plugins: ['typescript', 'jsx'],
+    })
+  } catch {
+    return []
+  }
+
+  traverse(ast, {
+    CallExpression(nodePath) {
+      const { node } = nodePath
+      const { callee } = node
+
+      if (callee.type !== 'Identifier' || callee.name !== 'loadDictionaries') return
+
+      const args = node.arguments
+      const loc = node.loc
+      if (!loc || !args[0] || args[0].type !== 'ObjectExpression') return
+
+      // Second argument is optional namespace
+      let namespace = 'default'
+      if (args[1]?.type === 'StringLiteral') {
+        namespace = args[1].value
+      }
+
+      // First argument: { locale: { key: value } }
+      // Collect keys from the first locale's dict (all locales should have same keys)
+      const dictObj = args[0]
+      const allKeys = new Set<string>()
+
+      for (const localeProp of dictObj.properties as Array<{
+        type: string
+        value: { type: string; properties?: unknown[] }
+      }>) {
+        if (localeProp.type !== 'ObjectProperty') continue
+        if (localeProp.value.type !== 'ObjectExpression') continue
+
+        const localeKeys = flattenObjectKeys(localeProp.value)
+        for (const key of localeKeys) {
+          allKeys.add(key)
+        }
+      }
+
+      if (allKeys.size > 0) {
+        entries.push({
+          file: filePath,
+          line: loc.start.line,
+          namespace,
+          keys: [...allKeys],
+        })
+      }
+    },
+  })
+
+  return entries
+}
+
+// v0.8.0: Extract t() call sites
+export function parseTCalls(filePath: string): TCallEntry[] {
+  const entries: TCallEntry[] = []
+  const code = fs.readFileSync(filePath, 'utf-8')
+
+  let ast
+  try {
+    ast = parse(code, {
+      sourceType: 'module',
+      plugins: ['typescript', 'jsx'],
+    })
+  } catch {
+    return []
+  }
+
+  traverse(ast, {
+    CallExpression(nodePath) {
+      const { node } = nodePath
+      const { callee } = node
+
+      if (callee.type !== 'Identifier' || callee.name !== 't') return
+
+      const args = node.arguments
+      const loc = node.loc
+      if (!loc || !args[0] || args[0].type !== 'StringLiteral') return
+
+      entries.push({
+        file: filePath,
+        line: loc.start.line,
+        key: args[0].value,
+      })
+    },
+  })
+
+  return entries
+}
+
+export async function extractProjectDictionaryKeys(options: ParseOptions = {}): Promise<DictionaryKeyEntry[]> {
+  const {
+    cwd = process.cwd(),
+    include = ['**/*.{ts,tsx,js,jsx}'],
+    exclude = ['**/node_modules/**', '**/dist/**', '**/.next/**'],
+  } = options
+
+  const files = await fg(include, { cwd, ignore: exclude, absolute: true })
+  const allEntries: DictionaryKeyEntry[] = []
+
+  for (const file of files) {
+    allEntries.push(...parseDictionaryKeys(file))
+  }
+
+  return allEntries
+}
+
+export async function extractProjectTCalls(options: ParseOptions = {}): Promise<TCallEntry[]> {
+  const {
+    cwd = process.cwd(),
+    include = ['**/*.{ts,tsx,js,jsx}'],
+    exclude = ['**/node_modules/**', '**/dist/**', '**/.next/**'],
+  } = options
+
+  const files = await fg(include, { cwd, ignore: exclude, absolute: true })
+  const allEntries: TCallEntry[] = []
+
+  for (const file of files) {
+    allEntries.push(...parseTCalls(file))
+  }
+
+  return allEntries
 }
 
 export async function parseProject(options: ParseOptions = {}): Promise<TranslationEntry[]> {

@@ -18,6 +18,7 @@ Basic TypeScript example demonstrating core `inline-i18n-multi` features.
 - ICU Message Cache (v0.7.0)
 - Plural Shorthand (v0.7.0)
 - Locale Persistence (v0.7.0)
+- Translation Scope (v0.8.0)
 
 ## Run
 

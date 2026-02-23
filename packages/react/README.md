@@ -152,6 +152,37 @@ configure({
 const saved = restoreLocale()  // returns locale string or undefined
 ```
 
+## Translation Scope (v0.8.0)
+
+Scope translations to a key prefix with `useScopedT`. Useful for large apps where each component only needs a subset of the dictionary.
+
+```tsx
+import { useScopedT } from 'inline-i18n-multi-react'
+
+function Dashboard() {
+  const t = useScopedT('dashboard')
+  return (
+    <div>
+      <h1>{t('title')}</h1>     {/* resolves to 'dashboard.title' */}
+      <p>{t('subtitle')}</p>    {/* resolves to 'dashboard.subtitle' */}
+    </div>
+  )
+}
+```
+
+You can also create a reusable scope with `createScope`:
+
+```tsx
+import { createScope } from 'inline-i18n-multi-react'
+
+const scope = createScope('settings.profile')
+
+function ProfileForm() {
+  const t = useScopedT(scope)
+  return <label>{t('name')}</label>  {/* resolves to 'settings.profile.name' */}
+}
+```
+
 ## Automatic Locale Detection
 
 ```tsx
@@ -189,6 +220,7 @@ function AutoDetect() {
 | `RichText` | Rich text translation component |
 | `useRichText(components)` | Hook for rich text translations |
 | `useLoadDictionaries(locale, namespace?)` | Lazy loading hook with loading/error state |
+| `useScopedT(prefix)` | Hook returning scoped `t()` bound to a key prefix |
 | `useDetectedLocale(options)` | Auto-detect and set locale on mount |
 
 ### Re-exported from Core
@@ -200,7 +232,7 @@ function AutoDetect() {
 `getLocale`, `setLocale`
 
 **Key-based translations:**
-`t`, `loadDictionaries`, `loadDictionary`, `clearDictionaries`, `hasTranslation`, `getLoadedLocales`, `getDictionary`, `loadAsync`, `isLoaded`
+`t`, `loadDictionaries`, `loadDictionary`, `clearDictionaries`, `hasTranslation`, `getLoadedLocales`, `getDictionary`, `loadAsync`, `isLoaded`, `createScope`
 
 **Configuration:**
 `configure`, `getConfig`, `resetConfig`

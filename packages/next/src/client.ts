@@ -46,8 +46,11 @@ export {
   type CustomFormatter,
   // locale persistence (v0.7.0)
   restoreLocale,
+  // translation scope (v0.8.0)
+  createScope,
   // locale detection (v0.6.0)
   detectLocale,
+  useScopedT,
   useDetectedLocale,
   type DetectLocaleOptions,
   type DetectSource,

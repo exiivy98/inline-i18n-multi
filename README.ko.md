@@ -73,6 +73,9 @@
 - **Plural Shorthand** - 간결한 복수형 문법 (`{count, p, item|items}`)
 - **Locale Persistence** - 로케일 자동 저장/복원 (`configure({ persistLocale: { storage: 'cookie' } })`)
 - **CLI `--strict` 모드** - ICU 타입 일관성 검증 (`npx inline-i18n validate --strict`)
+- **Translation Scope** - 네임스페이스 스코프 번역 함수 (`createScope('common')`)
+- **미사용 키 탐지** - CLI에서 미사용 dictionary 키 탐지 (`npx inline-i18n validate --unused`)
+- **TypeScript 타입 생성** - `t()` 키 자동완성을 위한 `.d.ts` 생성 (`npx inline-i18n typegen`)
 
 ---
 
@@ -934,18 +937,131 @@ ICU 타입 일관성을 검증하는 엄격 모드:
 npx inline-i18n validate --strict
 
 # 출력:
-# ❌ ICU 타입 불일치
+# ICU 타입 불일치
 #    src/Header.tsx:12
 #    en: {count, plural, one {# item} other {# items}}  (plural)
 #    ko: {count}개                                        (simple)
 #
-# ❌ 변수 누락
+# 변수 누락
 #    src/About.tsx:8
 #    en: Hello, {name}!  (변수: name)
 #    ko: 안녕하세요!     (변수: 없음)
 ```
 
 `--strict` 플래그는 기존 `validate` 명령어에 추가로 ICU 메시지 타입(plural, select, number 등)이 모든 로케일에서 일관되게 사용되는지 검증합니다.
+
+---
+
+## Translation Scope
+
+네임스페이스 접두사를 자동으로 붙여주는 스코프 번역 함수를 생성합니다:
+
+```typescript
+import { createScope, loadDictionaries, setLocale } from 'inline-i18n-multi'
+
+loadDictionaries({
+  en: { greeting: 'Hello', goodbye: 'Goodbye' },
+  ko: { greeting: '안녕하세요', goodbye: '안녕히 가세요' }
+}, 'common')
+
+loadDictionaries({
+  en: { title: 'Settings', theme: 'Theme' },
+  ko: { title: '설정', theme: '테마' }
+}, 'settings')
+
+setLocale('ko')
+
+// 스코프 함수 생성
+const tc = createScope('common')
+const ts = createScope('settings')
+
+// 네임스페이스 접두사 자동 추가
+tc('greeting')   // → "안녕하세요" (내부적으로 t('common:greeting'))
+tc('goodbye')    // → "안녕히 가세요"
+ts('title')      // → "설정"
+ts('theme')      // → "테마"
+
+// 변수도 지원
+tc('welcome', { name: 'John' })  // → t('common:welcome', { name: 'John' })
+```
+
+### React 훅
+
+```tsx
+import { useScopedT } from 'inline-i18n-multi-react'
+
+function CommonSection() {
+  const tc = useScopedT('common')
+
+  return (
+    <div>
+      <h1>{tc('greeting')}</h1>
+      <p>{tc('goodbye')}</p>
+    </div>
+  )
+}
+```
+
+`createScope(namespace)`는 매번 `t('namespace:key')`를 작성하는 대신, 네임스페이스를 한 번 지정하고 키만으로 번역을 조회할 수 있도록 해줍니다.
+
+---
+
+## 미사용 키 탐지
+
+딕셔너리에 정의되었지만 코드에서 사용되지 않는 번역 키를 탐지합니다:
+
+```bash
+npx inline-i18n validate --unused
+
+# 출력:
+# Found 2 unused translation key(s):
+#
+#   - common:oldGreeting
+#     defined in locales/ko/common.json
+#   - settings:legacyTheme
+#     defined in locales/ko/settings.json
+```
+
+코드 내의 `t()` 호출과 딕셔너리 키를 교차 비교하여 미사용 키를 탐지합니다. 복수형 접미사(`_one`, `_other` 등)는 기본 키로 자동 그룹화되어 오탐을 방지합니다.
+
+---
+
+## TypeScript 타입 생성
+
+딕셔너리 키를 기반으로 `.d.ts` 파일을 생성하여 `t()` 호출 시 키 자동완성을 제공합니다:
+
+```bash
+# 기본 출력: src/i18n.d.ts
+npx inline-i18n typegen
+
+# 커스텀 출력 경로
+npx inline-i18n typegen --output types/i18n.d.ts
+
+# 특정 작업 디렉토리
+npx inline-i18n typegen --cwd ./packages/app
+```
+
+생성되는 `.d.ts` 파일 예시:
+
+```typescript
+// 자동 생성됨 - 직접 수정하지 마세요
+declare module 'inline-i18n-multi' {
+  interface TranslationKeys {
+    'common:greeting': string
+    'common:goodbye': string
+    'settings:title': string
+    'settings:theme': string
+  }
+
+  export function t<K extends keyof TranslationKeys>(
+    key: K,
+    vars?: Record<string, string | number>,
+    locale?: string
+  ): string
+}
+```
+
+모듈 확장(module augmentation) 방식을 사용하여 기존 코드 변경 없이 IDE 자동완성을 제공합니다. 딕셔너리 구조가 변경될 때마다 `typegen`을 다시 실행하여 타입을 동기화하세요.
 
 ---
 
@@ -1078,11 +1194,11 @@ npx inline-i18n find "Hello"
 npx inline-i18n validate --locales ko,en,ja
 
 # 출력:
-# ⚠️  "안녕하세요"에 대한 일관되지 않은 번역
+# Inconsistent translations for "안녕하세요"
 #    src/Header.tsx:12  en: "Hello"
 #    src/Footer.tsx:8   en: "Hi"
 #
-# 📭 누락된 로케일: ja
+# Missing locales: ja
 #    src/About.tsx:15
 ```
 
@@ -1174,6 +1290,7 @@ VSCode 마켓플레이스에서 `inline-i18n-multi-vscode`를 설치하세요.
 | `isLoaded(locale, namespace?)` | 딕셔너리 로드 여부 확인 |
 | `parseRichText(template, names)` | 리치 텍스트 템플릿을 세그먼트로 파싱 |
 | `clearICUCache()`             | ICU 파싱 캐시 초기화                    |
+| `createScope(namespace)`      | 네임스페이스 스코프 `t()` 함수 반환       |
 | `restoreLocale()`             | 저장소(쿠키/localStorage)에서 로케일 복원 |
 
 ### React 훅 & 컴포넌트
@@ -1187,6 +1304,7 @@ VSCode 마켓플레이스에서 `inline-i18n-multi-vscode`를 설치하세요.
 | `RichText` | 컴포넌트 삽입이 가능한 리치 텍스트 번역 컴포넌트 |
 | `useRichText(components)` | 리치 텍스트 번역 함수를 반환하는 훅 |
 | `useLoadDictionaries(locale, ns?)` | 로딩 상태를 포함한 지연 로딩 훅 |
+| `useScopedT(namespace)` | 네임스페이스 스코프 `t` 함수를 반환하는 훅 |
 | `useDetectedLocale(options)` | 자동 로케일 감지 및 설정 훅 |
 
 ### 타입

@@ -79,7 +79,7 @@ export async function coverage(options: CoverageOptions): Promise<void> {
   const notCovered = coverageData.filter((d) => d.percentage === 0).length
 
   if (fullyCovered === locales.length) {
-    console.log(chalk.green('✅ All locales are fully translated!'))
+    console.log(chalk.green('All locales are fully translated!'))
   } else {
     console.log(chalk.gray(`Full: ${fullyCovered}, Partial: ${partiallyCovered}, Empty: ${notCovered}`))
   }

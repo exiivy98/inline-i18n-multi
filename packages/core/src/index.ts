@@ -42,6 +42,9 @@ export { registerFormatter, clearFormatters, clearICUCache, type CustomFormatter
 // Locale detection (v0.6.0)
 export { detectLocale, type DetectLocaleOptions, type DetectSource } from './detect'
 
+// Translation scope (v0.8.0)
+export { createScope } from './scope'
+
 // Rich text parsing
 export { parseRichText, type RichTextSegment } from './richtext'
 

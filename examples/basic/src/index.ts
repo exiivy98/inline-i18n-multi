@@ -21,6 +21,7 @@
  * - ICU Message Cache (v0.7.0)
  * - Plural Shorthand (v0.7.0)
  * - Locale Persistence (v0.7.0)
+ * - Translation Scope (v0.8.0)
  */
 
 import {
@@ -53,6 +54,8 @@ import {
   clearICUCache,
   // Locale persistence (v0.7.0)
   restoreLocale,
+  // Translation scope (v0.8.0)
+  createScope,
 } from 'inline-i18n-multi'
 
 // ============================================
@@ -209,7 +212,7 @@ resetConfig()
 configure({
   warnOnMissing: true,
   onMissingTranslation: (warning) => {
-    console.log(`⚠️  Warning: Missing translation`)
+    console.log(`Warning: Missing translation`)
     console.log(`   Requested: ${warning.requestedLocale}`)
     console.log(`   Available: ${warning.availableLocales.join(', ')}`)
     console.log(`   Fallback used: ${warning.fallbackUsed}`)
@@ -594,6 +597,42 @@ console.log('Configured persistLocale with cookie (expires: 365 days)')
 resetConfig()
 
 // ============================================
+// 20. Translation Scope (v0.8.0)
+// ============================================
+
+console.log('\n=== Translation Scope (v0.8.0) ===\n')
+
+resetConfig()
+clearDictionaries()
+setLocale('en')
+
+// Load namespaced dictionaries
+loadDictionaries({
+  en: { hello: 'Hello', goodbye: 'Goodbye' },
+  ko: { hello: '안녕하세요', goodbye: '안녕히 가세요' }
+}, 'common')
+
+loadDictionaries({
+  en: { title: 'Settings', theme: 'Theme' },
+  ko: { title: '설정', theme: '테마' }
+}, 'settings')
+
+// Create scoped translation functions
+const tc = createScope('common')
+const ts = createScope('settings')
+
+// Use scoped functions — no need to prefix with namespace
+console.log(tc('hello'))     // → "Hello" (same as t('common:hello'))
+console.log(tc('goodbye'))   // → "Goodbye"
+console.log(ts('title'))     // → "Settings"
+console.log(ts('theme'))     // → "Theme"
+
+// Switch locale
+setLocale('ko')
+console.log(tc('hello'))     // → "안녕하세요"
+console.log(ts('title'))     // → "설정"
+
+// ============================================
 // Summary
 // ============================================
 
@@ -639,4 +678,9 @@ v0.7.0 features:
 - ICU Message Cache (cachedParse, clearICUCache())
 - Plural Shorthand ({count, p, item|items})
 - Locale Persistence (persistLocale, restoreLocale())
+
+v0.8.0 features:
+- Translation Scope (createScope, useScopedT)
+- Unused Key Detection (validate --unused)
+- TypeScript Type Generation (typegen)
 `)

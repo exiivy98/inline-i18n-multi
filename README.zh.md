@@ -72,6 +72,9 @@
 - **复数简写** - 简洁的复数语法（`{count, p, item|items}`）
 - **语言环境持久化** - 自动保存/恢复语言环境到Cookie或localStorage
 - **CLI `--strict`模式** - ICU类型一致性检查（`npx inline-i18n validate --strict`）
+- **Translation Scope** - 使用`createScope`进行命名空间作用域翻译（`createScope('common')` → 作用域内的`t()`）
+- **未使用键检测** - CLI `--unused`标志检测未使用的翻译键
+- **TypeScript类型生成** - `typegen`命令自动生成翻译键的类型定义
 
 ---
 
@@ -906,14 +909,55 @@ setLocale('zh')  // 自动保存到Cookie或localStorage
 npx inline-i18n validate --strict
 
 # 输出:
-# ⚠️  ICU类型不一致: "count"
+# ICU type mismatch: "count"
 #    src/Header.tsx:12  en: plural
 #    src/Header.tsx:12  zh: select
 #
-# ✅ 所有ICU类型一致（无--strict错误）
+# 148 translations checked, 1 error found
 ```
 
 严格模式会验证同一变量在不同语言环境中是否使用了一致的ICU类型（如 `plural`、`select`、`number` 等）。
+
+---
+
+## Translation Scope
+
+使用`createScope`创建作用域内的翻译函数：
+
+```typescript
+import { createScope, loadDictionaries } from 'inline-i18n-multi'
+
+loadDictionaries({ en: { greeting: 'Hello' }, ko: { greeting: '안녕하세요' } }, 'common')
+
+const tc = createScope('common')
+tc('greeting') // → "Hello"
+```
+
+无需每次都编写命名空间前缀（`t('common:greeting')`），让代码更加简洁。
+
+---
+
+## 未使用键检测
+
+使用`--unused`标志检测字典中已定义但代码中未使用的翻译键：
+
+```bash
+npx inline-i18n validate --unused
+```
+
+有助于识别和清理不再需要的翻译。
+
+---
+
+## TypeScript类型生成
+
+使用`typegen`命令自动生成翻译键的TypeScript类型定义文件：
+
+```bash
+npx inline-i18n typegen --output src/i18n.d.ts
+```
+
+生成的类型定义为`t()`函数的键参数提供自动补全和类型检查。
 
 ---
 
@@ -1036,11 +1080,11 @@ npx inline-i18n find "Hello"
 npx inline-i18n validate --locales ko,en,zh
 
 # 输出:
-# ⚠️  "안녕하세요"的翻译不一致
+# Inconsistent translations for "안녕하세요"
 #    src/Header.tsx:12  en: "Hello"
 #    src/Footer.tsx:8   en: "Hi"
 #
-# 📭 缺少语言环境: zh
+# Missing locales: zh
 #    src/About.tsx:15
 ```
 
@@ -1133,6 +1177,7 @@ pnpm --filter inline-i18n-multi-nextjs-example dev
 | `parseRichText(template, names)` | 将富文本模板解析为段落 |
 | `clearICUCache()` | 清除ICU消息解析缓存 |
 | `restoreLocale()` | 从持久化存储中恢复语言环境 |
+| `createScope(namespace)` | 返回作用域为指定命名空间的翻译函数 |
 
 ### React钩子和组件
 

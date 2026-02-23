@@ -70,6 +70,9 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **ICU Message Cache** - Memoize parsed ICU ASTs for performance (`icuCacheSize`, `clearICUCache()`)
 - **Plural Shorthand** - Concise plural syntax (`{count, p, item|items}`)
 - **Locale Persistence** - Auto-save/restore locale to cookie or localStorage (`persistLocale`, `restoreLocale()`)
+- **Translation Scope** - Namespace scoping with `createScope` (`createScope('common')` returns a scoped `t()`)
+- **Unused Key Detection** - CLI `--unused` flag to detect unused translation keys
+- **TypeScript Type Generation** - `typegen` command for auto-generating translation key type definitions
 
 ---
 
@@ -657,6 +660,47 @@ setLocale('ja')   // saves 'ja' to localStorage
 
 ---
 
+## Translation Scope
+
+Create a scoped translation function bound to a specific namespace with `createScope`:
+
+```typescript
+import { createScope, loadDictionaries } from 'inline-i18n-multi'
+
+loadDictionaries({ en: { greeting: 'Hello' }, ko: { greeting: '안녕하세요' } }, 'common')
+
+const tc = createScope('common')
+tc('greeting') // → "Hello"
+```
+
+Eliminates the need to write namespace prefixes (`t('common:greeting')`) every time, keeping your code cleaner.
+
+---
+
+## Unused Key Detection
+
+Use the `--unused` flag to detect translation keys defined in dictionaries but not used in your code:
+
+```bash
+npx inline-i18n validate --unused
+```
+
+Helps identify and clean up translations that are no longer needed.
+
+---
+
+## TypeScript Type Generation
+
+Auto-generate TypeScript type definition files for your translation keys with the `typegen` command:
+
+```bash
+npx inline-i18n typegen --output src/i18n.d.ts
+```
+
+The generated types enable autocomplete and type checking for `t()` function key arguments.
+
+---
+
 ## Configuration
 
 Configure global settings for fallback behavior and warnings:
@@ -750,6 +794,7 @@ Available helpers:
 | `parseRichText(template, names)` | Parse rich text template into segments |
 | `clearICUCache()` | Clear the ICU message AST cache |
 | `restoreLocale()` | Restore locale from configured persistent storage (cookie or localStorage) |
+| `createScope(namespace)` | Return a translation function scoped to the given namespace |
 
 ### Custom Formatters
 

@@ -72,6 +72,9 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Plural Shorthand** - Concise plural syntax (`{count, p, item|items}`)
 - **Locale Persistence** - Auto-save/restore locale to cookie or localStorage
 - **CLI `--strict` Mode** - ICU type consistency checking (`npx inline-i18n validate --strict`)
+- **Translation Scope** - Create scoped `t()` functions for namespaces (`createScope('common')`)
+- **Unused Key Detection** - CLI detects unused dictionary keys (`npx inline-i18n validate --unused`)
+- **TypeScript Type Generation** - Generate `.d.ts` for `t()` key autocomplete (`npx inline-i18n typegen`)
 
 ---
 
@@ -893,15 +896,74 @@ Validate ICU type consistency across all translations:
 npx inline-i18n validate --strict
 
 # Output:
-# ❌ ICU type mismatch in src/Dashboard.tsx:25
+# ICU type mismatch in src/Dashboard.tsx:25
 #    en: {count, plural, one {# item} other {# items}}
 #    ko: {count, number}
 #    Variable "count" used as "plural" in en but "number" in ko
 #
-# ✅ 148 translations checked, 1 error found
+# 148 translations checked, 1 error found
 ```
 
 The `--strict` flag ensures that ICU variable types (`plural`, `select`, `number`, `date`, etc.) are consistent across all locale variants of each translation. This catches subtle bugs where a variable is treated as a different type in different languages.
+
+---
+
+## Translation Scope
+
+Create scoped `t()` functions to avoid repeating namespace prefixes:
+
+```typescript
+import { createScope, loadDictionaries, setLocale } from 'inline-i18n-multi'
+
+loadDictionaries({
+  en: { greeting: 'Hello', nav: { home: 'Home', about: 'About' } },
+  ko: { greeting: '안녕하세요', nav: { home: '홈', about: '소개' } },
+}, 'common')
+
+const tc = createScope('common')
+tc('greeting')    // → "Hello" (same as t('common:greeting'))
+tc('nav.home')    // → "Home"
+
+// React hook
+import { useScopedT } from 'inline-i18n-multi-react'
+const tc = useScopedT('common')
+```
+
+A scoped function is equivalent to calling `t('namespace:key')` but removes the repetition when many keys share the same namespace. This is especially useful in large components that reference a single namespace heavily.
+
+---
+
+## CLI Unused Key Detection
+
+Detect dictionary keys that are not referenced anywhere in your source code:
+
+```bash
+npx inline-i18n validate --unused
+```
+
+The `--unused` flag scans your codebase for `t()` and `createScope()` calls and compares them against all loaded dictionary keys. Any key that is defined in a dictionary but never referenced in code is reported, helping you keep translation files clean and free of dead entries.
+
+---
+
+## TypeScript Type Generation
+
+Generate a `.d.ts` file so that `t()` keys are autocompleted in your editor:
+
+```bash
+npx inline-i18n typegen
+npx inline-i18n typegen --output src/types/i18n.d.ts
+```
+
+Generated file example:
+
+```typescript
+declare module 'inline-i18n-multi' {
+  export type TranslationKey = 'greeting' | 'nav.home' | 'common:title'
+  export function t(key: TranslationKey, vars?: TranslationVars, locale?: string): string
+}
+```
+
+Run this command after updating your dictionaries to keep types in sync. The generated module augmentation narrows the `key` parameter of `t()` to the exact union of keys found in your dictionaries, giving you compile-time safety and editor autocomplete.
 
 ---
 
@@ -1034,11 +1096,11 @@ Check for inconsistencies:
 npx inline-i18n validate --locales ko,en,ja
 
 # Output:
-# ⚠️  Inconsistent translations for "안녕하세요"
+# Inconsistent translations for "안녕하세요"
 #    src/Header.tsx:12  en: "Hello"
 #    src/Footer.tsx:8   en: "Hi"
 #
-# 📭 Missing locales: ja
+# Missing locales: ja
 #    src/About.tsx:15
 ```
 
@@ -1123,8 +1185,8 @@ pnpm test -- --run
 
 | Package | Tests | Status |
 |---------|-------|--------|
-| `inline-i18n-multi` (core) | 182 | ✅ |
-| `inline-i18n-multi-next` (server) | 16 | ✅ |
+| `inline-i18n-multi` (core) | 182 | Passed |
+| `inline-i18n-multi-next` (server) | 16 | Passed |
 
 See [Testing Documentation](./docs/test.md) for more details.
 
@@ -1157,6 +1219,7 @@ See [Testing Documentation](./docs/test.md) for more details.
 | `detectLocale(options)` | Detect locale from cookies/navigator |
 | `loadAsync(locale, namespace?)` | Asynchronously load dictionary using configured loader |
 | `isLoaded(locale, namespace?)` | Check if dictionary has been loaded |
+| `createScope(namespace)` | Create a scoped `t()` function bound to a namespace |
 | `parseRichText(template, names)` | Parse rich text template into segments |
 
 ### React Hooks & Components
@@ -1171,6 +1234,7 @@ See [Testing Documentation](./docs/test.md) for more details.
 | `useRichText(components)` | Hook returning function for rich text translations |
 | `useLoadDictionaries(locale, ns?)` | Hook for lazy loading dictionaries with loading state |
 | `useDetectedLocale(options)` | Hook for automatic locale detection and setting |
+| `useScopedT(namespace)` | Hook returning a scoped `t` function bound to a namespace |
 
 ### Types
 
@@ -1221,6 +1285,8 @@ interface RichTextSegment {
   content: string
   componentName?: string
 }
+
+type ScopedT = (key: string, vars?: TranslationVars, locale?: string) => string
 ```
 
 ---

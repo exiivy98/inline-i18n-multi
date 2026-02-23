@@ -15,6 +15,7 @@ React example using `inline-i18n-multi-react` with Vite.
 - Currency & Compact number formatting
 - Custom Formatter, Interpolation Guards
 - Plural Shorthand (v0.7.0)
+- Translation Scope with `useScopedT` (v0.8.0)
 
 ## Run
 

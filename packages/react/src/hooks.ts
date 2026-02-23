@@ -80,6 +80,22 @@ export function useLoadDictionaries(
  *   return <Content />
  * }
  */
+/**
+ * Get a scoped translation function bound to current locale and namespace
+ * @param namespace - Namespace to scope to
+ * @example
+ * const tc = useScopedT('common')
+ * tc('greeting') // equivalent to t('common:greeting')
+ */
+export function useScopedT(namespace: string): (key: string, vars?: TranslationVars) => string {
+  const { locale } = useLocaleContext()
+
+  return useCallback(
+    (key: string, vars?: TranslationVars) => coreT(`${namespace}:${key}`, vars, locale),
+    [locale, namespace]
+  )
+}
+
 export function useDetectedLocale(options: DetectLocaleOptions): void {
   const { setLocale: setContextLocale } = useLocaleContext()
 

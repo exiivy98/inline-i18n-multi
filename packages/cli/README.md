@@ -37,6 +37,26 @@ Check translation consistency across locales:
 ```bash
 npx inline-i18n validate
 npx inline-i18n validate --locales en ko ja
+npx inline-i18n validate --unused
+```
+
+### Detect Unused Keys (v0.8.0)
+
+Find translation keys defined in dictionaries but never referenced in source code:
+
+```bash
+npx inline-i18n validate --unused
+```
+
+Example output:
+
+```
+Found 2 unused translation key(s):
+
+  - old.feature.title
+    defined in src/locales.ts:5
+  - deprecated.banner
+    defined in src/locales.ts:12
 ```
 
 ### Strict Mode (v0.7.0)
@@ -54,13 +74,23 @@ Strict mode detects:
 Example output:
 
 ```
-⚠ ICU type mismatch:
-  en: count → plural
-  ko: count → select
-  Details: Variable "count" has type "plural" in en but "select" in ko
+ICU type mismatch between translations
+  src/Header.tsx:12
+    en: {count, plural, one {# item} other {# items}}
+    ko: {count, select, male {He} female {She}}
 
-✗ 2 issues found
+Found 1 issue(s)
 ```
+
+### Generate Types (v0.8.0)
+
+Generate TypeScript type definitions from your translation keys for type-safe `t()` calls:
+
+```bash
+npx inline-i18n typegen --output src/i18n.d.ts
+```
+
+This scans your dictionaries and produces a `.d.ts` file with autocomplete-ready key types.
 
 ### Generate Report
 
@@ -77,7 +107,8 @@ npx inline-i18n report
 --output, -o    Output file path
 --locales, -l   Comma-separated list of locales
 --format, -f    Output format: json, csv (default: json)
---strict, -s    Enable strict mode (ICU type consistency check)
+--strict        Enable strict mode (ICU type consistency check)
+--unused        Detect unused translation keys (validate command)
 ```
 
 ## Documentation

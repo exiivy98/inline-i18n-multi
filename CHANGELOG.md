@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.0] - 2026-02-23
+
+### Added
+
+- **Translation Scope** - `createScope(namespace)` returns a scoped `t()` function
+  - Auto-prepends namespace prefix: `createScope('common')('greeting')` → `t('common:greeting')`
+  - React hook: `useScopedT(namespace)` for component-level scoping
+- **Unused Key Detection** - `npx inline-i18n validate --unused`
+  - Cross-references dictionary keys against `t()` calls in code
+  - Detects and reports unused translation keys
+  - Plural suffix awareness (`_one`, `_other` variants covered by base key)
+- **TypeScript Type Generation** - `npx inline-i18n typegen`
+  - Generates `.d.ts` with literal union types for `t()` key autocomplete
+  - Module augmentation approach for seamless IDE integration
+  - Options: `--output <path>` (default: `src/i18n.d.ts`), `--cwd <path>`
+
 ## [0.7.0] - 2026-02-17
 
 ### Added
