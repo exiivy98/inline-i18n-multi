@@ -300,6 +300,42 @@ export function ProfileForm() {
 }
 ```
 
+## Context System (v0.9.0)
+
+Select translations based on context. Pass `_context` to `t()` to choose between contextual variants defined in your dictionaries.
+
+```tsx
+'use client'
+import { useT } from 'inline-i18n-multi-next/client'
+
+// Assuming dictionaries are loaded with contextual keys:
+// { greeting: 'Hello', 'greeting#formal': 'Good day', 'greeting#casual': 'Hey' }
+
+export function Greeting() {
+  const t = useT()
+  return (
+    <div>
+      <p>{t('greeting')}</p>                              {/* "Hello" */}
+      <p>{t('greeting', { _context: 'formal' })}</p>      {/* "Good day" */}
+      <p>{t('greeting', { _context: 'casual' })}</p>      {/* "Hey" */}
+    </div>
+  )
+}
+```
+
+Server components can also use context via the core `t()` function:
+
+```tsx
+import { t, setLocale } from 'inline-i18n-multi'
+
+export default async function Page({ params }) {
+  const { locale } = await params
+  setLocale(locale)
+
+  return <h1>{t('greeting', { _context: 'formal' })}</h1>
+}
+```
+
 ## Custom Formatters
 
 Register custom ICU formatters via the core re-exports.

@@ -19,6 +19,7 @@ Basic TypeScript example demonstrating core `inline-i18n-multi` features.
 - Plural Shorthand (v0.7.0)
 - Locale Persistence (v0.7.0)
 - Translation Scope (v0.8.0)
+- Context System (v0.9.0)
 
 ## Run
 

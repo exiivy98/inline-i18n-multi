@@ -633,6 +633,53 @@ console.log(tc('hello'))     // → "안녕하세요"
 console.log(ts('title'))     // → "설정"
 
 // ============================================
+// 21. Context System (v0.9.0)
+// ============================================
+
+console.log('\n=== Context System (v0.9.0) ===\n')
+
+resetConfig()
+clearDictionaries()
+setLocale('en')
+
+// Load dictionaries with context-specific keys (key#context format)
+loadDictionaries({
+  en: {
+    greeting: 'Hello',
+    'greeting#formal': 'Good day',
+    'greeting#casual': 'Hey',
+    welcome: 'Welcome, {name}',
+    'welcome#formal': 'We are honored to have you, {name}',
+  },
+  ko: {
+    greeting: '안녕하세요',
+    'greeting#formal': '안녕하십니까',
+    'greeting#casual': '안녕',
+    welcome: '{name}님 환영합니다',
+    'welcome#formal': '{name}님을 모시게 되어 영광입니다',
+  },
+})
+
+// Use _context to select context-specific translation
+console.log(t('greeting'))                          // → "Hello"
+console.log(t('greeting', { _context: 'formal' }))  // → "Good day"
+console.log(t('greeting', { _context: 'casual' }))  // → "Hey"
+
+// Unknown context falls back to base key
+console.log(t('greeting', { _context: 'unknown' })) // → "Hello"
+
+// Context works with interpolation
+console.log(t('welcome', { name: 'John', _context: 'formal' }))
+// → "We are honored to have you, John"
+
+// Context works across locales
+setLocale('ko')
+console.log(t('greeting', { _context: 'formal' }))  // → "안녕하십니까"
+
+resetConfig()
+clearDictionaries()
+
+// ============================================
 // Summary
 // ============================================
 
@@ -683,4 +730,9 @@ v0.8.0 features:
 - Translation Scope (createScope, useScopedT)
 - Unused Key Detection (validate --unused)
 - TypeScript Type Generation (typegen)
+
+v0.9.0 features:
+- Context System (t('greeting', { _context: 'formal' }))
+- Translation Extraction (extract command)
+- CLI Watch Mode (validate --watch, typegen --watch)
 `)

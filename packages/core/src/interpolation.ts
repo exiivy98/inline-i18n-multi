@@ -4,6 +4,16 @@ import { hasICUPattern, hasCustomFormatter, hasPluralShorthand, interpolateICU }
 
 const VARIABLE_PATTERN = /\{(\w+)\}/g
 
+/**
+ * Strip _context from vars before interpolation (v0.9.0)
+ * _context is only used for dictionary key lookup, not for output
+ */
+function stripContext(vars: TranslationVars): TranslationVars {
+  if (!('_context' in vars)) return vars
+  const { _context: _, ...rest } = vars
+  return rest as TranslationVars
+}
+
 export function interpolate(
   template: string,
   vars?: TranslationVars,
@@ -11,9 +21,12 @@ export function interpolate(
 ): string {
   const resolvedLocale = locale || 'en'
 
+  // Strip _context from vars — it's only for key resolution (v0.9.0)
+  const cleanVars = vars ? stripContext(vars) : vars
+
   // ICU Message Format (plural, select) or custom formatters
   if (hasICUPattern(template) || hasCustomFormatter(template) || hasPluralShorthand(template)) {
-    if (!vars) {
+    if (!cleanVars) {
       // Even without vars, handler should process missing variables
       const cfg = getConfig()
       if (cfg.missingVarHandler) {
@@ -21,11 +34,11 @@ export function interpolate(
       }
       return template
     }
-    return interpolateICU(template, vars, resolvedLocale)
+    return interpolateICU(template, cleanVars, resolvedLocale)
   }
 
   // Simple variable substitution
-  if (!vars) {
+  if (!cleanVars) {
     const cfg = getConfig()
     if (cfg.missingVarHandler) {
       return template.replace(VARIABLE_PATTERN, (_, key) => {
@@ -36,7 +49,7 @@ export function interpolate(
   }
 
   return template.replace(VARIABLE_PATTERN, (_, key) => {
-    const value = vars[key]
+    const value = cleanVars[key]
     if (value !== undefined) return String(value)
     const cfg = getConfig()
     if (cfg.missingVarHandler) {

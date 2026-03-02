@@ -75,6 +75,9 @@
 - **Translation Scope** - 使用`createScope`进行命名空间作用域翻译（`createScope('common')` → 作用域内的`t()`）
 - **未使用键检测** - CLI `--unused`标志检测未使用的翻译键
 - **TypeScript类型生成** - `typegen`命令自动生成翻译键的类型定义
+- **Context System** - 上下文翻译消歧义（`t('greeting', { _context: 'formal' })` → 字典键 `greeting#formal`）
+- **Translation Extraction** - 将内联翻译提取到JSON文件（`npx inline-i18n extract`）
+- **CLI Watch模式** - `validate`和`typegen`的`--watch`标志，监听文件变更自动执行
 
 ---
 
@@ -961,6 +964,81 @@ npx inline-i18n typegen --output src/i18n.d.ts
 
 ---
 
+## Context System
+
+使用`_context`参数为同一个键提供不同上下文的翻译。字典中使用`key#context`格式定义键：
+
+```typescript
+import { t, loadDictionaries } from 'inline-i18n-multi'
+
+loadDictionaries({
+  en: {
+    greeting: 'Hi',
+    'greeting#formal': 'Good day',
+    'greeting#casual': 'Hey',
+  },
+  zh: {
+    greeting: '你好',
+    'greeting#formal': '您好',
+    'greeting#casual': '嗨',
+  }
+})
+
+// 无上下文（默认）
+t('greeting')  // → "你好"
+
+// formal上下文
+t('greeting', { _context: 'formal' })  // → "您好"
+
+// casual上下文
+t('greeting', { _context: 'casual' })  // → "嗨"
+
+// 找不到带上下文的键时，回退到无上下文的键
+t('greeting', { _context: 'unknown' })  // → "你好"
+```
+
+当同一个翻译键在不同上下文中有不同含义时非常有用（例如："open"既可作动词也可作形容词）。
+
+---
+
+## Translation Extraction
+
+使用`extract`命令将源代码中的内联翻译提取到JSON文件：
+
+```bash
+# 默认（输出到./locales目录）
+npx inline-i18n extract
+
+# 指定输出目录
+npx inline-i18n extract --output ./src/locales
+
+# 指定语言环境
+npx inline-i18n extract --locales en,zh,ko
+```
+
+扫描源代码中的`it()`调用，为每个语言环境生成JSON文件。如果已有JSON文件，则仅添加新的键。
+
+---
+
+## CLI Watch模式
+
+为`validate`和`typegen`命令添加`--watch`标志，在文件变更时自动重新执行：
+
+```bash
+# 以watch模式运行验证
+npx inline-i18n validate --watch
+
+# 以watch模式运行类型生成
+npx inline-i18n typegen --output src/i18n.d.ts --watch
+
+# 组合strict模式和watch
+npx inline-i18n validate --strict --watch
+```
+
+开发过程中每次保存文件都会自动执行验证或类型生成，提供快速反馈。
+
+---
+
 ## 配置
 
 配置回退行为和警告的全局设置：
@@ -1178,6 +1256,20 @@ pnpm --filter inline-i18n-multi-nextjs-example dev
 | `clearICUCache()` | 清除ICU消息解析缓存 |
 | `restoreLocale()` | 从持久化存储中恢复语言环境 |
 | `createScope(namespace)` | 返回作用域为指定命名空间的翻译函数 |
+
+### CLI命令
+
+| 命令 | 描述 |
+|------|------|
+| `npx inline-i18n find "text"` | 在翻译中搜索文本 |
+| `npx inline-i18n validate` | 验证翻译一致性 |
+| `npx inline-i18n validate --strict` | 带ICU类型一致性检查的严格验证 |
+| `npx inline-i18n validate --unused` | 检测未使用的翻译键 |
+| `npx inline-i18n validate --watch` | 监听文件变更自动验证 |
+| `npx inline-i18n coverage` | 生成翻译覆盖率报告 |
+| `npx inline-i18n extract` | 将内联翻译提取到JSON文件 |
+| `npx inline-i18n typegen` | 生成翻译键的TypeScript类型定义 |
+| `npx inline-i18n typegen --watch` | 监听文件变更自动生成类型 |
 
 ### React钩子和组件
 

@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.0] - 2026-03-02
+
+### Added
+
+- **Context System** - Contextual translation disambiguation
+  - Use `_context` in vars: `t('greeting', { _context: 'formal' })` → "Good day"
+  - Dictionary keys: `greeting#formal`, `greeting#casual`
+  - Falls back to base key when context not found
+  - Works with plurals, interpolation, namespaces, and `createScope()`
+  - `hasTranslation(key, locale, context)` for context-aware checks
+  - `_context` stripped from output (not interpolated)
+- **Translation Extraction** - `npx inline-i18n extract`
+  - Extracts inline `it()` translations to JSON files per locale
+  - Options: `--output <dir>` (default: `translations/`), `--format flat|nested`
+- **CLI Watch Mode** - `--watch` flag for `validate` and `typegen`
+  - Auto-reruns on file changes (`.ts`, `.tsx`, `.js`, `.jsx`)
+  - 300ms debounce for rapid changes
+  - Uses `chokidar` for efficient file watching
+
+### Changed
+
+- `TranslationVars` type extended with optional `_context` property
+- `validate` command supports `noExit` option (used by watch mode)
+- CLI version updated to 0.9.0
+
 ## [0.8.0] - 2026-02-23
 
 ### Added

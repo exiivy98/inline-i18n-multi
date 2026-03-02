@@ -3,13 +3,15 @@ import { find } from './commands/find'
 import { validate } from './commands/validate'
 import { coverage } from './commands/coverage'
 import { typegen } from './commands/typegen'
+import { extract } from './commands/extract'
+import { startWatch } from './watch'
 
 const program = new Command()
 
 program
   .name('inline-i18n')
   .description('CLI tools for inline-i18n-multi')
-  .version('0.8.0')
+  .version('0.9.0')
 
 program
   .command('find <query>')
@@ -26,8 +28,19 @@ program
   .option('-l, --locales <locales...>', 'Required locales to check')
   .option('-s, --strict', 'Enable strict mode (ICU type consistency check)')
   .option('-u, --unused', 'Detect unused dictionary keys')
-  .action(async (options: { cwd?: string; locales?: string[]; strict?: boolean; unused?: boolean }) => {
-    await validate(options)
+  .option('-w, --watch', 'Watch mode - re-validate on file changes')
+  .action(async (options: { cwd?: string; locales?: string[]; strict?: boolean; unused?: boolean; watch?: boolean }) => {
+    await validate(options.watch ? { ...options, noExit: true } : options)
+    if (options.watch) {
+      const cwd = options.cwd || process.cwd()
+      startWatch({
+        cwd,
+        patterns: ['**/*.{ts,tsx,js,jsx}'],
+        ignore: ['**/node_modules/**', '**/dist/**', '**/.next/**'],
+        onChange: () => validate({ ...options, noExit: true }),
+        label: 'validate',
+      })
+    }
   })
 
 program
@@ -44,8 +57,29 @@ program
   .description('Generate TypeScript types for translation keys')
   .option('-c, --cwd <path>', 'Working directory')
   .option('-o, --output <path>', 'Output file path', 'src/i18n.d.ts')
-  .action(async (options: { cwd?: string; output?: string }) => {
+  .option('-w, --watch', 'Watch mode - regenerate types on file changes')
+  .action(async (options: { cwd?: string; output?: string; watch?: boolean }) => {
     await typegen(options)
+    if (options.watch) {
+      const cwd = options.cwd || process.cwd()
+      startWatch({
+        cwd,
+        patterns: ['**/*.{ts,tsx,js,jsx}'],
+        ignore: ['**/node_modules/**', '**/dist/**', '**/.next/**'],
+        onChange: () => typegen(options),
+        label: 'typegen',
+      })
+    }
+  })
+
+program
+  .command('extract')
+  .description('Extract inline translations to JSON files')
+  .option('-c, --cwd <path>', 'Working directory')
+  .option('-o, --output <path>', 'Output directory', 'translations')
+  .option('-f, --format <format>', 'Output format (flat|nested)', 'flat')
+  .action(async (options: { cwd?: string; output?: string; format?: 'flat' | 'nested' }) => {
+    await extract(options)
   })
 
 program.parse()

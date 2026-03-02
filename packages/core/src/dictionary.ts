@@ -226,7 +226,13 @@ function getPluralCategory(count: number, locale: Locale): Intl.LDMLPluralRule {
 }
 
 /**
- * Try to find a translation in a dictionary, handling plurals
+ * Context separator for contextual translations (v0.9.0)
+ * Dictionary keys use key#context format: 'greeting#formal', 'greeting#casual'
+ */
+const CONTEXT_SEPARATOR = '#'
+
+/**
+ * Try to find a translation in a dictionary, handling context and plurals
  */
 function findInDictionary(
   dict: Dictionary,
@@ -234,6 +240,24 @@ function findInDictionary(
   vars: TranslationVars | undefined,
   locale: Locale
 ): string | undefined {
+  // Try context-specific key first (v0.9.0)
+  if (vars?._context) {
+    const contextKey = `${key}${CONTEXT_SEPARATOR}${vars._context}`
+
+    // Check plural variants of context key first
+    if (typeof vars.count === 'number') {
+      const pluralKey = `${contextKey}_${getPluralCategory(vars.count, locale)}`
+      const pluralTemplate = getNestedValue(dict, pluralKey)
+      if (pluralTemplate) return pluralTemplate
+    }
+
+    // Then check the context key itself
+    const contextTemplate = getNestedValue(dict, contextKey)
+    if (contextTemplate !== undefined) return contextTemplate
+
+    // Fall through to base key if context key not found
+  }
+
   let template = getNestedValue(dict, key)
 
   // Handle plurals if count is provided
@@ -333,13 +357,22 @@ export function t(
  * Check if a translation key exists
  * @param key - Translation key (may include namespace prefix)
  * @param locale - Optional locale to check
+ * @param context - Optional context for contextual translations (v0.9.0)
  */
-export function hasTranslation(key: string, locale?: Locale): boolean {
+export function hasTranslation(key: string, locale?: Locale, context?: string): boolean {
   const { namespace, key: actualKey } = parseKey(key)
   const currentLocale = locale ?? getLocale()
   const nsDictionaries = namespacedDictionaries[namespace] || {}
   const dict = nsDictionaries[currentLocale]
-  return dict ? getNestedValue(dict, actualKey) !== undefined : false
+  if (!dict) return false
+
+  // Check context-specific key only when context is provided (v0.9.0)
+  if (context) {
+    const contextKey = `${actualKey}${CONTEXT_SEPARATOR}${context}`
+    return getNestedValue(dict, contextKey) !== undefined
+  }
+
+  return getNestedValue(dict, actualKey) !== undefined
 }
 
 /**

@@ -183,6 +183,38 @@ function ProfileForm() {
 }
 ```
 
+## Context System (v0.9.0)
+
+Select translations based on context. Pass `_context` to `t()` to choose between contextual variants defined in your dictionaries.
+
+```tsx
+import { useT, loadDictionaries } from 'inline-i18n-multi-react'
+
+loadDictionaries({
+  en: {
+    greeting: 'Hello',
+    'greeting#formal': 'Good day',
+    'greeting#casual': 'Hey',
+  },
+  ko: {
+    greeting: '안녕하세요',
+    'greeting#formal': '안녕하십니까',
+    'greeting#casual': '안녕',
+  },
+})
+
+function Greeting() {
+  const t = useT()
+  return (
+    <div>
+      <p>{t('greeting')}</p>                              {/* "Hello" */}
+      <p>{t('greeting', { _context: 'formal' })}</p>      {/* "Good day" */}
+      <p>{t('greeting', { _context: 'casual' })}</p>      {/* "Hey" */}
+    </div>
+  )
+}
+```
+
 ## Automatic Locale Detection
 
 ```tsx

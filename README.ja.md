@@ -75,6 +75,9 @@
 - **Translation Scope** - 名前空間スコープ用の`createScope`（`createScope('common')` → スコープ付き`t()`）
 - **未使用キー検出** - CLI `--unused`フラグで未使用の翻訳キーを検出
 - **TypeScript型生成** - `typegen`コマンドで翻訳キーの型定義を自動生成
+- **Context System** - コンテキスト付き翻訳の曖昧さ解消（`t('greeting', { _context: 'formal' })` → 辞書キー `greeting#formal`）
+- **Translation Extraction** - インライン翻訳をJSONファイルに抽出（`npx inline-i18n extract`）
+- **CLI Watchモード** - `validate`と`typegen`の`--watch`フラグでファイル変更を監視
 
 ---
 
@@ -981,6 +984,81 @@ npx inline-i18n typegen --output src/i18n.d.ts
 
 ---
 
+## Context System
+
+`_context`パラメータで同じキーに対して文脈に応じた翻訳を使い分けます。辞書では`key#context`形式でキーを定義します：
+
+```typescript
+import { t, loadDictionaries } from 'inline-i18n-multi'
+
+loadDictionaries({
+  en: {
+    greeting: 'Hi',
+    'greeting#formal': 'Good day',
+    'greeting#casual': 'Hey',
+  },
+  ja: {
+    greeting: 'こんにちは',
+    'greeting#formal': 'お世話になっております',
+    'greeting#casual': 'やあ',
+  }
+})
+
+// コンテキストなし（デフォルト）
+t('greeting')  // → "こんにちは"
+
+// formalコンテキスト
+t('greeting', { _context: 'formal' })  // → "お世話になっております"
+
+// casualコンテキスト
+t('greeting', { _context: 'casual' })  // → "やあ"
+
+// コンテキスト付きキーが見つからない場合、コンテキストなしのキーにフォールバック
+t('greeting', { _context: 'unknown' })  // → "こんにちは"
+```
+
+同じ翻訳キーが文脈によって異なる意味を持つ場合（例：「open」が動詞と形容詞の両方で使われる場合）に便利です。
+
+---
+
+## Translation Extraction
+
+`extract`コマンドでソースコード内のインライン翻訳をJSONファイルに抽出します：
+
+```bash
+# デフォルト（./localesディレクトリに出力）
+npx inline-i18n extract
+
+# 出力先を指定
+npx inline-i18n extract --output ./src/locales
+
+# ロケールを指定
+npx inline-i18n extract --locales en,ja,ko
+```
+
+ソースコード内の`it()`呼び出しをスキャンし、ロケールごとのJSONファイルを生成します。既存のJSONファイルがある場合、新しいキーのみ追加されます。
+
+---
+
+## CLI Watchモード
+
+`validate`と`typegen`コマンドに`--watch`フラグを追加すると、ファイル変更時に自動で再実行されます：
+
+```bash
+# 検証をウォッチモードで実行
+npx inline-i18n validate --watch
+
+# 型生成をウォッチモードで実行
+npx inline-i18n typegen --output src/i18n.d.ts --watch
+
+# strictモードとウォッチを組み合わせ
+npx inline-i18n validate --strict --watch
+```
+
+開発中にファイルを保存するたびに自動で検証・型生成が実行されるため、素早いフィードバックが得られます。
+
+---
+
 ## 設定
 
 フォールバック動作と警告のグローバル設定を構成します：
@@ -1198,6 +1276,20 @@ VSCodeマーケットプレイスから`inline-i18n-multi-vscode`をインスト
 | `clearICUCache()` | ICUパースキャッシュをクリア |
 | `restoreLocale()` | ストレージ（Cookie/localStorage）からロケールを復元 |
 | `createScope(namespace)` | 指定した名前空間にスコープされた翻訳関数を返す |
+
+### CLIコマンド
+
+| コマンド | 説明 |
+|----------|------|
+| `npx inline-i18n find "text"` | 翻訳内のテキストを検索 |
+| `npx inline-i18n validate` | 翻訳の一貫性を検証 |
+| `npx inline-i18n validate --strict` | ICU型整合性チェック付きの厳格な検証 |
+| `npx inline-i18n validate --unused` | 未使用の翻訳キーを検出 |
+| `npx inline-i18n validate --watch` | ファイル変更を監視して自動検証 |
+| `npx inline-i18n coverage` | 翻訳カバレッジレポートを生成 |
+| `npx inline-i18n extract` | インライン翻訳をJSONファイルに抽出 |
+| `npx inline-i18n typegen` | 翻訳キーのTypeScript型定義を生成 |
+| `npx inline-i18n typegen --watch` | ファイル変更を監視して自動型生成 |
 
 ### Reactフック＆コンポーネント
 

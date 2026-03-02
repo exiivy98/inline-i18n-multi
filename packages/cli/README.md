@@ -14,12 +14,23 @@ npm install -g @inline-i18n-multi/cli
 
 ## Commands
 
-### Extract Translations
+### Extract Translations (v0.9.0)
 
-Extract all translations from your codebase:
+Extract all inline translations from your codebase into a structured JSON file:
 
 ```bash
 npx inline-i18n extract --output translations.json
+npx inline-i18n extract --src ./src --output i18n/translations.json
+```
+
+The extracted file contains all `it()`, `T`, and key-based translations found in source files, grouped by file path:
+
+```json
+{
+  "src/Header.tsx": [
+    { "key": "greeting", "translations": { "en": "Hello", "ko": "안녕하세요" } }
+  ]
+}
 ```
 
 ### Check Missing Translations
@@ -100,6 +111,31 @@ Generate a translation coverage report:
 npx inline-i18n report
 ```
 
+### Watch Mode (v0.9.0)
+
+Run `validate` or `typegen` in watch mode to automatically re-run on file changes:
+
+```bash
+npx inline-i18n validate --watch
+npx inline-i18n typegen --output src/i18n.d.ts --watch
+```
+
+Watch mode monitors your source directory for changes and re-executes the command on each save. Useful during development to catch translation issues or regenerate types in real time.
+
+### Context System Support (v0.9.0)
+
+The CLI commands (`extract`, `validate`, `typegen`) recognize contextual translation keys using the `key#context` convention:
+
+```json
+{
+  "greeting": "Hello",
+  "greeting#formal": "Good day",
+  "greeting#casual": "Hey"
+}
+```
+
+Validation checks context variants for completeness across locales. Type generation includes context-aware overloads for `t()`.
+
 ## Options
 
 ```
@@ -109,6 +145,7 @@ npx inline-i18n report
 --format, -f    Output format: json, csv (default: json)
 --strict        Enable strict mode (ICU type consistency check)
 --unused        Detect unused translation keys (validate command)
+--watch, -w     Watch mode for validate/typegen (re-run on file changes)
 ```
 
 ## Documentation

@@ -12,8 +12,11 @@ export type Translations = Record<Locale, string>
  * Variables for interpolation
  * Supports string, number, Date values for ICU formatting
  * Supports string[] for list formatting
+ * Use _context for contextual translation disambiguation (v0.9.0)
  */
-export type TranslationVars = Record<string, string | number | Date | string[]>
+export type TranslationVars = Record<string, string | number | Date | string[]> & {
+  _context?: string
+}
 
 /**
  * Extract variable names from template string

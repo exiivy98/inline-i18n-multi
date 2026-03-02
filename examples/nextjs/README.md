@@ -13,6 +13,7 @@ Next.js 15 App Router example with full SEO support using `inline-i18n-multi-nex
 - **ICU Message Cache** (v0.7.0) - Parsed AST memoization
 - **Locale Persistence** (v0.7.0) - Auto-save/restore locale
 - **Translation Scope** (v0.8.0) - `createScope()` for namespace scoping
+- **Context System** (v0.9.0) - `t('key', { _context: 'formal' })` for contextual translations
 
 ## Run
 

@@ -16,6 +16,7 @@ React example using `inline-i18n-multi-react` with Vite.
 - Custom Formatter, Interpolation Guards
 - Plural Shorthand (v0.7.0)
 - Translation Scope with `useScopedT` (v0.8.0)
+- Context System with `_context` (v0.9.0)
 
 ## Run
 

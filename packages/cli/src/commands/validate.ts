@@ -7,6 +7,7 @@ interface ValidateOptions {
   locales?: string[]
   strict?: boolean
   unused?: boolean
+  noExit?: boolean
 }
 
 interface Issue {
@@ -201,7 +202,7 @@ export async function validate(options: ValidateOptions = {}): Promise<void> {
     console.log()
   }
 
-  if (issues.length > 0 || unusedCount > 0) {
+  if ((issues.length > 0 || unusedCount > 0) && !options.noExit) {
     process.exit(1)
   }
 }

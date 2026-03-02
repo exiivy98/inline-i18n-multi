@@ -76,6 +76,9 @@
 - **Translation Scope** - 네임스페이스 스코프 번역 함수 (`createScope('common')`)
 - **미사용 키 탐지** - CLI에서 미사용 dictionary 키 탐지 (`npx inline-i18n validate --unused`)
 - **TypeScript 타입 생성** - `t()` 키 자동완성을 위한 `.d.ts` 생성 (`npx inline-i18n typegen`)
+- **Context System** - 문맥별 번역 선택 (`t('greeting', { _context: 'formal' })`)
+- **Translation Extraction** - 인라인 번역을 JSON 파일로 추출 (`npx inline-i18n extract`)
+- **CLI Watch Mode** - 파일 변경 감시 모드 (`npx inline-i18n validate --watch`)
 
 ---
 
@@ -1062,6 +1065,98 @@ declare module 'inline-i18n-multi' {
 ```
 
 모듈 확장(module augmentation) 방식을 사용하여 기존 코드 변경 없이 IDE 자동완성을 제공합니다. 딕셔너리 구조가 변경될 때마다 `typegen`을 다시 실행하여 타입을 동기화하세요.
+
+---
+
+## Context System (문맥 번역)
+
+동일한 키에 대해 문맥별로 다른 번역을 선택합니다. 딕셔너리에서 `key#context` 형태로 문맥별 번역을 정의하고, `_context` 변수로 선택합니다:
+
+```typescript
+import { t, loadDictionaries, setLocale } from 'inline-i18n-multi'
+
+loadDictionaries({
+  en: {
+    greeting: 'Hi',
+    'greeting#formal': 'Good day',
+    'greeting#casual': 'Hey',
+  },
+  ko: {
+    greeting: '안녕',
+    'greeting#formal': '안녕하십니까',
+    'greeting#casual': '야',
+  },
+})
+
+setLocale('ko')
+
+// 문맥 없이 호출 → base key 사용
+t('greeting')                              // → "안녕"
+
+// _context로 문맥 지정
+t('greeting', { _context: 'formal' })      // → "안녕하십니까"
+t('greeting', { _context: 'casual' })      // → "야"
+
+// 존재하지 않는 문맥 → base key로 폴백
+t('greeting', { _context: 'unknown' })     // → "안녕"
+```
+
+`_context`는 내부적으로 `key#context` 형태의 딕셔너리 키를 조회하며, 해당 키가 없으면 문맥 없는 base key로 자동 폴백합니다.
+
+---
+
+## Translation Extraction (번역 추출)
+
+소스 코드에서 인라인 번역을 JSON 파일로 추출합니다:
+
+```bash
+# 기본 사용법 — 소스에서 번역 추출
+npx inline-i18n extract
+
+# 출력 디렉토리 지정
+npx inline-i18n extract --output locales/
+
+# 특정 작업 디렉토리
+npx inline-i18n extract --cwd ./packages/app
+```
+
+추출 결과 예시:
+
+```json
+// locales/en.json
+{
+  "안녕하세요": "Hello",
+  "환영합니다, {name}님": "Welcome, {name}"
+}
+
+// locales/ko.json
+{
+  "안녕하세요": "안녕하세요",
+  "환영합니다, {name}님": "환영합니다, {name}님"
+}
+```
+
+소스 코드 내의 `it()` 호출을 분석하여 모든 인라인 번역을 로케일별 JSON 파일로 추출합니다. 기존 JSON 번역 파일 기반 워크플로우와의 연동이나, 외부 번역 서비스에 전달할 때 유용합니다.
+
+---
+
+## CLI Watch Mode (감시 모드)
+
+`validate`와 `typegen` 명령어에 `--watch` 플래그를 추가하여 파일 변경 시 자동으로 재실행합니다:
+
+```bash
+# 검증 감시 모드 — 파일 변경 시 자동 재검증
+npx inline-i18n validate --watch
+
+# 타입 생성 감시 모드 — 딕셔너리 변경 시 자동 재생성
+npx inline-i18n typegen --watch
+
+# 다른 옵션과 함께 사용
+npx inline-i18n validate --strict --watch
+npx inline-i18n typegen --output types/i18n.d.ts --watch
+```
+
+`--watch` 모드는 소스 파일과 딕셔너리 파일의 변경을 감지하여 해당 명령어를 자동으로 재실행합니다. 개발 중 터미널에 띄워두면 번역 일관성 검증과 타입 동기화를 실시간으로 유지할 수 있습니다.
 
 ---
 

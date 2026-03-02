@@ -75,6 +75,9 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Translation Scope** - Create scoped `t()` functions for namespaces (`createScope('common')`)
 - **Unused Key Detection** - CLI detects unused dictionary keys (`npx inline-i18n validate --unused`)
 - **TypeScript Type Generation** - Generate `.d.ts` for `t()` key autocomplete (`npx inline-i18n typegen`)
+- **Context System** - Disambiguate translations by context (`t('greeting', { _context: 'formal' })`)
+- **Translation Extraction** - Extract inline translations to JSON files (`npx inline-i18n extract`)
+- **CLI Watch Mode** - File-watching for validate and typegen (`--watch`)
 
 ---
 
@@ -933,6 +936,43 @@ A scoped function is equivalent to calling `t('namespace:key')` but removes the 
 
 ---
 
+## Context System
+
+Disambiguate translations that share the same key but differ by context:
+
+```typescript
+import { t, loadDictionaries, setLocale } from 'inline-i18n-multi'
+
+loadDictionaries({
+  en: {
+    greeting: 'Hi',
+    'greeting#formal': 'Good day',
+    'greeting#casual': 'Hey there',
+  },
+  ko: {
+    greeting: '안녕',
+    'greeting#formal': '안녕하십니까',
+    'greeting#casual': '야',
+  },
+})
+
+setLocale('en')
+
+// Without context
+t('greeting')  // → "Hi"
+
+// With context
+t('greeting', { _context: 'formal' })  // → "Good day"
+t('greeting', { _context: 'casual' })  // → "Hey there"
+
+// Falls back to base key when context variant is missing
+t('greeting', { _context: 'unknown' })  // → "Hi"
+```
+
+Dictionary keys use the `key#context` format. When `_context` is passed in the variables object, the lookup resolves `key#context` first and falls back to the base `key` if not found. The `_context` variable is consumed internally and is not interpolated into the output.
+
+---
+
 ## CLI Unused Key Detection
 
 Detect dictionary keys that are not referenced anywhere in your source code:
@@ -1118,6 +1158,43 @@ npx inline-i18n coverage --locales ko,en,ja
 # en      ██████████ 100%  150/150
 # ja      ████░░░░░░  40%   60/150
 ```
+
+### Translation Extraction
+
+Extract inline translations from your source code into JSON dictionary files:
+
+```bash
+npx inline-i18n extract
+
+# Output:
+# Scanning src/...
+# Found 42 inline translations across 12 files
+# Written: locales/en.json
+# Written: locales/ko.json
+# Written: locales/ja.json
+
+npx inline-i18n extract --outdir ./i18n --locales en,ko
+```
+
+This command scans your codebase for `it()` calls, collects all inline translation strings, and writes them out as structured JSON files. This is useful when migrating from inline translations to key-based dictionaries, or when you need to hand off translation files to external translators.
+
+### Watch Mode
+
+Run `validate` and `typegen` in watch mode for continuous feedback during development:
+
+```bash
+# Watch for file changes and re-validate
+npx inline-i18n validate --watch
+
+# Watch and regenerate types on change
+npx inline-i18n typegen --watch
+
+# Combine with other flags
+npx inline-i18n validate --strict --watch
+npx inline-i18n typegen --output src/types/i18n.d.ts --watch
+```
+
+Watch mode monitors your source files and re-runs the command automatically whenever a change is detected. This provides instant feedback on translation consistency and keeps generated type definitions up to date as you edit code.
 
 ---
 
