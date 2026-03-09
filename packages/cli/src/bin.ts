@@ -4,6 +4,8 @@ import { validate } from './commands/validate'
 import { coverage } from './commands/coverage'
 import { typegen } from './commands/typegen'
 import { extract } from './commands/extract'
+import { diff } from './commands/diff'
+import { stats } from './commands/stats'
 import { startWatch } from './watch'
 
 const program = new Command()
@@ -11,7 +13,7 @@ const program = new Command()
 program
   .name('inline-i18n')
   .description('CLI tools for inline-i18n-multi')
-  .version('0.9.0')
+  .version('0.10.0')
 
 program
   .command('find <query>')
@@ -80,6 +82,23 @@ program
   .option('-f, --format <format>', 'Output format (flat|nested)', 'flat')
   .action(async (options: { cwd?: string; output?: string; format?: 'flat' | 'nested' }) => {
     await extract(options)
+  })
+
+program
+  .command('diff <locale1> <locale2>')
+  .description('Compare translations between two locales')
+  .option('-c, --cwd <path>', 'Working directory')
+  .option('-a, --all', 'Show all entries including shared translations')
+  .action(async (locale1: string, locale2: string, options: { cwd?: string; all?: boolean }) => {
+    await diff({ locale1, locale2, cwd: options.cwd, all: options.all })
+  })
+
+program
+  .command('stats')
+  .description('Show translation statistics overview')
+  .option('-c, --cwd <path>', 'Working directory')
+  .action(async (options: { cwd?: string }) => {
+    await stats(options)
   })
 
 program.parse()

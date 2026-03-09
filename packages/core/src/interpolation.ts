@@ -5,12 +5,13 @@ import { hasICUPattern, hasCustomFormatter, hasPluralShorthand, interpolateICU }
 const VARIABLE_PATTERN = /\{(\w+)\}/g
 
 /**
- * Strip _context from vars before interpolation (v0.9.0)
- * _context is only used for dictionary key lookup, not for output
+ * Strip special underscore-prefixed vars before interpolation
+ * _context: dictionary key lookup only (v0.9.0)
+ * _fallback: missing key fallback only (v0.10.0)
  */
-function stripContext(vars: TranslationVars): TranslationVars {
-  if (!('_context' in vars)) return vars
-  const { _context: _, ...rest } = vars
+function stripSpecialVars(vars: TranslationVars): TranslationVars {
+  if (!('_context' in vars) && !('_fallback' in vars)) return vars
+  const { _context: _c, _fallback: _f, ...rest } = vars
   return rest as TranslationVars
 }
 
@@ -21,8 +22,8 @@ export function interpolate(
 ): string {
   const resolvedLocale = locale || 'en'
 
-  // Strip _context from vars — it's only for key resolution (v0.9.0)
-  const cleanVars = vars ? stripContext(vars) : vars
+  // Strip special vars (_context, _fallback) — not for interpolation output
+  const cleanVars = vars ? stripSpecialVars(vars) : vars
 
   // ICU Message Format (plural, select) or custom formatters
   if (hasICUPattern(template) || hasCustomFormatter(template) || hasPluralShorthand(template)) {

@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.0] - 2026-03-09
+
+### Added
+
+- **Fallback Value** - Custom fallback text for missing translation keys
+  - Use `_fallback` in vars: `t('missing.key', { _fallback: 'Default text' })` → "Default text"
+  - Returns `_fallback` instead of raw key when translation is not found
+  - Works with namespaces, debug mode, `createScope()`, and `_context`
+  - Empty string fallback supported: `{ _fallback: '' }` → `""`
+  - `_fallback` stripped from interpolation output (not passed as variable)
+  - Warning still emitted for missing keys even when fallback is used
+- **Translation Diff** - `npx inline-i18n diff <locale1> <locale2>`
+  - Compares inline translations between two locales
+  - Shows entries unique to each locale with translation text
+  - `--all` flag to include shared translations
+  - Summary with shared/unique counts
+- **Translation Stats** - `npx inline-i18n stats`
+  - Overview dashboard: inline translation count, dictionary key count, `t()` call sites
+  - Locale breakdown with translation counts per locale
+  - Namespace summary with key counts
+  - Top 10 files by translation density
+  - ICU pattern usage breakdown (plural, select, date, number, etc.)
+
+### Changed
+
+- `TranslationVars` type extended with optional `_fallback` property
+- `stripContext()` renamed to `stripSpecialVars()` to handle both `_context` and `_fallback`
+- CLI version updated to 0.10.0
+
 ## [0.9.0] - 2026-03-02
 
 ### Added

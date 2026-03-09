@@ -78,6 +78,9 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Context System** - Disambiguate translations by context (`t('greeting', { _context: 'formal' })`)
 - **Translation Extraction** - Extract inline translations to JSON files (`npx inline-i18n extract`)
 - **CLI Watch Mode** - File-watching for validate and typegen (`--watch`)
+- **Fallback Value** - `t('key', { _fallback: 'Default' })` returns custom fallback text instead of raw key when translation is missing
+- **Translation Diff** - `npx inline-i18n diff ko en` compares translations between two locales
+- **Translation Stats** - `npx inline-i18n stats` shows translation statistics dashboard
 
 ---
 
@@ -1195,6 +1198,107 @@ npx inline-i18n typegen --output src/types/i18n.d.ts --watch
 ```
 
 Watch mode monitors your source files and re-runs the command automatically whenever a change is detected. This provides instant feedback on translation consistency and keeps generated type definitions up to date as you edit code.
+
+### Translation Diff
+
+Compare translations between two locales:
+
+```bash
+npx inline-i18n diff ko en
+```
+
+See the [Translation Diff](#translation-diff) section for details.
+
+### Translation Stats
+
+Display a translation statistics dashboard:
+
+```bash
+npx inline-i18n stats
+```
+
+See the [Translation Stats](#translation-stats) section for details.
+
+---
+
+## Fallback Value
+
+Provide a custom fallback string when a translation key is missing, instead of displaying the raw key:
+
+```typescript
+import { t, loadDictionaries, setLocale } from 'inline-i18n-multi'
+
+loadDictionaries({
+  en: { greeting: 'Hello' },
+  ko: { greeting: '안녕하세요' },
+})
+
+setLocale('en')
+
+// Without _fallback — returns the raw key
+t('missing.key')  // → "missing.key"
+
+// With _fallback — returns your custom text
+t('missing.key', { _fallback: 'Default text' })  // → "Default text"
+
+// Works with existing keys (fallback is ignored)
+t('greeting', { _fallback: 'Default' })  // → "Hello"
+```
+
+The `_fallback` variable is consumed internally and is not interpolated into the output. This is useful for providing user-friendly placeholder text when translations have not yet been added, or when a key may not exist in all environments.
+
+---
+
+## Translation Diff
+
+Compare translations between two locales to see what is missing, added, or changed:
+
+```bash
+npx inline-i18n diff ko en
+
+# Output:
+# Comparing ko → en
+#
+# Missing in en:
+#   greeting#formal
+#   nav.settings
+#
+# Missing in ko:
+#   dashboard.title
+#
+# 3 differences found
+```
+
+This command compares the dictionary keys of two locales side by side and reports any keys that exist in one locale but not the other. This is useful for identifying translation gaps when adding a new language or auditing existing coverage.
+
+---
+
+## Translation Stats
+
+Display a statistics dashboard summarizing your project's translation state:
+
+```bash
+npx inline-i18n stats
+
+# Output:
+# Translation Statistics
+# ═══════════════════════════════════════
+#
+# Locales:       3 (en, ko, ja)
+# Namespaces:    2 (default, common)
+# Total keys:    85
+#
+# Locale    Keys   Coverage
+# ─────────────────────────
+# en        85/85  100%
+# ko        80/85   94%
+# ja        42/85   49%
+#
+# Contexts:      12
+# ICU patterns:  28
+```
+
+The `stats` command scans your dictionaries and source files to produce a high-level overview of translation health, including per-locale coverage percentages, key counts, context usage, and ICU pattern counts. This is useful for tracking translation progress and identifying locales that need attention.
 
 ---
 

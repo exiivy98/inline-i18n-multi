@@ -78,6 +78,9 @@
 - **Context System** - 上下文翻译消歧义（`t('greeting', { _context: 'formal' })` → 字典键 `greeting#formal`）
 - **Translation Extraction** - 将内联翻译提取到JSON文件（`npx inline-i18n extract`）
 - **CLI Watch模式** - `validate`和`typegen`的`--watch`标志，监听文件变更自动执行
+- **Fallback Value** - `t('key', { _fallback: '默认值' })` 翻译键缺失时返回自定义后备文本而不是原始键
+- **Translation Diff** - `npx inline-i18n diff ko en` 比较两个语言环境之间的翻译
+- **Translation Stats** - `npx inline-i18n stats` 翻译统计仪表板
 
 ---
 

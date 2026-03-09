@@ -136,6 +136,75 @@ The CLI commands (`extract`, `validate`, `typegen`) recognize contextual transla
 
 Validation checks context variants for completeness across locales. Type generation includes context-aware overloads for `t()`.
 
+### Diff Command (v0.10.0)
+
+Compare translations between two locales to find missing, extra, or differing keys:
+
+```bash
+npx inline-i18n diff en ko
+npx inline-i18n diff en ko --all
+```
+
+By default, `diff` shows keys that exist in one locale but not the other. Use the `--all` flag to also show shared keys for a complete comparison.
+
+Example output:
+
+```
+Comparing en ↔ ko
+
+Only in en:
+  - settings.theme
+  - settings.notifications
+
+Only in ko:
+  - onboarding.welcome
+
+Shared: 45 keys (use --all to show)
+```
+
+### Stats Command (v0.10.0)
+
+Display a translation statistics dashboard with an overview of your project's translation coverage:
+
+```bash
+npx inline-i18n stats
+```
+
+Shows:
+- **Overview** — Total keys, locales, and namespaces
+- **Locale breakdown** — Per-locale key count and coverage percentage
+- **Namespaces** — Key distribution across namespaces
+- **Top files** — Files with the most translation calls
+- **ICU usage** — Breakdown of ICU message types used (plural, select, date, number, etc.)
+
+Example output:
+
+```
+Translation Statistics
+======================
+
+Overview
+  Total keys:    128
+  Locales:       3 (en, ko, ja)
+  Namespaces:    2 (default, common)
+
+Locale Breakdown
+  en    128/128  100%
+  ko    120/128   94%
+  ja    115/128   90%
+
+Top Files
+  src/components/Header.tsx     18 keys
+  src/pages/Dashboard.tsx       15 keys
+  src/pages/Settings.tsx        12 keys
+
+ICU Usage
+  plural          23 occurrences
+  select           8 occurrences
+  date             5 occurrences
+  number           4 occurrences
+```
+
 ## Options
 
 ```
@@ -146,6 +215,7 @@ Validation checks context variants for completeness across locales. Type generat
 --strict        Enable strict mode (ICU type consistency check)
 --unused        Detect unused translation keys (validate command)
 --watch, -w     Watch mode for validate/typegen (re-run on file changes)
+--all           Show shared keys in diff output (diff command)
 ```
 
 ## Documentation

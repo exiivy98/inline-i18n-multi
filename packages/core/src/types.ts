@@ -13,9 +13,11 @@ export type Translations = Record<Locale, string>
  * Supports string, number, Date values for ICU formatting
  * Supports string[] for list formatting
  * Use _context for contextual translation disambiguation (v0.9.0)
+ * Use _fallback for custom fallback text when key is missing (v0.10.0)
  */
 export type TranslationVars = Record<string, string | number | Date | string[]> & {
   _context?: string
+  _fallback?: string
 }
 
 /**

@@ -76,6 +76,9 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Context System** - Contextual translation disambiguation (`t('greeting', { _context: 'formal' })` with `key#context` dictionary keys)
 - **Translation Extraction** - Extract inline translations to JSON files (`npx inline-i18n extract`)
 - **CLI Watch Mode** - `--watch` flag for `validate` and `typegen` commands
+- **Fallback Value** - Custom fallback text when translation is missing (`t('key', { _fallback: 'Default' })`)
+- **Diff Command** - Compare translations between two locales (`npx inline-i18n diff en ko`)
+- **Stats Command** - Translation statistics dashboard (`npx inline-i18n stats`)
 
 ---
 
@@ -779,6 +782,38 @@ Provides instant feedback during development by re-running validation or type ge
 
 ---
 
+## Fallback Value
+
+Provide custom fallback text when a translation key is missing, instead of returning the raw key:
+
+```typescript
+import { t, loadDictionaries, setLocale } from 'inline-i18n-multi'
+
+loadDictionaries({
+  en: { greeting: 'Hello' }
+})
+
+setLocale('en')
+
+// Without _fallback: returns the raw key when missing
+t('missing.key')  // → "missing.key"
+
+// With _fallback: returns custom fallback text
+t('missing.key', { _fallback: 'Default text' })  // → "Default text"
+
+// _fallback is stripped from interpolation output (not passed as a variable)
+t('greeting', { _fallback: 'Fallback' })  // → "Hello" (uses real translation, ignores _fallback)
+
+// Works with variables — _fallback is not treated as a variable
+t('welcome', { name: 'John', _fallback: 'Welcome!' })
+// If 'welcome' exists: uses translation with {name} interpolated
+// If 'welcome' is missing: → "Welcome!"
+```
+
+Useful for providing user-friendly defaults in UI components where raw keys would be confusing.
+
+---
+
 ## Configuration
 
 Configure global settings for fallback behavior and warnings:
@@ -1022,7 +1057,7 @@ npm install inline-i18n-multi-next
 
 ### CLI
 
-Command-line tools for translation management. Find translations with `inline-i18n find "text"`, validate consistency with `inline-i18n validate`, extract inline translations with `inline-i18n extract`, and generate coverage reports with `inline-i18n coverage`. Supports `--watch` mode for `validate` and `typegen`.
+Command-line tools for translation management. Find translations with `inline-i18n find "text"`, validate consistency with `inline-i18n validate`, extract inline translations with `inline-i18n extract`, and generate coverage reports with `inline-i18n coverage`. Compare locales with `inline-i18n diff en ko` and view statistics with `inline-i18n stats`. Supports `--watch` mode for `validate` and `typegen`.
 
 ```bash
 npm install -D @inline-i18n-multi/cli

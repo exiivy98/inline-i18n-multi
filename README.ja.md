@@ -78,6 +78,9 @@
 - **Context System** - コンテキスト付き翻訳の曖昧さ解消（`t('greeting', { _context: 'formal' })` → 辞書キー `greeting#formal`）
 - **Translation Extraction** - インライン翻訳をJSONファイルに抽出（`npx inline-i18n extract`）
 - **CLI Watchモード** - `validate`と`typegen`の`--watch`フラグでファイル変更を監視
+- **Fallback Value** - `t('key', { _fallback: 'デフォルト' })` 翻訳キーが見つからない場合、生のキーの代わりにフォールバックテキストを返す
+- **Translation Diff** - `npx inline-i18n diff ko en` 2つのロケール間の翻訳を比較
+- **Translation Stats** - `npx inline-i18n stats` 翻訳統計ダッシュボード
 
 ---
 

@@ -79,6 +79,9 @@
 - **Context System** - 문맥별 번역 선택 (`t('greeting', { _context: 'formal' })`)
 - **Translation Extraction** - 인라인 번역을 JSON 파일로 추출 (`npx inline-i18n extract`)
 - **CLI Watch Mode** - 파일 변경 감시 모드 (`npx inline-i18n validate --watch`)
+- **Fallback Value** - `t('key', { _fallback: '기본값' })` 번역 키 누락 시 raw key 대신 대체 텍스트 반환
+- **Translation Diff** - `npx inline-i18n diff ko en` 두 로케일 간 번역 비교
+- **Translation Stats** - `npx inline-i18n stats` 번역 통계 대시보드
 
 ---
 

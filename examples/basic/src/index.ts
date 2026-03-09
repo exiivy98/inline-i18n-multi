@@ -22,6 +22,7 @@
  * - Plural Shorthand (v0.7.0)
  * - Locale Persistence (v0.7.0)
  * - Translation Scope (v0.8.0)
+ * - Fallback Value (v0.10.0)
  */
 
 import {
@@ -680,6 +681,40 @@ resetConfig()
 clearDictionaries()
 
 // ============================================
+// 22. Fallback Value (v0.10.0)
+// ============================================
+
+console.log('\n=== Fallback Value (v0.10.0) ===\n')
+
+resetConfig()
+clearDictionaries()
+setLocale('en')
+
+loadDictionaries({
+  en: { greeting: 'Hello', welcome: 'Welcome, {name}!' },
+  ko: { greeting: '안녕하세요', welcome: '{name}님 환영합니다!' },
+})
+
+// Without fallback: missing key returns raw key
+console.log(t('missing.key'))  // → "missing.key"
+
+// With _fallback: returns fallback text instead of raw key
+console.log(t('missing.key', { _fallback: 'Default text' }))  // → "Default text"
+
+// When translation exists, _fallback is ignored
+console.log(t('greeting', { _fallback: 'Fallback' }))  // → "Hello"
+
+// Empty string fallback
+console.log(t('missing.key', { _fallback: '' }))  // → ""
+
+// _fallback works with _context
+console.log(t('greeting', { _context: 'unknown', _fallback: 'Hi there' }))  // → "Hello" (base key found)
+console.log(t('nonexistent', { _context: 'formal', _fallback: 'Hi there' }))  // → "Hi there"
+
+resetConfig()
+clearDictionaries()
+
+// ============================================
 // Summary
 // ============================================
 
@@ -735,4 +770,9 @@ v0.9.0 features:
 - Context System (t('greeting', { _context: 'formal' }))
 - Translation Extraction (extract command)
 - CLI Watch Mode (validate --watch, typegen --watch)
+
+v0.10.0 features:
+- Fallback Value (t('key', { _fallback: 'Default' }))
+- Translation Diff (diff ko en)
+- Translation Stats (stats)
 `)

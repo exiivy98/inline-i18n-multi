@@ -324,6 +324,12 @@ export function t(
       requestedLocale: currentLocale,
       key,
     }
+
+    // v0.10.0: Use _fallback if provided instead of raw key
+    if (vars?._fallback !== undefined) {
+      return applyDebugFormat(vars._fallback, debugInfo)
+    }
+
     return applyDebugFormat(key, debugInfo)
   }
 
