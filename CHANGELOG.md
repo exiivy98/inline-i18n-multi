@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.11.0] - 2026-03-16
+
+### Added
+
+- **Locale Display Names** - `getLocaleDisplayName(locale, displayLocale?)`
+  - Uses `Intl.DisplayNames` for locale-aware display names
+  - `getLocaleDisplayName('ko', 'en')` → `"Korean"`
+  - `getLocaleDisplayName('ko', 'ko')` → `"한국어"`
+  - Falls back to locale code for invalid locales
+- **Translation Key Listing** - `getTranslationKeys(locale?, namespace?)`
+  - Returns all loaded translation keys as flat dot-notation paths
+  - Filter by locale and/or namespace
+  - Defaults to current locale when none specified
+- **Missing Translation Tracker** - Runtime missing key collection
+  - `trackMissingKeys(true)` to start tracking
+  - `getMissingKeys()` returns all missing keys encountered via `t()`
+  - `clearMissingKeys()` to reset collected keys
+  - Auto-deduplicates repeated missing keys
+  - Works with namespaced keys and `_fallback`
+
+### Changed
+
+- New core exports: `getLocaleDisplayName`, `getTranslationKeys`, `trackMissingKeys`, `getMissingKeys`, `clearMissingKeys`
+- New React/Next re-exports for all v0.11.0 functions
+- CLI version updated to 0.11.0
+
 ## [0.10.0] - 2026-03-09
 
 ### Added

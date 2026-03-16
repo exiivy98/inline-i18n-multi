@@ -82,6 +82,9 @@
 - **Fallback Value** - `t('key', { _fallback: '기본값' })` 번역 키 누락 시 raw key 대신 대체 텍스트 반환
 - **Translation Diff** - `npx inline-i18n diff ko en` 두 로케일 간 번역 비교
 - **Translation Stats** - `npx inline-i18n stats` 번역 통계 대시보드
+- **Locale Display Names** - `getLocaleDisplayName('ko', 'en')` → `"Korean"` (`Intl.DisplayNames` 활용)
+- **Translation Key Listing** - `getTranslationKeys(locale?, namespace?)` 로드된 번역 키 목록 반환
+- **Missing Translation Tracker** - `trackMissingKeys(true)`, `getMissingKeys()`, `clearMissingKeys()` 런타임 누락 키 수집
 
 ---
 

@@ -311,6 +311,8 @@ export function t(
   }
 
   if (!template) {
+    recordMissingKey(key)
+
     emitWarning({
       type: 'missing_translation',
       key,
@@ -414,4 +416,111 @@ export function getDictionary(locale: Locale, namespace?: string): Dictionary | 
  */
 export function getLoadedNamespaces(): string[] {
   return Object.keys(namespacedDictionaries)
+}
+
+/**
+ * Get the display name of a locale using Intl.DisplayNames (v0.11.0)
+ * @param locale - Locale code to get display name for (e.g., 'ko', 'ja', 'en-US')
+ * @param displayLocale - Locale in which to display the name (defaults to current locale)
+ * @returns Display name string (e.g., "Korean", "日本語")
+ *
+ * @example
+ * getLocaleDisplayName('ko', 'en')  // → "Korean"
+ * getLocaleDisplayName('ko', 'ko')  // → "한국어"
+ * getLocaleDisplayName('en', 'ja')  // → "英語"
+ */
+export function getLocaleDisplayName(locale: Locale, displayLocale?: Locale): string {
+  const dl = displayLocale ?? getLocale()
+  try {
+    const displayNames = new Intl.DisplayNames([dl], { type: 'language' })
+    return displayNames.of(locale) ?? locale
+  } catch {
+    return locale
+  }
+}
+
+/**
+ * Get all translation keys for a locale (v0.11.0)
+ * @param locale - Locale to get keys for (defaults to current locale)
+ * @param namespace - Optional namespace (returns from all if not specified)
+ * @returns Array of translation keys (dot-notation paths)
+ *
+ * @example
+ * getTranslationKeys('en')             // → ['greeting.hello', 'greeting.goodbye', 'welcome']
+ * getTranslationKeys('en', 'common')   // → ['hello', 'goodbye']
+ */
+export function getTranslationKeys(locale?: Locale, namespace?: string): string[] {
+  const loc = locale ?? getLocale()
+  const keys: string[] = []
+
+  function collectKeys(dict: Dictionary, prefix: string): void {
+    for (const [k, v] of Object.entries(dict)) {
+      const fullKey = prefix ? `${prefix}.${k}` : k
+      if (typeof v === 'string') {
+        keys.push(fullKey)
+      } else {
+        collectKeys(v, fullKey)
+      }
+    }
+  }
+
+  if (namespace) {
+    const dict = namespacedDictionaries[namespace]?.[loc]
+    if (dict) collectKeys(dict, '')
+  } else {
+    for (const [ns, dicts] of Object.entries(namespacedDictionaries)) {
+      const dict = dicts[loc]
+      if (dict) {
+        const prefix = ns === DEFAULT_NAMESPACE ? '' : ''
+        collectKeys(dict, prefix)
+      }
+    }
+  }
+
+  return keys
+}
+
+// Missing translation tracker (v0.11.0)
+let missingKeys: Set<string> = new Set()
+let trackMissing = false
+
+/**
+ * Enable or disable missing translation tracking (v0.11.0)
+ * When enabled, all missing translation keys encountered via t() are recorded.
+ * @param enabled - Whether to enable tracking
+ *
+ * @example
+ * trackMissingKeys(true)
+ * t('nonexistent.key')
+ * getMissingKeys()  // → ['nonexistent.key']
+ */
+export function trackMissingKeys(enabled: boolean): void {
+  trackMissing = enabled
+  if (!enabled) {
+    missingKeys = new Set()
+  }
+}
+
+/**
+ * Get all missing translation keys encountered since tracking was enabled (v0.11.0)
+ * @returns Array of missing keys
+ */
+export function getMissingKeys(): string[] {
+  return Array.from(missingKeys)
+}
+
+/**
+ * Clear the list of tracked missing keys (v0.11.0)
+ */
+export function clearMissingKeys(): void {
+  missingKeys = new Set()
+}
+
+/**
+ * Record a missing key (internal use)
+ */
+export function recordMissingKey(key: string): void {
+  if (trackMissing) {
+    missingKeys.add(key)
+  }
 }

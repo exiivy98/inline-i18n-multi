@@ -79,6 +79,9 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Fallback Value** - Custom fallback text when translation is missing (`t('key', { _fallback: 'Default' })`)
 - **Diff Command** - Compare translations between two locales (`npx inline-i18n diff en ko`)
 - **Stats Command** - Translation statistics dashboard (`npx inline-i18n stats`)
+- **Locale Display Names** - Get human-readable locale names using `Intl.DisplayNames` (`getLocaleDisplayName('ko', 'en')` → `"Korean"`)
+- **Translation Key Listing** - `getTranslationKeys(locale?, namespace?)` returns all loaded translation keys
+- **Missing Translation Tracker** - Runtime collection of missing translation keys (`trackMissingKeys(true/false)`, `getMissingKeys()`, `clearMissingKeys()`)
 
 ---
 
@@ -814,6 +817,87 @@ Useful for providing user-friendly defaults in UI components where raw keys woul
 
 ---
 
+## Locale Display Names
+
+Get human-readable display names for locale codes using `Intl.DisplayNames`:
+
+```typescript
+import { getLocaleDisplayName, setLocale } from 'inline-i18n-multi'
+
+setLocale('en')
+
+// Get display name in a specific locale
+getLocaleDisplayName('ko', 'en')    // → "Korean"
+getLocaleDisplayName('ja', 'en')    // → "Japanese"
+getLocaleDisplayName('zh', 'en')    // → "Chinese"
+
+// Display name in the target's own locale
+getLocaleDisplayName('ko', 'ko')    // → "한국어"
+getLocaleDisplayName('en', 'ja')    // → "英語"
+
+// Omit displayLocale to use current locale
+setLocale('ko')
+getLocaleDisplayName('en')          // → "영어"
+```
+
+---
+
+## Translation Key Listing
+
+Get a list of all loaded translation keys:
+
+```typescript
+import { getTranslationKeys, loadDictionaries } from 'inline-i18n-multi'
+
+loadDictionaries({
+  en: { greeting: 'Hello', farewell: 'Goodbye' },
+  ko: { greeting: '안녕하세요' }
+}, 'common')
+
+// Get all keys for a specific locale and namespace
+getTranslationKeys('en', 'common')   // → ['greeting', 'farewell']
+getTranslationKeys('ko', 'common')   // → ['greeting']
+
+// Omit namespace to get keys from all namespaces
+getTranslationKeys('en')             // → ['common:greeting', 'common:farewell']
+
+// Omit all parameters to use current locale
+getTranslationKeys()                 // → all keys for current locale
+```
+
+---
+
+## Missing Translation Tracker
+
+Collect missing translation keys at runtime to identify what needs translating:
+
+```typescript
+import { trackMissingKeys, getMissingKeys, clearMissingKeys, t, loadDictionaries } from 'inline-i18n-multi'
+
+loadDictionaries({ en: { greeting: 'Hello' } })
+
+// Enable missing key tracking
+trackMissingKeys(true)
+
+// Use keys that don't exist
+t('missing.key')
+t('another.missing')
+
+// Get all missing keys
+getMissingKeys()  // → ['missing.key', 'another.missing']
+
+// Clear the tracked list
+clearMissingKeys()
+getMissingKeys()  // → []
+
+// Disable tracking
+trackMissingKeys(false)
+```
+
+Useful for discovering untranslated content during development and testing.
+
+---
+
 ## Configuration
 
 Configure global settings for fallback behavior and warnings:
@@ -908,6 +992,11 @@ Available helpers:
 | `clearICUCache()` | Clear the ICU message AST cache |
 | `restoreLocale()` | Restore locale from configured persistent storage (cookie or localStorage) |
 | `createScope(namespace)` | Return a translation function scoped to the given namespace |
+| `getLocaleDisplayName(locale, displayLocale?)` | Get human-readable display name for a locale using `Intl.DisplayNames` |
+| `getTranslationKeys(locale?, namespace?)` | Get all loaded translation keys |
+| `trackMissingKeys(enabled)` | Enable or disable missing translation key tracking |
+| `getMissingKeys()` | Get all tracked missing translation keys |
+| `clearMissingKeys()` | Clear the tracked missing keys list |
 
 ### Custom Formatters
 

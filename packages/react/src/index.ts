@@ -50,6 +50,12 @@ export {
   createScope,
   // locale detection (v0.6.0)
   detectLocale,
+  // utils (v0.11.0)
+  getLocaleDisplayName,
+  getTranslationKeys,
+  trackMissingKeys,
+  getMissingKeys,
+  clearMissingKeys,
   type DetectLocaleOptions,
   type DetectSource,
   // types

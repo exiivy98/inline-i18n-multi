@@ -81,6 +81,9 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Fallback Value** - `t('key', { _fallback: 'Default' })` returns custom fallback text instead of raw key when translation is missing
 - **Translation Diff** - `npx inline-i18n diff ko en` compares translations between two locales
 - **Translation Stats** - `npx inline-i18n stats` shows translation statistics dashboard
+- **Locale Display Names** - Human-readable locale names (`getLocaleDisplayName('ko', 'en')` → `"Korean"`) using `Intl.DisplayNames`
+- **Translation Key Listing** - `getTranslationKeys(locale?, namespace?)` returns all loaded translation keys
+- **Missing Translation Tracker** - Runtime missing key collection (`trackMissingKeys(true)`, `getMissingKeys()`, `clearMissingKeys()`)
 
 ---
 
@@ -1402,6 +1405,11 @@ See [Testing Documentation](./docs/test.md) for more details.
 | `isLoaded(locale, namespace?)` | Check if dictionary has been loaded |
 | `createScope(namespace)` | Create a scoped `t()` function bound to a namespace |
 | `parseRichText(template, names)` | Parse rich text template into segments |
+| `getLocaleDisplayName(locale, displayLocale?)` | Get human-readable locale name using `Intl.DisplayNames` |
+| `getTranslationKeys(locale?, namespace?)` | Get array of all loaded translation keys |
+| `trackMissingKeys(enable)` | Enable/disable runtime missing key tracking |
+| `getMissingKeys()` | Get collected missing translation keys |
+| `clearMissingKeys()` | Clear collected missing keys |
 
 ### React Hooks & Components
 

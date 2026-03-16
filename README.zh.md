@@ -81,6 +81,9 @@
 - **Fallback Value** - `t('key', { _fallback: '默认值' })` 翻译键缺失时返回自定义后备文本而不是原始键
 - **Translation Diff** - `npx inline-i18n diff ko en` 比较两个语言环境之间的翻译
 - **Translation Stats** - `npx inline-i18n stats` 翻译统计仪表板
+- **Locale Display Names** - 使用`Intl.DisplayNames`获取语言环境显示名称（`getLocaleDisplayName('ko', 'en')` → `"Korean"`）
+- **Translation Key Listing** - `getTranslationKeys(locale?, namespace?)` 返回所有已加载的翻译键
+- **Missing Translation Tracker** - `trackMissingKeys(true)`、`getMissingKeys()`、`clearMissingKeys()` 运行时收集缺失的翻译键
 
 ---
 
@@ -1042,6 +1045,87 @@ npx inline-i18n validate --strict --watch
 
 ---
 
+## Locale Display Names
+
+使用`Intl.DisplayNames`获取语言环境的人类可读显示名称：
+
+```typescript
+import { getLocaleDisplayName, setLocale } from 'inline-i18n-multi'
+
+setLocale('en')
+
+// 获取语言环境的英文显示名称
+getLocaleDisplayName('ko', 'en')    // → "Korean"
+getLocaleDisplayName('ja', 'en')    // → "Japanese"
+getLocaleDisplayName('zh', 'en')    // → "Chinese"
+
+// 获取语言环境的本地显示名称
+getLocaleDisplayName('ko', 'ko')    // → "한국어"
+getLocaleDisplayName('en', 'ja')    // → "英語"
+
+// 省略displayLocale时使用当前语言环境
+setLocale('zh')
+getLocaleDisplayName('en')          // → "英语"
+```
+
+---
+
+## Translation Key Listing
+
+获取所有已加载翻译键的列表：
+
+```typescript
+import { getTranslationKeys, loadDictionaries } from 'inline-i18n-multi'
+
+loadDictionaries({
+  en: { greeting: 'Hello', farewell: 'Goodbye' },
+  zh: { greeting: '你好' }
+}, 'common')
+
+// 获取特定语言环境的所有键
+getTranslationKeys('en', 'common')   // → ['greeting', 'farewell']
+getTranslationKeys('zh', 'common')   // → ['greeting']
+
+// 省略命名空间时返回所有命名空间的键
+getTranslationKeys('en')             // → ['common:greeting', 'common:farewell']
+
+// 省略所有参数时使用当前语言环境
+getTranslationKeys()                 // → 当前语言环境的所有键
+```
+
+---
+
+## Missing Translation Tracker
+
+在运行时收集缺失的翻译键，便于识别需要翻译的内容：
+
+```typescript
+import { trackMissingKeys, getMissingKeys, clearMissingKeys, t, loadDictionaries } from 'inline-i18n-multi'
+
+loadDictionaries({ en: { greeting: 'Hello' } })
+
+// 启用缺失键追踪
+trackMissingKeys(true)
+
+// 使用不存在的键
+t('missing.key')
+t('another.missing')
+
+// 获取所有缺失的键
+getMissingKeys()  // → ['missing.key', 'another.missing']
+
+// 清除记录
+clearMissingKeys()
+getMissingKeys()  // → []
+
+// 禁用追踪
+trackMissingKeys(false)
+```
+
+有助于在开发和测试阶段发现遗漏的翻译。
+
+---
+
 ## 配置
 
 配置回退行为和警告的全局设置：
@@ -1259,6 +1343,11 @@ pnpm --filter inline-i18n-multi-nextjs-example dev
 | `clearICUCache()` | 清除ICU消息解析缓存 |
 | `restoreLocale()` | 从持久化存储中恢复语言环境 |
 | `createScope(namespace)` | 返回作用域为指定命名空间的翻译函数 |
+| `getLocaleDisplayName(locale, displayLocale?)` | 获取语言环境的显示名称（使用`Intl.DisplayNames`） |
+| `getTranslationKeys(locale?, namespace?)` | 返回所有已加载的翻译键 |
+| `trackMissingKeys(enabled)` | 启用或禁用缺失翻译键追踪 |
+| `getMissingKeys()` | 获取所有已追踪的缺失翻译键 |
+| `clearMissingKeys()` | 清除已追踪的缺失翻译键列表 |
 
 ### CLI命令
 

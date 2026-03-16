@@ -81,6 +81,9 @@
 - **Fallback Value** - `t('key', { _fallback: 'デフォルト' })` 翻訳キーが見つからない場合、生のキーの代わりにフォールバックテキストを返す
 - **Translation Diff** - `npx inline-i18n diff ko en` 2つのロケール間の翻訳を比較
 - **Translation Stats** - `npx inline-i18n stats` 翻訳統計ダッシュボード
+- **Locale Display Names** - `getLocaleDisplayName('ko', 'en')` → `"Korean"`（`Intl.DisplayNames`を使用）
+- **Translation Key Listing** - `getTranslationKeys(locale?, namespace?)` ロードされた翻訳キー一覧を返す
+- **Missing Translation Tracker** - `trackMissingKeys(true)`, `getMissingKeys()`, `clearMissingKeys()` ランタイムで不足キーを収集
 
 ---
 
@@ -1279,6 +1282,11 @@ VSCodeマーケットプレイスから`inline-i18n-multi-vscode`をインスト
 | `clearICUCache()` | ICUパースキャッシュをクリア |
 | `restoreLocale()` | ストレージ（Cookie/localStorage）からロケールを復元 |
 | `createScope(namespace)` | 指定した名前空間にスコープされた翻訳関数を返す |
+| `getLocaleDisplayName(locale, displayLocale?)` | ロケールの表示名を返す（`Intl.DisplayNames`使用） |
+| `getTranslationKeys(locale?, namespace?)` | ロードされた翻訳キーの一覧を返す |
+| `trackMissingKeys(enable)` | 不足キーのランタイム追跡を有効/無効にする |
+| `getMissingKeys()` | 追跡された不足キーの一覧を返す |
+| `clearMissingKeys()` | 追跡された不足キーをクリアする |
 
 ### CLIコマンド
 

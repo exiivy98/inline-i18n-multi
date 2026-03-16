@@ -23,6 +23,9 @@
  * - Locale Persistence (v0.7.0)
  * - Translation Scope (v0.8.0)
  * - Fallback Value (v0.10.0)
+ * - Locale Display Names (v0.11.0)
+ * - Translation Key Listing (v0.11.0)
+ * - Missing Translation Tracker (v0.11.0)
  */
 
 import {
@@ -57,6 +60,12 @@ import {
   restoreLocale,
   // Translation scope (v0.8.0)
   createScope,
+  // Utils (v0.11.0)
+  getLocaleDisplayName,
+  getTranslationKeys,
+  trackMissingKeys,
+  getMissingKeys,
+  clearMissingKeys,
 } from 'inline-i18n-multi'
 
 // ============================================
@@ -715,6 +724,70 @@ resetConfig()
 clearDictionaries()
 
 // ============================================
+// 23. Locale Display Names (v0.11.0)
+// ============================================
+
+console.log('\n=== Locale Display Names (v0.11.0) ===\n')
+
+setLocale('en')
+
+// Display locale names in English
+console.log(getLocaleDisplayName('ko', 'en'))  // → "Korean"
+console.log(getLocaleDisplayName('ja', 'en'))  // → "Japanese"
+console.log(getLocaleDisplayName('zh', 'en'))  // → "Chinese"
+
+// Display in native locale
+console.log(getLocaleDisplayName('ko', 'ko'))  // → "한국어"
+console.log(getLocaleDisplayName('ja', 'ja'))  // → "日本語"
+
+// Uses current locale by default
+console.log(getLocaleDisplayName('ko'))  // → "Korean" (current locale is en)
+
+// ============================================
+// 24. Translation Key Listing (v0.11.0)
+// ============================================
+
+console.log('\n=== Translation Key Listing (v0.11.0) ===\n')
+
+loadDictionaries({
+  en: { greeting: { hello: 'Hello', goodbye: 'Goodbye' }, welcome: 'Welcome' },
+  ko: { greeting: { hello: '안녕하세요' } },
+})
+
+console.log('EN keys:', getTranslationKeys('en'))
+// → ['greeting.hello', 'greeting.goodbye', 'welcome']
+
+console.log('KO keys:', getTranslationKeys('ko'))
+// → ['greeting.hello']
+
+clearDictionaries()
+
+// ============================================
+// 25. Missing Translation Tracker (v0.11.0)
+// ============================================
+
+console.log('\n=== Missing Translation Tracker (v0.11.0) ===\n')
+
+loadDictionaries({ en: { greeting: 'Hello' } })
+
+// Enable tracking
+trackMissingKeys(true)
+
+t('greeting')      // exists — not tracked
+t('missing.key')   // missing — tracked
+t('another.miss')  // missing — tracked
+
+console.log('Missing keys:', getMissingKeys())
+// → ['missing.key', 'another.miss']
+
+clearMissingKeys()
+console.log('After clear:', getMissingKeys())  // → []
+
+trackMissingKeys(false)
+resetConfig()
+clearDictionaries()
+
+// ============================================
 // Summary
 // ============================================
 
@@ -775,4 +848,9 @@ v0.10.0 features:
 - Fallback Value (t('key', { _fallback: 'Default' }))
 - Translation Diff (diff ko en)
 - Translation Stats (stats)
+
+v0.11.0 features:
+- Locale Display Names (getLocaleDisplayName())
+- Translation Key Listing (getTranslationKeys())
+- Missing Translation Tracker (trackMissingKeys(), getMissingKeys())
 `)

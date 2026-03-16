@@ -31,6 +31,11 @@ export {
   getLoadedNamespaces,
   loadAsync,
   isLoaded,
+  getLocaleDisplayName,
+  getTranslationKeys,
+  trackMissingKeys,
+  getMissingKeys,
+  clearMissingKeys,
 } from './dictionary'
 
 // Configuration
