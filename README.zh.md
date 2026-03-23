@@ -84,6 +84,7 @@
 - **Locale Display Names** - 使用`Intl.DisplayNames`获取语言环境显示名称（`getLocaleDisplayName('ko', 'en')` → `"Korean"`）
 - **Translation Key Listing** - `getTranslationKeys(locale?, namespace?)` 返回所有已加载的翻译键
 - **Missing Translation Tracker** - `trackMissingKeys(true)`、`getMissingKeys()`、`clearMissingKeys()` 运行时收集缺失的翻译键
+- **区域设置变更事件** — 使用 `onLocaleChange()` 订阅区域设置变更 (v0.12.0)
 
 ---
 
@@ -1126,6 +1127,29 @@ trackMissingKeys(false)
 
 ---
 
+## 区域设置变更事件
+
+使用 `onLocaleChange()` 订阅区域设置变更，在语言环境切换时执行自定义逻辑：
+
+```typescript
+import { setLocale, onLocaleChange, clearLocaleListeners } from 'inline-i18n-multi'
+
+// 订阅区域设置变更
+const unsubscribe = onLocaleChange((newLocale, previousLocale) => {
+  console.log(`区域设置已变更: ${previousLocale} → ${newLocale}`)
+})
+
+setLocale('ko')  // 输出: "区域设置已变更: en → ko"
+
+// 取消订阅
+unsubscribe()
+
+// 或移除所有监听器
+clearLocaleListeners()
+```
+
+---
+
 ## 配置
 
 配置回退行为和警告的全局设置：
@@ -1348,6 +1372,8 @@ pnpm --filter inline-i18n-multi-nextjs-example dev
 | `trackMissingKeys(enabled)` | 启用或禁用缺失翻译键追踪 |
 | `getMissingKeys()` | 获取所有已追踪的缺失翻译键 |
 | `clearMissingKeys()` | 清除已追踪的缺失翻译键列表 |
+| `onLocaleChange(callback)` | 订阅区域设置变更事件，返回取消订阅函数 |
+| `clearLocaleListeners()` | 移除所有区域设置变更监听器 |
 
 ### CLI命令
 

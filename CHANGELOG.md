@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.0] - 2026-03-23
+
+### Added
+
+- **Locale Change Event** - `onLocaleChange(callback)` subscribe to locale changes
+  - Callback receives `(newLocale, previousLocale)`
+  - Returns unsubscribe function for cleanup
+  - Only fires when locale actually changes (same locale is ignored)
+  - `clearLocaleListeners()` to remove all listeners (for testing)
+
+### Changed
+
+- New core exports: `onLocaleChange`, `clearLocaleListeners`
+- New React/Next re-exports for v0.12.0 functions
+
 ## [0.11.0] - 2026-03-16
 
 ### Added

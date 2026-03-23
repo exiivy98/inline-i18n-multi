@@ -84,6 +84,7 @@
 - **Locale Display Names** - `getLocaleDisplayName('ko', 'en')` → `"Korean"`（`Intl.DisplayNames`を使用）
 - **Translation Key Listing** - `getTranslationKeys(locale?, namespace?)` ロードされた翻訳キー一覧を返す
 - **Missing Translation Tracker** - `trackMissingKeys(true)`, `getMissingKeys()`, `clearMissingKeys()` ランタイムで不足キーを収集
+- **ロケール変更イベント** — `onLocaleChange()`でロケール変更をサブスクライブ (v0.12.0)
 
 ---
 
@@ -1287,6 +1288,8 @@ VSCodeマーケットプレイスから`inline-i18n-multi-vscode`をインスト
 | `trackMissingKeys(enable)` | 不足キーのランタイム追跡を有効/無効にする |
 | `getMissingKeys()` | 追跡された不足キーの一覧を返す |
 | `clearMissingKeys()` | 追跡された不足キーをクリアする |
+| `onLocaleChange(callback)` | ロケール変更イベントをサブスクライブ、unsubscribe関数を返す |
+| `clearLocaleListeners()` | すべてのロケール変更リスナーを削除 |
 
 ### CLIコマンド
 

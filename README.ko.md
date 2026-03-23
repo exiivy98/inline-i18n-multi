@@ -85,6 +85,7 @@
 - **Locale Display Names** - `getLocaleDisplayName('ko', 'en')` → `"Korean"` (`Intl.DisplayNames` 활용)
 - **Translation Key Listing** - `getTranslationKeys(locale?, namespace?)` 로드된 번역 키 목록 반환
 - **Missing Translation Tracker** - `trackMissingKeys(true)`, `getMissingKeys()`, `clearMissingKeys()` 런타임 누락 키 수집
+- **로케일 변경 이벤트** — `onLocaleChange()`로 로케일 변경 구독 (v0.12.0)
 
 ---
 
@@ -1393,6 +1394,8 @@ VSCode 마켓플레이스에서 `inline-i18n-multi-vscode`를 설치하세요.
 | `clearICUCache()`             | ICU 파싱 캐시 초기화                    |
 | `createScope(namespace)`      | 네임스페이스 스코프 `t()` 함수 반환       |
 | `restoreLocale()`             | 저장소(쿠키/localStorage)에서 로케일 복원 |
+| `onLocaleChange(callback)`   | 로케일 변경 이벤트 구독, unsubscribe 함수 반환 |
+| `clearLocaleListeners()`     | 모든 로케일 변경 리스너 제거              |
 
 ### React 훅 & 컴포넌트
 

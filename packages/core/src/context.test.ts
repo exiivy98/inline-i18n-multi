@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach } from 'vitest'
+import { describe, test, expect, beforeEach, vi } from 'vitest'
 import {
   setLocale,
   t,
@@ -7,6 +7,8 @@ import {
   hasTranslation,
   resetConfig,
   createScope,
+  onLocaleChange,
+  clearLocaleListeners,
 } from './index'
 
 describe('Context System (v0.9.0)', () => {
@@ -160,5 +162,98 @@ describe('Context System (v0.9.0)', () => {
     })
     expect(t('nav.home', { _context: 'short' })).toBe('H')
     expect(t('nav.home')).toBe('Home')
+  })
+})
+
+describe('onLocaleChange (v0.12.0)', () => {
+  beforeEach(() => {
+    resetConfig()
+    clearDictionaries()
+    clearLocaleListeners()
+    setLocale('en')
+  })
+
+  test('calls callback when locale changes', () => {
+    const cb = vi.fn()
+    onLocaleChange(cb)
+
+    setLocale('ko')
+    expect(cb).toHaveBeenCalledWith('ko', 'en')
+    expect(cb).toHaveBeenCalledTimes(1)
+  })
+
+  test('does not call callback when locale is same', () => {
+    const cb = vi.fn()
+    setLocale('en')
+    onLocaleChange(cb)
+
+    setLocale('en')
+    expect(cb).not.toHaveBeenCalled()
+  })
+
+  test('supports multiple listeners', () => {
+    const cb1 = vi.fn()
+    const cb2 = vi.fn()
+    onLocaleChange(cb1)
+    onLocaleChange(cb2)
+
+    setLocale('ja')
+    expect(cb1).toHaveBeenCalledWith('ja', 'en')
+    expect(cb2).toHaveBeenCalledWith('ja', 'en')
+  })
+
+  test('unsubscribe stops notifications', () => {
+    const cb = vi.fn()
+    const unsub = onLocaleChange(cb)
+
+    setLocale('ko')
+    expect(cb).toHaveBeenCalledTimes(1)
+
+    unsub()
+    setLocale('ja')
+    expect(cb).toHaveBeenCalledTimes(1)
+  })
+
+  test('tracks consecutive changes', () => {
+    const cb = vi.fn()
+    onLocaleChange(cb)
+
+    setLocale('ko')
+    setLocale('ja')
+    setLocale('zh')
+
+    expect(cb).toHaveBeenCalledTimes(3)
+    expect(cb).toHaveBeenNthCalledWith(1, 'ko', 'en')
+    expect(cb).toHaveBeenNthCalledWith(2, 'ja', 'ko')
+    expect(cb).toHaveBeenNthCalledWith(3, 'zh', 'ja')
+  })
+
+  test('clearLocaleListeners removes all listeners', () => {
+    const cb = vi.fn()
+    onLocaleChange(cb)
+
+    clearLocaleListeners()
+    setLocale('ko')
+    expect(cb).not.toHaveBeenCalled()
+  })
+
+  test('duplicate callback registered once', () => {
+    const cb = vi.fn()
+    onLocaleChange(cb)
+    onLocaleChange(cb)
+
+    setLocale('ko')
+    expect(cb).toHaveBeenCalledTimes(1)
+  })
+
+  test('unsubscribe is idempotent', () => {
+    const cb = vi.fn()
+    const unsub = onLocaleChange(cb)
+
+    unsub()
+    unsub() // should not throw
+
+    setLocale('ko')
+    expect(cb).not.toHaveBeenCalled()
   })
 })

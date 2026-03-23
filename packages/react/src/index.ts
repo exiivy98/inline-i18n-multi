@@ -50,6 +50,9 @@ export {
   createScope,
   // locale detection (v0.6.0)
   detectLocale,
+  // locale change event (v0.12.0)
+  onLocaleChange,
+  clearLocaleListeners,
   // utils (v0.11.0)
   getLocaleDisplayName,
   getTranslationKeys,

@@ -26,6 +26,7 @@
  * - Locale Display Names (v0.11.0)
  * - Translation Key Listing (v0.11.0)
  * - Missing Translation Tracker (v0.11.0)
+ * - Locale Change Event (v0.12.0)
  */
 
 import {
@@ -66,6 +67,8 @@ import {
   trackMissingKeys,
   getMissingKeys,
   clearMissingKeys,
+  // Locale change event (v0.12.0)
+  onLocaleChange,
 } from 'inline-i18n-multi'
 
 // ============================================
@@ -788,6 +791,28 @@ resetConfig()
 clearDictionaries()
 
 // ============================================
+// 26. Locale Change Event (v0.12.0)
+// ============================================
+
+console.log('\n=== Locale Change Event (v0.12.0) ===\n')
+
+setLocale('en')
+
+// Subscribe to locale changes
+const unsubscribe = onLocaleChange((newLocale, previousLocale) => {
+  console.log(`Locale changed: ${previousLocale} → ${newLocale}`)
+})
+
+setLocale('ko')  // → "Locale changed: en → ko"
+setLocale('ja')  // → "Locale changed: ko → ja"
+setLocale('ja')  // (no output — same locale, no change)
+
+// Unsubscribe
+unsubscribe()
+setLocale('en')  // (no output — unsubscribed)
+console.log('After unsubscribe: no output for locale change')
+
+// ============================================
 // Summary
 // ============================================
 
@@ -853,4 +878,7 @@ v0.11.0 features:
 - Locale Display Names (getLocaleDisplayName())
 - Translation Key Listing (getTranslationKeys())
 - Missing Translation Tracker (trackMissingKeys(), getMissingKeys())
+
+v0.12.0 features:
+- Locale Change Event (onLocaleChange(), clearLocaleListeners())
 `)

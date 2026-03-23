@@ -82,6 +82,7 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Locale Display Names** - Get human-readable locale names using `Intl.DisplayNames` (`getLocaleDisplayName('ko', 'en')` → `"Korean"`)
 - **Translation Key Listing** - `getTranslationKeys(locale?, namespace?)` returns all loaded translation keys
 - **Missing Translation Tracker** - Runtime collection of missing translation keys (`trackMissingKeys(true/false)`, `getMissingKeys()`, `clearMissingKeys()`)
+- **Locale Change Event** — Subscribe to locale changes with `onLocaleChange()` (v0.12.0)
 
 ---
 
@@ -898,6 +899,23 @@ Useful for discovering untranslated content during development and testing.
 
 ---
 
+## Locale Change Event
+
+Subscribe to locale changes with `onLocaleChange()` to run custom logic when the locale switches:
+
+```ts
+import { setLocale, onLocaleChange } from 'inline-i18n-multi'
+
+const unsubscribe = onLocaleChange((newLocale, previousLocale) => {
+  console.log(`Locale changed: ${previousLocale} → ${newLocale}`)
+})
+
+setLocale('ko')  // logs: "Locale changed: en → ko"
+unsubscribe()    // stop listening
+```
+
+---
+
 ## Configuration
 
 Configure global settings for fallback behavior and warnings:
@@ -997,6 +1015,8 @@ Available helpers:
 | `trackMissingKeys(enabled)` | Enable or disable missing translation key tracking |
 | `getMissingKeys()` | Get all tracked missing translation keys |
 | `clearMissingKeys()` | Clear the tracked missing keys list |
+| `onLocaleChange(callback)` | Subscribe to locale changes, returns unsubscribe function |
+| `clearLocaleListeners()` | Remove all locale change listeners |
 
 ### Custom Formatters
 

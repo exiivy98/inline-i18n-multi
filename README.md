@@ -84,6 +84,7 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Locale Display Names** - Human-readable locale names (`getLocaleDisplayName('ko', 'en')` → `"Korean"`) using `Intl.DisplayNames`
 - **Translation Key Listing** - `getTranslationKeys(locale?, namespace?)` returns all loaded translation keys
 - **Missing Translation Tracker** - Runtime missing key collection (`trackMissingKeys(true)`, `getMissingKeys()`, `clearMissingKeys()`)
+- **Locale Change Event** — Subscribe to locale changes with `onLocaleChange()` (v0.12.0)
 
 ---
 
@@ -1305,6 +1306,25 @@ The `stats` command scans your dictionaries and source files to produce a high-l
 
 ---
 
+## Locale Change Event
+
+Subscribe to locale changes to react when the user switches language:
+
+```ts
+import { setLocale, onLocaleChange } from 'inline-i18n-multi'
+
+const unsubscribe = onLocaleChange((newLocale, previousLocale) => {
+  console.log(`Locale changed: ${previousLocale} → ${newLocale}`)
+})
+
+setLocale('ko')  // logs: "Locale changed: en → ko"
+unsubscribe()    // stop listening
+```
+
+Use `onLocaleChange()` to trigger side effects such as reloading data, updating document attributes, or syncing with external state when the locale changes. The returned function removes the listener when called. To remove all listeners at once, use `clearLocaleListeners()`.
+
+---
+
 ## Examples
 
 Check out the example projects in the [`examples/`](./examples) directory:
@@ -1410,6 +1430,8 @@ See [Testing Documentation](./docs/test.md) for more details.
 | `trackMissingKeys(enable)` | Enable/disable runtime missing key tracking |
 | `getMissingKeys()` | Get collected missing translation keys |
 | `clearMissingKeys()` | Clear collected missing keys |
+| `onLocaleChange(callback)` | Subscribe to locale changes, returns unsubscribe function |
+| `clearLocaleListeners()` | Remove all locale change listeners |
 
 ### React Hooks & Components
 

@@ -3,6 +3,29 @@ import { getConfig } from './config'
 
 let currentLocale: Locale = 'en'
 
+type LocaleChangeCallback = (locale: Locale, previousLocale: Locale) => void
+const listeners = new Set<LocaleChangeCallback>()
+
+/**
+ * Subscribe to locale changes.
+ * Returns an unsubscribe function.
+ */
+export function onLocaleChange(callback: LocaleChangeCallback): () => void {
+  listeners.add(callback)
+  return () => { listeners.delete(callback) }
+}
+
+function notifyListeners(locale: Locale, previousLocale: Locale): void {
+  for (const cb of listeners) {
+    cb(locale, previousLocale)
+  }
+}
+
+/** Remove all locale change listeners (for testing) */
+export function clearLocaleListeners(): void {
+  listeners.clear()
+}
+
 function setCookie(name: string, value: string, days: number): void {
   if (typeof document === 'undefined') return
   const expires = new Date(Date.now() + days * 864e5).toUTCString()
@@ -35,8 +58,12 @@ function persistLocaleToStorage(locale: Locale): void {
 }
 
 export function setLocale(locale: Locale): void {
+  const previousLocale = currentLocale
   currentLocale = locale
   persistLocaleToStorage(locale)
+  if (locale !== previousLocale) {
+    notifyListeners(locale, previousLocale)
+  }
 }
 
 export function getLocale(): Locale {

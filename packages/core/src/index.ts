@@ -1,6 +1,6 @@
 // Inline translations
 export { it } from './translate'
-export { setLocale, getLocale, restoreLocale } from './context'
+export { setLocale, getLocale, restoreLocale, onLocaleChange, clearLocaleListeners } from './context'
 /** @deprecated Will be removed in v1.0.0 */
 export { __i18n_lookup } from './runtime'
 export {
