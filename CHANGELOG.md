@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.13.0] - 2026-03-30
+
+### Added
+
+- **Formatting Utilities** - Locale-aware formatting powered by `Intl` APIs
+  - `formatNumber(value, options?, locale?)` — number formatting (currency, percent, etc.)
+  - `formatDate(value, options?, locale?)` — date/time formatting (dateStyle, timeZone, etc.)
+  - `formatList(values, options?, locale?)` — list formatting (conjunction, disjunction)
+  - All default to current locale when `locale` parameter is omitted
+
+### Changed
+
+- New core exports: `formatNumber`, `formatDate`, `formatList`
+- New React/Next re-exports for v0.13.0 functions
+
 ## [0.12.0] - 2026-03-23
 
 ### Added

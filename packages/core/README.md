@@ -83,6 +83,7 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Translation Key Listing** - `getTranslationKeys(locale?, namespace?)` returns all loaded translation keys
 - **Missing Translation Tracker** - Runtime collection of missing translation keys (`trackMissingKeys(true/false)`, `getMissingKeys()`, `clearMissingKeys()`)
 - **Locale Change Event** — Subscribe to locale changes with `onLocaleChange()` (v0.12.0)
+- **Formatting Utilities** — Locale-aware `formatNumber`, `formatDate`, `formatList` powered by `Intl` APIs (v0.13.0)
 
 ---
 
@@ -1017,6 +1018,9 @@ Available helpers:
 | `clearMissingKeys()` | Clear the tracked missing keys list |
 | `onLocaleChange(callback)` | Subscribe to locale changes, returns unsubscribe function |
 | `clearLocaleListeners()` | Remove all locale change listeners |
+| `formatNumber(value, options?, locale?)` | Format numbers (currency, percent, etc.) |
+| `formatDate(value, options?, locale?)` | Format dates and times |
+| `formatList(values, options?, locale?)` | Format lists (conjunction, disjunction) |
 
 ### Custom Formatters
 

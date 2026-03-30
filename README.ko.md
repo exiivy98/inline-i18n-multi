@@ -86,6 +86,7 @@
 - **Translation Key Listing** - `getTranslationKeys(locale?, namespace?)` 로드된 번역 키 목록 반환
 - **Missing Translation Tracker** - `trackMissingKeys(true)`, `getMissingKeys()`, `clearMissingKeys()` 런타임 누락 키 수집
 - **로케일 변경 이벤트** — `onLocaleChange()`로 로케일 변경 구독 (v0.12.0)
+- **포맷팅 유틸리티** — `Intl` API 기반 로케일 인식 `formatNumber`, `formatDate`, `formatList` (v0.13.0)
 
 ---
 
@@ -1396,6 +1397,9 @@ VSCode 마켓플레이스에서 `inline-i18n-multi-vscode`를 설치하세요.
 | `restoreLocale()`             | 저장소(쿠키/localStorage)에서 로케일 복원 |
 | `onLocaleChange(callback)`   | 로케일 변경 이벤트 구독, unsubscribe 함수 반환 |
 | `clearLocaleListeners()`     | 모든 로케일 변경 리스너 제거              |
+| `formatNumber(value, options?, locale?)` | 숫자 포맷팅 (통화, 퍼센트 등) |
+| `formatDate(value, options?, locale?)` | 날짜/시간 포맷팅 |
+| `formatList(values, options?, locale?)` | 목록 포맷팅 (접속사, 이접사) |
 
 ### React 훅 & 컴포넌트
 

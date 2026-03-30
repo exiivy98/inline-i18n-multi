@@ -85,6 +85,7 @@
 - **Translation Key Listing** - `getTranslationKeys(locale?, namespace?)` 返回所有已加载的翻译键
 - **Missing Translation Tracker** - `trackMissingKeys(true)`、`getMissingKeys()`、`clearMissingKeys()` 运行时收集缺失的翻译键
 - **区域设置变更事件** — 使用 `onLocaleChange()` 订阅区域设置变更 (v0.12.0)
+- **格式化工具** — 基于 `Intl` API 的本地化 `formatNumber`、`formatDate`、`formatList` (v0.13.0)
 
 ---
 
@@ -1374,6 +1375,9 @@ pnpm --filter inline-i18n-multi-nextjs-example dev
 | `clearMissingKeys()` | 清除已追踪的缺失翻译键列表 |
 | `onLocaleChange(callback)` | 订阅区域设置变更事件，返回取消订阅函数 |
 | `clearLocaleListeners()` | 移除所有区域设置变更监听器 |
+| `formatNumber(value, options?, locale?)` | 数字格式化（货币、百分比等） |
+| `formatDate(value, options?, locale?)` | 日期/时间格式化 |
+| `formatList(values, options?, locale?)` | 列表格式化（连接词、分离词） |
 
 ### CLI命令
 

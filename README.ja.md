@@ -85,6 +85,7 @@
 - **Translation Key Listing** - `getTranslationKeys(locale?, namespace?)` ロードされた翻訳キー一覧を返す
 - **Missing Translation Tracker** - `trackMissingKeys(true)`, `getMissingKeys()`, `clearMissingKeys()` ランタイムで不足キーを収集
 - **ロケール変更イベント** — `onLocaleChange()`でロケール変更をサブスクライブ (v0.12.0)
+- **フォーマットユーティリティ** — `Intl` API ベースのロケール対応 `formatNumber`、`formatDate`、`formatList` (v0.13.0)
 
 ---
 
@@ -1290,6 +1291,9 @@ VSCodeマーケットプレイスから`inline-i18n-multi-vscode`をインスト
 | `clearMissingKeys()` | 追跡された不足キーをクリアする |
 | `onLocaleChange(callback)` | ロケール変更イベントをサブスクライブ、unsubscribe関数を返す |
 | `clearLocaleListeners()` | すべてのロケール変更リスナーを削除 |
+| `formatNumber(value, options?, locale?)` | 数値フォーマット（通貨、パーセントなど） |
+| `formatDate(value, options?, locale?)` | 日付/時刻フォーマット |
+| `formatList(values, options?, locale?)` | リストフォーマット（接続詞、離接詞） |
 
 ### CLIコマンド
 

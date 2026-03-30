@@ -50,6 +50,9 @@ export { detectLocale, type DetectLocaleOptions, type DetectSource } from './det
 // Translation scope (v0.8.0)
 export { createScope } from './scope'
 
+// Formatting utilities (v0.13.0)
+export { formatNumber, formatDate, formatList } from './format'
+
 // Rich text parsing
 export { parseRichText, type RichTextSegment } from './richtext'
 

@@ -85,6 +85,7 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Translation Key Listing** - `getTranslationKeys(locale?, namespace?)` returns all loaded translation keys
 - **Missing Translation Tracker** - Runtime missing key collection (`trackMissingKeys(true)`, `getMissingKeys()`, `clearMissingKeys()`)
 - **Locale Change Event** — Subscribe to locale changes with `onLocaleChange()` (v0.12.0)
+- **Formatting Utilities** — Locale-aware `formatNumber`, `formatDate`, `formatList` powered by `Intl` APIs (v0.13.0)
 
 ---
 
@@ -1325,6 +1326,31 @@ Use `onLocaleChange()` to trigger side effects such as reloading data, updating 
 
 ---
 
+## Formatting Utilities
+
+Locale-aware formatting powered by `Intl` APIs:
+
+```typescript
+import { formatNumber, formatDate, formatList, setLocale } from 'inline-i18n-multi'
+
+setLocale('en')
+
+// Number formatting
+formatNumber(1234.5)                                    // "1,234.5"
+formatNumber(42.5, { style: 'currency', currency: 'USD' }) // "$42.50"
+formatNumber(0.85, { style: 'percent' })                // "85%"
+
+// Date formatting
+formatDate(new Date(), { dateStyle: 'full' })           // "Monday, March 30, 2026"
+formatDate(new Date(), { dateStyle: 'full' }, 'ja')     // "2026年3月30日月曜日"
+
+// List formatting
+formatList(['A', 'B', 'C'])                             // "A, B, and C"
+formatList(['A', 'B', 'C'], { type: 'disjunction' })   // "A, B, or C"
+```
+
+---
+
 ## Examples
 
 Check out the example projects in the [`examples/`](./examples) directory:
@@ -1432,6 +1458,9 @@ See [Testing Documentation](./docs/test.md) for more details.
 | `clearMissingKeys()` | Clear collected missing keys |
 | `onLocaleChange(callback)` | Subscribe to locale changes, returns unsubscribe function |
 | `clearLocaleListeners()` | Remove all locale change listeners |
+| `formatNumber(value, options?, locale?)` | Format numbers (currency, percent, etc.) |
+| `formatDate(value, options?, locale?)` | Format dates and times |
+| `formatList(values, options?, locale?)` | Format lists (conjunction, disjunction) |
 
 ### React Hooks & Components
 

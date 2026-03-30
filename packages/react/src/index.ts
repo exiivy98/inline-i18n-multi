@@ -59,6 +59,10 @@ export {
   trackMissingKeys,
   getMissingKeys,
   clearMissingKeys,
+  // formatting utilities (v0.13.0)
+  formatNumber,
+  formatDate,
+  formatList,
   type DetectLocaleOptions,
   type DetectSource,
   // types

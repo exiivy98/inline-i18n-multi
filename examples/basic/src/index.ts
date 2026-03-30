@@ -27,6 +27,7 @@
  * - Translation Key Listing (v0.11.0)
  * - Missing Translation Tracker (v0.11.0)
  * - Locale Change Event (v0.12.0)
+ * - Formatting Utilities (v0.13.0)
  */
 
 import {
@@ -69,6 +70,10 @@ import {
   clearMissingKeys,
   // Locale change event (v0.12.0)
   onLocaleChange,
+  // Formatting utilities (v0.13.0)
+  formatNumber,
+  formatDate,
+  formatList,
 } from 'inline-i18n-multi'
 
 // ============================================
@@ -813,6 +818,31 @@ setLocale('en')  // (no output — unsubscribed)
 console.log('After unsubscribe: no output for locale change')
 
 // ============================================
+// 27. Formatting Utilities (v0.13.0)
+// ============================================
+
+console.log('\n=== Formatting Utilities (v0.13.0) ===\n')
+
+setLocale('en')
+
+// Number formatting
+console.log(formatNumber(1234.5))                                    // → "1,234.5"
+console.log(formatNumber(42.5, { style: 'currency', currency: 'USD' })) // → "$42.50"
+console.log(formatNumber(0.85, { style: 'percent' }))                // → "85%"
+
+// Date formatting
+console.log(formatDate(new Date(), { dateStyle: 'medium' }))         // → "Mar 30, 2026"
+console.log(formatDate(new Date(), { dateStyle: 'full' }, 'ja'))     // → "2026年3月30日月曜日"
+
+// List formatting
+console.log(formatList(['Apple', 'Banana', 'Cherry']))               // → "Apple, Banana, and Cherry"
+console.log(formatList(['A', 'B', 'C'], { type: 'disjunction' }))   // → "A, B, or C"
+
+// Explicit locale override
+setLocale('ko')
+console.log(formatNumber(1234.5, undefined, 'de'))                   // → "1.234,5"
+
+// ============================================
 // Summary
 // ============================================
 
@@ -881,4 +911,7 @@ v0.11.0 features:
 
 v0.12.0 features:
 - Locale Change Event (onLocaleChange(), clearLocaleListeners())
+
+v0.13.0 features:
+- Formatting Utilities (formatNumber(), formatDate(), formatList())
 `)
