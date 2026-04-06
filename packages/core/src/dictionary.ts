@@ -362,6 +362,33 @@ export function t(
 }
 
 /**
+ * Get the raw template string for a translation key without interpolation (v0.14.0)
+ * Returns undefined if the key is not found.
+ *
+ * @param key - Dot-separated translation key, optionally prefixed with namespace
+ * @param locale - Override locale (optional)
+ * @example
+ * tRaw('welcome')               // → "Welcome, {name}!"
+ * tRaw('items.count', 'ko')     // → "{count}개 항목"
+ * tRaw('common:greeting')       // → "Hello"
+ */
+export function tRaw(key: string, locale?: Locale): string | undefined {
+  const { namespace, key: actualKey } = parseKey(key)
+  const currentLocale = locale ?? getLocale()
+  const fallbackChain = buildFallbackChain(currentLocale)
+  const nsDictionaries = namespacedDictionaries[namespace] || {}
+
+  for (const tryLocale of fallbackChain) {
+    const dict = nsDictionaries[tryLocale]
+    if (!dict) continue
+    const found = getNestedValue(dict, actualKey)
+    if (found !== undefined) return found
+  }
+
+  return undefined
+}
+
+/**
  * Check if a translation key exists
  * @param key - Translation key (may include namespace prefix)
  * @param locale - Optional locale to check

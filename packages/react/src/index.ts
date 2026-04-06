@@ -24,6 +24,7 @@ export {
   setLocale,
   // key-based translations (i18n compatible)
   t,
+  tRaw,
   loadDictionaries,
   loadDictionary,
   clearDictionaries,

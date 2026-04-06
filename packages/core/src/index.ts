@@ -22,6 +22,7 @@ export {
 // Key-based translations (i18n compatible)
 export {
   t,
+  tRaw,
   loadDictionaries,
   loadDictionary,
   clearDictionaries,

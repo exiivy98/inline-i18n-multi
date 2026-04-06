@@ -86,6 +86,7 @@
 - **Missing Translation Tracker** - `trackMissingKeys(true)`, `getMissingKeys()`, `clearMissingKeys()` ランタイムで不足キーを収集
 - **ロケール変更イベント** — `onLocaleChange()`でロケール変更をサブスクライブ (v0.12.0)
 - **フォーマットユーティリティ** — `Intl` API ベースのロケール対応 `formatNumber`、`formatDate`、`formatList` (v0.13.0)
+- **Rawテンプレートアクセス** -- `tRaw(key, locale?)` 補間なしで生のテンプレート文字列を返す (v0.14.0)
 
 ---
 
@@ -1294,6 +1295,7 @@ VSCodeマーケットプレイスから`inline-i18n-multi-vscode`をインスト
 | `formatNumber(value, options?, locale?)` | 数値フォーマット（通貨、パーセントなど） |
 | `formatDate(value, options?, locale?)` | 日付/時刻フォーマット |
 | `formatList(values, options?, locale?)` | リストフォーマット（接続詞、離接詞） |
+| `tRaw(key, locale?)` | 補間なしで生のテンプレート文字列を返す |
 
 ### CLIコマンド
 

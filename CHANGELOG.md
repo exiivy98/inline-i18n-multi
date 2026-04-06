@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.14.0] - 2026-04-06
+
+### Added
+
+- **Raw Template Access** - `tRaw(key, locale?)` returns the raw template string without interpolation
+  - `tRaw('welcome')` → `"Welcome, {name}!"` (no interpolation applied)
+  - Returns `undefined` when key is not found (instead of the key itself)
+  - Follows fallback chain like `t()` but skips interpolation
+  - Works with namespaces: `tRaw('common:greeting')`
+  - Useful for debugging, translation preview, and tooling
+
+### Changed
+
+- New core export: `tRaw`
+- New React/Next re-exports for `tRaw`
+
 ## [0.13.0] - 2026-03-30
 
 ### Added

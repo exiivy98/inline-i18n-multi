@@ -74,6 +74,8 @@ import {
   formatNumber,
   formatDate,
   formatList,
+  // Raw template access (v0.14.0)
+  tRaw,
 } from 'inline-i18n-multi'
 
 // ============================================
@@ -843,6 +845,32 @@ setLocale('ko')
 console.log(formatNumber(1234.5, undefined, 'de'))                   // → "1.234,5"
 
 // ============================================
+// 28. Raw Template Access (v0.14.0)
+// ============================================
+
+console.log('\n=== Raw Template Access (v0.14.0) ===\n')
+
+resetConfig()
+clearDictionaries()
+setLocale('en')
+
+loadDictionaries({
+  en: { welcome: 'Welcome, {name}!', items_one: '{count} item', items_other: '{count} items' },
+  ko: { welcome: '{name}님 환영합니다!' },
+})
+
+// Returns raw template without interpolation
+console.log(tRaw('welcome'))             // → "Welcome, {name}!"
+console.log(tRaw('welcome', 'ko'))       // → "{name}님 환영합니다!"
+console.log(tRaw('items_other'))         // → "{count} items"
+
+// Returns undefined for missing keys
+console.log(tRaw('missing.key'))         // → undefined
+
+resetConfig()
+clearDictionaries()
+
+// ============================================
 // Summary
 // ============================================
 
@@ -914,4 +942,7 @@ v0.12.0 features:
 
 v0.13.0 features:
 - Formatting Utilities (formatNumber(), formatDate(), formatList())
+
+v0.14.0 features:
+- Raw Template Access (tRaw())
 `)

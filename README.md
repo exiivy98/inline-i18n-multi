@@ -86,6 +86,7 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Missing Translation Tracker** - Runtime missing key collection (`trackMissingKeys(true)`, `getMissingKeys()`, `clearMissingKeys()`)
 - **Locale Change Event** — Subscribe to locale changes with `onLocaleChange()` (v0.12.0)
 - **Formatting Utilities** — Locale-aware `formatNumber`, `formatDate`, `formatList` powered by `Intl` APIs (v0.13.0)
+- **Raw Template Access** -- `tRaw(key, locale?)` returns raw template string without interpolation (v0.14.0)
 
 ---
 
@@ -1461,6 +1462,7 @@ See [Testing Documentation](./docs/test.md) for more details.
 | `formatNumber(value, options?, locale?)` | Format numbers (currency, percent, etc.) |
 | `formatDate(value, options?, locale?)` | Format dates and times |
 | `formatList(values, options?, locale?)` | Format lists (conjunction, disjunction) |
+| `tRaw(key, locale?)` | Get raw template string without interpolation |
 
 ### React Hooks & Components
 
