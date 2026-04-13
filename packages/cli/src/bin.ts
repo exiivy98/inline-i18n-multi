@@ -13,7 +13,7 @@ const program = new Command()
 program
   .name('inline-i18n')
   .description('CLI tools for inline-i18n-multi')
-  .version('0.14.0')
+  .version('0.15.0')
 
 program
   .command('find <query>')

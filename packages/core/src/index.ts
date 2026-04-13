@@ -23,6 +23,7 @@ export {
 export {
   t,
   tRaw,
+  tBatch,
   loadDictionaries,
   loadDictionary,
   clearDictionaries,

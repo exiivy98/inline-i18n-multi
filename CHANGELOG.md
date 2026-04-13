@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.15.0] - 2026-04-13
+
+### Added
+
+- **Batch Translation** - `tBatch(keys, vars?, locale?)` translates multiple keys at once
+  - Returns `Record<string, string>` mapping each key to its translated value
+  - Supports shared variables applied to all translations
+  - Works with namespaces, nested keys, and locale override
+
+### Changed
+
+- New core export: `tBatch`
+- New React/Next re-exports for `tBatch`
+
 ## [0.14.0] - 2026-04-06
 
 ### Added

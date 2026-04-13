@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm --filter @inline-i18n-multi/cli build:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm --filter inline-i18n-multi test:*)",
+      "Bash(node:*)",
+      "Bash(npx tsx:*)",
+      "Bash(sed -i '' 's/\"\"version\"\": \"\"0.13.0\"\"/\"\"version\"\": \"\"0.14.0\"\"/g' package.json packages/core/package.json packages/react/package.json packages/next/package.json packages/cli/package.json packages/vscode/package.json)",
+      "Bash(grep '\"\"version\"\"' package.json packages/*/package.json)"
+    ]
+  }
+}

@@ -25,6 +25,7 @@ export {
   // key-based translations (i18n compatible)
   t,
   tRaw,
+  tBatch,
   loadDictionaries,
   loadDictionary,
   clearDictionaries,

@@ -76,6 +76,8 @@ import {
   formatList,
   // Raw template access (v0.14.0)
   tRaw,
+  // Batch translation (v0.15.0)
+  tBatch,
 } from 'inline-i18n-multi'
 
 // ============================================
@@ -871,6 +873,36 @@ resetConfig()
 clearDictionaries()
 
 // ============================================
+// 29. Batch Translation (v0.15.0)
+// ============================================
+
+console.log('\n=== Batch Translation (v0.15.0) ===\n')
+
+resetConfig()
+clearDictionaries()
+setLocale('en')
+
+loadDictionaries({
+  en: { greeting: 'Hello', farewell: 'Goodbye', welcome: 'Welcome, {name}!' },
+  ko: { greeting: '안녕하세요', farewell: '안녕히 가세요', welcome: '{name}님 환영합니다!' },
+})
+
+// Translate multiple keys at once
+console.log(tBatch(['greeting', 'farewell']))
+// → { greeting: 'Hello', farewell: 'Goodbye' }
+
+// With shared variables
+console.log(tBatch(['greeting', 'welcome'], { name: 'John' }))
+// → { greeting: 'Hello', welcome: 'Welcome, John!' }
+
+// With explicit locale
+console.log(tBatch(['greeting', 'farewell'], undefined, 'ko'))
+// → { greeting: '안녕하세요', farewell: '안녕히 가세요' }
+
+resetConfig()
+clearDictionaries()
+
+// ============================================
 // Summary
 // ============================================
 
@@ -945,4 +977,7 @@ v0.13.0 features:
 
 v0.14.0 features:
 - Raw Template Access (tRaw())
+
+v0.15.0 features:
+- Batch Translation (tBatch())
 `)

@@ -389,6 +389,29 @@ export function tRaw(key: string, locale?: Locale): string | undefined {
 }
 
 /**
+ * Translate multiple keys at once (v0.15.0)
+ * @param keys - Array of translation keys
+ * @param vars - Optional variables applied to all translations
+ * @param locale - Override locale (optional)
+ * @returns Object mapping each key to its translated string
+ *
+ * @example
+ * tBatch(['greeting', 'farewell'])
+ * // → { greeting: 'Hello', farewell: 'Goodbye' }
+ */
+export function tBatch(
+  keys: string[],
+  vars?: TranslationVars,
+  locale?: Locale,
+): Record<string, string> {
+  const result: Record<string, string> = {}
+  for (const key of keys) {
+    result[key] = t(key, vars, locale)
+  }
+  return result
+}
+
+/**
  * Check if a translation key exists
  * @param key - Translation key (may include namespace prefix)
  * @param locale - Optional locale to check
