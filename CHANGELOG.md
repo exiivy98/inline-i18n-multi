@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.16.0] - 2026-04-20
+
+### Added
+
+- **Missing Locales Detection** - `getMissingLocales(key)` returns the locales where a translation key is absent
+  - Inverse of `hasTranslation` — checks every loaded locale in the key's namespace
+  - Returns array of locale codes missing the key
+  - Works with namespaced and nested keys
+  - Useful for translation completeness audits
+
+### Changed
+
+- New core export: `getMissingLocales`
+- New React/Next re-exports for `getMissingLocales`
+
 ## [0.15.0] - 2026-04-13
 
 ### Added

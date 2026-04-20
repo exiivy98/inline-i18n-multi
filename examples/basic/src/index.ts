@@ -78,6 +78,8 @@ import {
   tRaw,
   // Batch translation (v0.15.0)
   tBatch,
+  // Missing locales detection (v0.16.0)
+  getMissingLocales,
 } from 'inline-i18n-multi'
 
 // ============================================
@@ -903,6 +905,30 @@ resetConfig()
 clearDictionaries()
 
 // ============================================
+// 30. Missing Locales Detection (v0.16.0)
+// ============================================
+
+console.log('\n=== Missing Locales Detection (v0.16.0) ===\n')
+
+resetConfig()
+clearDictionaries()
+setLocale('en')
+
+loadDictionaries({
+  en: { greeting: 'Hello', farewell: 'Goodbye' },
+  ko: { greeting: '안녕하세요' },          // farewell missing
+  ja: {},                                  // both missing
+})
+
+// Returns locales where key is absent
+console.log(getMissingLocales('greeting'))    // → []  (all locales have it)
+console.log(getMissingLocales('farewell'))    // → ['ko', 'ja']
+console.log(getMissingLocales('nonexistent')) // → ['en', 'ko', 'ja']
+
+resetConfig()
+clearDictionaries()
+
+// ============================================
 // Summary
 // ============================================
 
@@ -980,4 +1006,7 @@ v0.14.0 features:
 
 v0.15.0 features:
 - Batch Translation (tBatch())
+
+v0.16.0 features:
+- Missing Locales Detection (getMissingLocales())
 `)

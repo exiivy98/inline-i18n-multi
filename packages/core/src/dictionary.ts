@@ -434,6 +434,32 @@ export function hasTranslation(key: string, locale?: Locale, context?: string): 
 }
 
 /**
+ * Get all locales where a translation key is missing (v0.16.0)
+ * Inverse of `hasTranslation` — checks every loaded locale in the key's namespace
+ * and returns those that do not contain the key.
+ *
+ * @param key - Translation key (may include namespace prefix)
+ * @returns Array of locale codes missing the key
+ *
+ * @example
+ * loadDictionaries({ en: { hello: 'Hi' }, ko: { hello: '안녕' }, ja: {} })
+ * getMissingLocales('hello')   // → ['ja']
+ * getMissingLocales('common:greeting')   // → ['en', 'ko', 'ja'] (key missing in all)
+ */
+export function getMissingLocales(key: string): Locale[] {
+  const { namespace, key: actualKey } = parseKey(key)
+  const nsDictionaries = namespacedDictionaries[namespace] || {}
+  const missing: Locale[] = []
+  for (const locale of Object.keys(nsDictionaries)) {
+    const dict = nsDictionaries[locale]
+    if (!dict || getNestedValue(dict, actualKey) === undefined) {
+      missing.push(locale)
+    }
+  }
+  return missing
+}
+
+/**
  * Get all loaded locales
  * @param namespace - Optional namespace (returns from all if not specified)
  */

@@ -30,6 +30,7 @@ export {
   loadDictionary,
   clearDictionaries,
   hasTranslation,
+  getMissingLocales,
   getLoadedLocales,
   getDictionary,
   loadAsync,

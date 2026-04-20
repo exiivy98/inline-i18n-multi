@@ -88,6 +88,7 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Formatting Utilities** — Locale-aware `formatNumber`, `formatDate`, `formatList` powered by `Intl` APIs (v0.13.0)
 - **Raw Template Access** -- `tRaw(key, locale?)` returns raw template string without interpolation (v0.14.0)
 - **Batch Translation** -- `tBatch(keys, vars?, locale?)` translates multiple keys at once (v0.15.0)
+- **Missing Locales Detection** -- `getMissingLocales(key)` returns locales where a key is absent (v0.16.0)
 
 ---
 
@@ -1465,6 +1466,7 @@ See [Testing Documentation](./docs/test.md) for more details.
 | `formatList(values, options?, locale?)` | Format lists (conjunction, disjunction) |
 | `tRaw(key, locale?)` | Get raw template string without interpolation |
 | `tBatch(keys, vars?, locale?)` | Translate multiple keys at once |
+| `getMissingLocales(key)` | List locales missing a translation key |
 
 ### React Hooks & Components
 

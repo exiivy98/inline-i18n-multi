@@ -89,6 +89,7 @@
 - **포맷팅 유틸리티** — `Intl` API 기반 로케일 인식 `formatNumber`, `formatDate`, `formatList` (v0.13.0)
 - **Raw 템플릿 접근** -- `tRaw(key, locale?)` 보간 없이 원본 템플릿 문자열 반환 (v0.14.0)
 - **일괄 번역** -- `tBatch(keys, vars?, locale?)` 여러 키를 한번에 번역 (v0.15.0)
+- **누락된 로케일 감지** -- `getMissingLocales(key)` 키가 없는 로케일 반환 (v0.16.0)
 
 ---
 
@@ -1404,6 +1405,7 @@ VSCode 마켓플레이스에서 `inline-i18n-multi-vscode`를 설치하세요.
 | `formatList(values, options?, locale?)` | 목록 포맷팅 (접속사, 이접사) |
 | `tRaw(key, locale?)` | 보간 없이 원본 템플릿 문자열 반환 |
 | `tBatch(keys, vars?, locale?)` | 여러 키를 한번에 번역 |
+| `getMissingLocales(key)` | 키가 없는 로케일 목록 반환 |
 
 ### React 훅 & 컴포넌트
 

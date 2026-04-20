@@ -88,6 +88,7 @@
 - **格式化工具** — 基于 `Intl` API 的本地化 `formatNumber`、`formatDate`、`formatList` (v0.13.0)
 - **原始模板访问** -- `tRaw(key, locale?)` 返回未插值的原始模板字符串 (v0.14.0)
 - **批量翻译** -- `tBatch(keys, vars?, locale?)` 一次翻译多个键 (v0.15.0)
+- **缺失语言检测** -- `getMissingLocales(key)` 返回缺少该键的语言列表 (v0.16.0)
 
 ---
 
@@ -1382,6 +1383,7 @@ pnpm --filter inline-i18n-multi-nextjs-example dev
 | `formatList(values, options?, locale?)` | 列表格式化（连接词、分离词） |
 | `tRaw(key, locale?)` | 返回未插值的原始模板字符串 |
 | `tBatch(keys, vars?, locale?)` | 一次翻译多个键 |
+| `getMissingLocales(key)` | 列出缺少翻译键的语言 |
 
 ### CLI命令
 

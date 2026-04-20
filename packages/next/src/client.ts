@@ -30,6 +30,7 @@ export {
   loadDictionary,
   clearDictionaries,
   hasTranslation,
+  getMissingLocales,
   getLoadedLocales,
   getDictionary,
   // rich text (v0.5.0)

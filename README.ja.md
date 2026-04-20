@@ -88,6 +88,7 @@
 - **フォーマットユーティリティ** — `Intl` API ベースのロケール対応 `formatNumber`、`formatDate`、`formatList` (v0.13.0)
 - **Rawテンプレートアクセス** -- `tRaw(key, locale?)` 補間なしで生のテンプレート文字列を返す (v0.14.0)
 - **一括翻訳** -- `tBatch(keys, vars?, locale?)` 複数キーを一括翻訳 (v0.15.0)
+- **欠落ロケール検出** -- `getMissingLocales(key)` キーが存在しないロケールを返す (v0.16.0)
 
 ---
 
@@ -1298,6 +1299,7 @@ VSCodeマーケットプレイスから`inline-i18n-multi-vscode`をインスト
 | `formatList(values, options?, locale?)` | リストフォーマット（接続詞、離接詞） |
 | `tRaw(key, locale?)` | 補間なしで生のテンプレート文字列を返す |
 | `tBatch(keys, vars?, locale?)` | 複数キーを一括翻訳 |
+| `getMissingLocales(key)` | キーが欠落しているロケール一覧 |
 
 ### CLIコマンド
 
