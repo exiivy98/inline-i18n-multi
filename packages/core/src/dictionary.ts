@@ -495,6 +495,40 @@ export function getLoadedNamespaces(): string[] {
 }
 
 /**
+ * Get translation completeness ratio of a locale relative to a base locale (v0.17.0)
+ * Returns a value between 0 and 1 representing the fraction of base locale keys
+ * that exist in the target locale.
+ *
+ * @param locale - Target locale to measure
+ * @param baseLocale - Reference locale (defaults to config.defaultLocale)
+ * @param namespace - Optional namespace to scope the comparison
+ * @returns Ratio in [0, 1]; 1 if base has no keys or locale === base
+ *
+ * @example
+ * loadDictionaries({ en: { a: '1', b: '2', c: '3' }, ko: { a: '가' } })
+ * getCompletenessRatio('ko')        // → 0.333... (1 of 3 keys translated)
+ * getCompletenessRatio('en')        // → 1 (same as base)
+ */
+export function getCompletenessRatio(
+  locale: Locale,
+  baseLocale?: Locale,
+  namespace?: string,
+): number {
+  const base = baseLocale ?? getConfig().defaultLocale
+  if (locale === base) return 1
+
+  const baseKeys = getTranslationKeys(base, namespace)
+  if (baseKeys.length === 0) return 1
+
+  const localeKeys = new Set(getTranslationKeys(locale, namespace))
+  let matched = 0
+  for (const k of baseKeys) {
+    if (localeKeys.has(k)) matched++
+  }
+  return matched / baseKeys.length
+}
+
+/**
  * Get the display name of a locale using Intl.DisplayNames (v0.11.0)
  * @param locale - Locale code to get display name for (e.g., 'ko', 'ja', 'en-US')
  * @param displayLocale - Locale in which to display the name (defaults to current locale)

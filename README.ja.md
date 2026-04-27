@@ -89,6 +89,7 @@
 - **Rawテンプレートアクセス** -- `tRaw(key, locale?)` 補間なしで生のテンプレート文字列を返す (v0.14.0)
 - **一括翻訳** -- `tBatch(keys, vars?, locale?)` 複数キーを一括翻訳 (v0.15.0)
 - **欠落ロケール検出** -- `getMissingLocales(key)` キーが存在しないロケールを返す (v0.16.0)
+- **翻訳完成度比率** -- `getCompletenessRatio(locale, baseLocale?, namespace?)` 基準ロケールに対する翻訳完成度(0-1)を返す (v0.17.0)
 
 ---
 
@@ -1300,6 +1301,7 @@ VSCodeマーケットプレイスから`inline-i18n-multi-vscode`をインスト
 | `tRaw(key, locale?)` | 補間なしで生のテンプレート文字列を返す |
 | `tBatch(keys, vars?, locale?)` | 複数キーを一括翻訳 |
 | `getMissingLocales(key)` | キーが欠落しているロケール一覧 |
+| `getCompletenessRatio(locale, baseLocale?, namespace?)` | 翻訳完成度比率(0-1)を返す |
 
 ### CLIコマンド
 

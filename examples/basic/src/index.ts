@@ -80,6 +80,8 @@ import {
   tBatch,
   // Missing locales detection (v0.16.0)
   getMissingLocales,
+  // Completeness ratio (v0.17.0)
+  getCompletenessRatio,
 } from 'inline-i18n-multi'
 
 // ============================================
@@ -929,6 +931,32 @@ resetConfig()
 clearDictionaries()
 
 // ============================================
+// 31. Translation Completeness Ratio (v0.17.0)
+// ============================================
+
+console.log('\n=== Translation Completeness Ratio (v0.17.0) ===\n')
+
+resetConfig()
+clearDictionaries()
+setLocale('en')
+
+loadDictionaries({
+  en: { greeting: 'Hello', farewell: 'Goodbye', welcome: 'Welcome' },
+  ko: { greeting: '안녕하세요', farewell: '안녕히 가세요' },  // 2/3 translated
+  ja: { greeting: 'こんにちは' },                              // 1/3 translated
+})
+
+console.log('en:', getCompletenessRatio('en'))  // → 1     (base locale)
+console.log('ko:', getCompletenessRatio('ko'))  // → 0.666...
+console.log('ja:', getCompletenessRatio('ja'))  // → 0.333...
+
+// Custom base locale
+console.log('en vs ja:', getCompletenessRatio('en', 'ja'))  // → 1 (en has 'greeting')
+
+resetConfig()
+clearDictionaries()
+
+// ============================================
 // Summary
 // ============================================
 
@@ -1009,4 +1037,7 @@ v0.15.0 features:
 
 v0.16.0 features:
 - Missing Locales Detection (getMissingLocales())
+
+v0.17.0 features:
+- Translation Completeness Ratio (getCompletenessRatio())
 `)

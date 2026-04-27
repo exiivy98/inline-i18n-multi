@@ -89,6 +89,7 @@
 - **原始模板访问** -- `tRaw(key, locale?)` 返回未插值的原始模板字符串 (v0.14.0)
 - **批量翻译** -- `tBatch(keys, vars?, locale?)` 一次翻译多个键 (v0.15.0)
 - **缺失语言检测** -- `getMissingLocales(key)` 返回缺少该键的语言列表 (v0.16.0)
+- **翻译完成度比率** -- `getCompletenessRatio(locale, baseLocale?, namespace?)` 返回相对于基准语言的翻译完成度(0-1) (v0.17.0)
 
 ---
 
@@ -1384,6 +1385,7 @@ pnpm --filter inline-i18n-multi-nextjs-example dev
 | `tRaw(key, locale?)` | 返回未插值的原始模板字符串 |
 | `tBatch(keys, vars?, locale?)` | 一次翻译多个键 |
 | `getMissingLocales(key)` | 列出缺少翻译键的语言 |
+| `getCompletenessRatio(locale, baseLocale?, namespace?)` | 返回翻译完成度比率(0-1) |
 
 ### CLI命令
 

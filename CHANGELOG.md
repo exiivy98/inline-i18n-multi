@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.17.0] - 2026-04-27
+
+### Added
+
+- **Translation Completeness Ratio** - `getCompletenessRatio(locale, baseLocale?, namespace?)` returns the fraction of base-locale keys present in a target locale
+  - Result is in `[0, 1]` (1 means fully translated, 0 means none of the base keys are present)
+  - Defaults `baseLocale` to `config.defaultLocale`
+  - Optional `namespace` parameter scopes the comparison
+  - Useful for translation status dashboards and CI gating
+
+### Changed
+
+- New core export: `getCompletenessRatio`
+- New React/Next re-exports for `getCompletenessRatio`
+
 ## [0.16.0] - 2026-04-20
 
 ### Added

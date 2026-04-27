@@ -89,6 +89,7 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Raw Template Access** -- `tRaw(key, locale?)` returns raw template string without interpolation (v0.14.0)
 - **Batch Translation** -- `tBatch(keys, vars?, locale?)` translates multiple keys at once (v0.15.0)
 - **Missing Locales Detection** -- `getMissingLocales(key)` returns locales where a key is absent (v0.16.0)
+- **Translation Completeness Ratio** -- `getCompletenessRatio(locale, baseLocale?, namespace?)` returns the fraction of base-locale keys present in a target locale (v0.17.0)
 
 ---
 
@@ -1467,6 +1468,7 @@ See [Testing Documentation](./docs/test.md) for more details.
 | `tRaw(key, locale?)` | Get raw template string without interpolation |
 | `tBatch(keys, vars?, locale?)` | Translate multiple keys at once |
 | `getMissingLocales(key)` | List locales missing a translation key |
+| `getCompletenessRatio(locale, baseLocale?, namespace?)` | Get translation completeness ratio (0-1) |
 
 ### React Hooks & Components
 
