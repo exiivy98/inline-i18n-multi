@@ -82,6 +82,8 @@ import {
   getMissingLocales,
   // Completeness ratio (v0.17.0)
   getCompletenessRatio,
+  // Missing key listener (v0.18.0)
+  onMissingKey,
 } from 'inline-i18n-multi'
 
 // ============================================
@@ -957,6 +959,34 @@ resetConfig()
 clearDictionaries()
 
 // ============================================
+// 32. Missing Key Listener (v0.18.0)
+// ============================================
+
+console.log('\n=== Missing Key Listener (v0.18.0) ===\n')
+
+resetConfig()
+clearDictionaries()
+setLocale('en')
+
+loadDictionaries({ en: { greeting: 'Hello' } })
+
+// Subscribe to missing key events
+const off = onMissingKey((key, locale) => {
+  console.log(`[missing] key="${key}" locale="${locale}"`)
+})
+
+t('greeting')         // exists — no event
+t('missing.one')      // → "[missing] key=\"missing.one\" locale=\"en\""
+t('missing.two', undefined, 'fr')  // → "[missing] key=\"missing.two\" locale=\"fr\""
+
+// Unsubscribe
+off()
+t('still.missing')    // (no output — listener removed)
+
+resetConfig()
+clearDictionaries()
+
+// ============================================
 // Summary
 // ============================================
 
@@ -1040,4 +1070,7 @@ v0.16.0 features:
 
 v0.17.0 features:
 - Translation Completeness Ratio (getCompletenessRatio())
+
+v0.18.0 features:
+- Missing Key Listener (onMissingKey())
 `)

@@ -90,6 +90,7 @@
 - **批量翻译** -- `tBatch(keys, vars?, locale?)` 一次翻译多个键 (v0.15.0)
 - **缺失语言检测** -- `getMissingLocales(key)` 返回缺少该键的语言列表 (v0.16.0)
 - **翻译完成度比率** -- `getCompletenessRatio(locale, baseLocale?, namespace?)` 返回相对于基准语言的翻译完成度(0-1) (v0.17.0)
+- **缺失键监听器** -- `onMissingKey(callback)` 订阅缺失翻译键事件 (`(key, locale)` 回调) (v0.18.0)
 
 ---
 
@@ -1386,6 +1387,7 @@ pnpm --filter inline-i18n-multi-nextjs-example dev
 | `tBatch(keys, vars?, locale?)` | 一次翻译多个键 |
 | `getMissingLocales(key)` | 列出缺少翻译键的语言 |
 | `getCompletenessRatio(locale, baseLocale?, namespace?)` | 返回翻译完成度比率(0-1) |
+| `onMissingKey(callback)` | 订阅缺失翻译键事件 |
 
 ### CLI命令
 

@@ -90,6 +90,7 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Batch Translation** -- `tBatch(keys, vars?, locale?)` translates multiple keys at once (v0.15.0)
 - **Missing Locales Detection** -- `getMissingLocales(key)` returns locales where a key is absent (v0.16.0)
 - **Translation Completeness Ratio** -- `getCompletenessRatio(locale, baseLocale?, namespace?)` returns the fraction of base-locale keys present in a target locale (v0.17.0)
+- **Missing Key Listener** -- `onMissingKey(callback)` subscribes to missing translation events with `(key, locale)` (v0.18.0)
 
 ---
 
@@ -1469,6 +1470,7 @@ See [Testing Documentation](./docs/test.md) for more details.
 | `tBatch(keys, vars?, locale?)` | Translate multiple keys at once |
 | `getMissingLocales(key)` | List locales missing a translation key |
 | `getCompletenessRatio(locale, baseLocale?, namespace?)` | Get translation completeness ratio (0-1) |
+| `onMissingKey(callback)` | Subscribe to missing translation key events |
 
 ### React Hooks & Components
 

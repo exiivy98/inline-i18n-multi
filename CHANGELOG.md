@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.18.0] - 2026-05-04
+
+### Added
+
+- **Missing Key Listener** - `onMissingKey(callback)` subscribes to missing translation events
+  - Callback receives `(key, requestedLocale)` for each missing key encountered via `t()`
+  - Returns unsubscribe function for cleanup
+  - Fires every time (no dedup), independent of `trackMissingKeys`
+  - `clearMissingKeyListeners()` removes all listeners (for testing)
+
+### Changed
+
+- New core exports: `onMissingKey`, `clearMissingKeyListeners`
+- New React/Next re-exports for v0.18.0 functions
+
 ## [0.17.0] - 2026-04-27
 
 ### Added

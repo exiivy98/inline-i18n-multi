@@ -40,6 +40,8 @@ export {
   trackMissingKeys,
   getMissingKeys,
   clearMissingKeys,
+  onMissingKey,
+  clearMissingKeyListeners,
 } from './dictionary'
 
 // Configuration

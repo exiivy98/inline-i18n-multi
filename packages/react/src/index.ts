@@ -63,6 +63,8 @@ export {
   trackMissingKeys,
   getMissingKeys,
   clearMissingKeys,
+  onMissingKey,
+  clearMissingKeyListeners,
   // formatting utilities (v0.13.0)
   formatNumber,
   formatDate,

@@ -91,6 +91,7 @@
 - **일괄 번역** -- `tBatch(keys, vars?, locale?)` 여러 키를 한번에 번역 (v0.15.0)
 - **누락된 로케일 감지** -- `getMissingLocales(key)` 키가 없는 로케일 반환 (v0.16.0)
 - **번역 완성도 비율** -- `getCompletenessRatio(locale, baseLocale?, namespace?)` 기준 로케일 대비 번역 완성도(0-1) 반환 (v0.17.0)
+- **누락 키 리스너** -- `onMissingKey(callback)` 누락된 번역 키 이벤트 구독 (`(key, locale)` 콜백) (v0.18.0)
 
 ---
 
@@ -1408,6 +1409,7 @@ VSCode 마켓플레이스에서 `inline-i18n-multi-vscode`를 설치하세요.
 | `tBatch(keys, vars?, locale?)` | 여러 키를 한번에 번역 |
 | `getMissingLocales(key)` | 키가 없는 로케일 목록 반환 |
 | `getCompletenessRatio(locale, baseLocale?, namespace?)` | 번역 완성도 비율(0-1) 반환 |
+| `onMissingKey(callback)` | 누락된 번역 키 이벤트 구독 |
 
 ### React 훅 & 컴포넌트
 

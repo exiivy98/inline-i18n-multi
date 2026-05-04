@@ -63,6 +63,8 @@ export {
   trackMissingKeys,
   getMissingKeys,
   clearMissingKeys,
+  onMissingKey,
+  clearMissingKeyListeners,
   useScopedT,
   useDetectedLocale,
   type DetectLocaleOptions,

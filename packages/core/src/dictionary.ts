@@ -311,7 +311,7 @@ export function t(
   }
 
   if (!template) {
-    recordMissingKey(key)
+    recordMissingKey(key, currentLocale)
 
     emitWarning({
       type: 'missing_translation',
@@ -594,6 +594,37 @@ export function getTranslationKeys(locale?: Locale, namespace?: string): string[
 let missingKeys: Set<string> = new Set()
 let trackMissing = false
 
+// Missing key event listeners (v0.18.0)
+type MissingKeyCallback = (key: string, locale: Locale) => void
+const missingKeyListeners = new Set<MissingKeyCallback>()
+
+/**
+ * Subscribe to missing translation key events (v0.18.0)
+ * Callback fires every time `t()` encounters a key with no translation
+ * (independent of `trackMissingKeys`).
+ *
+ * @param callback - Receives `(key, requestedLocale)` for each missing key
+ * @returns Unsubscribe function
+ *
+ * @example
+ * const off = onMissingKey((key, locale) => {
+ *   reportToMonitoring({ key, locale })
+ * })
+ * t('missing.key')   // callback fires with ('missing.key', 'en')
+ * off()              // stop listening
+ */
+export function onMissingKey(callback: MissingKeyCallback): () => void {
+  missingKeyListeners.add(callback)
+  return () => { missingKeyListeners.delete(callback) }
+}
+
+/**
+ * Remove all missing-key listeners (for testing) (v0.18.0)
+ */
+export function clearMissingKeyListeners(): void {
+  missingKeyListeners.clear()
+}
+
 /**
  * Enable or disable missing translation tracking (v0.11.0)
  * When enabled, all missing translation keys encountered via t() are recorded.
@@ -629,8 +660,14 @@ export function clearMissingKeys(): void {
 /**
  * Record a missing key (internal use)
  */
-export function recordMissingKey(key: string): void {
+export function recordMissingKey(key: string, locale?: Locale): void {
   if (trackMissing) {
     missingKeys.add(key)
+  }
+  if (missingKeyListeners.size > 0) {
+    const loc = locale ?? getLocale()
+    for (const cb of missingKeyListeners) {
+      cb(key, loc)
+    }
   }
 }
