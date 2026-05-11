@@ -26,6 +26,7 @@ export {
   t,
   tRaw,
   tBatch,
+  interpolateTemplate,
   loadDictionaries,
   loadDictionary,
   clearDictionaries,

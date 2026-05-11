@@ -28,6 +28,7 @@
  * - Missing Translation Tracker (v0.11.0)
  * - Locale Change Event (v0.12.0)
  * - Formatting Utilities (v0.13.0)
+ * - Template Interpolation (v0.19.0)
  */
 
 import {
@@ -84,6 +85,8 @@ import {
   getCompletenessRatio,
   // Missing key listener (v0.18.0)
   onMissingKey,
+  // Template interpolation (v0.19.0)
+  interpolateTemplate,
 } from 'inline-i18n-multi'
 
 // ============================================
@@ -987,6 +990,40 @@ resetConfig()
 clearDictionaries()
 
 // ============================================
+// 33. Template Interpolation (v0.19.0)
+// ============================================
+
+console.log('\n=== Template Interpolation (v0.19.0) ===\n')
+
+setLocale('en')
+
+// Simple variable interpolation
+console.log(interpolateTemplate('Hello {name}!', { name: 'World' }))
+// → "Hello World!"
+
+// ICU plural format
+console.log(interpolateTemplate('{count, plural, one {# item} other {# items}}', { count: 1 }))
+// → "1 item"
+console.log(interpolateTemplate('{count, plural, one {# item} other {# items}}', { count: 5 }))
+// → "5 items"
+
+// Plural shorthand
+console.log(interpolateTemplate('{count, p, file|files}', { count: 3 }))
+// → "3 files"
+
+// ICU select format
+console.log(interpolateTemplate('{gender, select, male {He} female {She} other {They}} left.', { gender: 'female' }))
+// → "She left."
+
+// Locale-aware number formatting
+console.log(interpolateTemplate('Price: {price, number}', { price: 1234.5 }, 'de'))
+// → "Price: 1.234,5"
+
+// No dictionary lookup needed — works with any template string
+console.log(interpolateTemplate('Welcome, {name}! You have {count, p, message|messages}.', { name: 'Alice', count: 7 }))
+// → "Welcome, Alice! You have 7 messages."
+
+// ============================================
 // Summary
 // ============================================
 
@@ -1073,4 +1110,7 @@ v0.17.0 features:
 
 v0.18.0 features:
 - Missing Key Listener (onMissingKey())
+
+v0.19.0 features:
+- Template Interpolation (interpolateTemplate())
 `)

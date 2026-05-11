@@ -89,6 +89,7 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Missing Locales Detection** -- `getMissingLocales(key)` returns locales where a key is absent (v0.16.0)
 - **Translation Completeness Ratio** -- `getCompletenessRatio(locale, baseLocale?, namespace?)` returns the fraction of base-locale keys present in a target locale (v0.17.0)
 - **Missing Key Listener** -- `onMissingKey(callback)` subscribes to missing translation events with `(key, locale)` (v0.18.0)
+- **Template Interpolation** -- `interpolateTemplate(template, vars?, locale?)` interpolates arbitrary ICU template strings without dictionary lookup (v0.19.0)
 
 ---
 
@@ -1031,6 +1032,7 @@ Available helpers:
 | `getMissingLocales(key)` | List locales missing a translation key |
 | `getCompletenessRatio(locale, baseLocale?, namespace?)` | Get translation completeness ratio (0-1) |
 | `onMissingKey(callback)` | Subscribe to missing translation key events |
+| `interpolateTemplate(template, vars?, locale?)` | Interpolate an arbitrary ICU template string without dictionary lookup |
 
 ### Custom Formatters
 

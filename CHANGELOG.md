@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.19.0] - 2026-05-11
+
+### Added
+
+- **Template Interpolation** - `interpolateTemplate(template, vars?, locale?)` interpolates arbitrary ICU template strings without dictionary lookup
+  - Supports all ICU features: plural, select, number, date, time, relativeTime, list, currency, compact numbers, plural shorthand, and custom formatters
+  - Uses current locale by default, accepts optional locale override
+  - Strips special vars (`_context`, `_fallback`) before interpolation
+
+### Changed
+
+- New core export: `interpolateTemplate`
+- New React/Next re-exports for v0.19.0 function
+
 ## [0.18.0] - 2026-05-04
 
 ### Added

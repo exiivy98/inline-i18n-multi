@@ -660,6 +660,33 @@ export function clearMissingKeys(): void {
 /**
  * Record a missing key (internal use)
  */
+/**
+ * Interpolate an arbitrary ICU template string without dictionary lookup (v0.19.0)
+ *
+ * Supports all ICU features: plural, select, number, date, time, relativeTime,
+ * list, currency, compact numbers, plural shorthand, and custom formatters.
+ *
+ * @param template - ICU MessageFormat template string
+ * @param vars - Variables for interpolation
+ * @param locale - Override locale (defaults to current locale)
+ * @returns Interpolated string
+ *
+ * @example
+ * interpolateTemplate('Hello {name}!', { name: 'World' })
+ * // → 'Hello World!'
+ *
+ * interpolateTemplate('{count, plural, one {# item} other {# items}}', { count: 3 })
+ * // → '3 items'
+ */
+export function interpolateTemplate(
+  template: string,
+  vars?: TranslationVars,
+  locale?: Locale,
+): string {
+  const currentLocale = locale ?? getLocale()
+  return interpolate(template, vars, currentLocale)
+}
+
 export function recordMissingKey(key: string, locale?: Locale): void {
   if (trackMissing) {
     missingKeys.add(key)
