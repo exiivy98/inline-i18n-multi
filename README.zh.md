@@ -92,6 +92,7 @@
 - **翻译完成度比率** -- `getCompletenessRatio(locale, baseLocale?, namespace?)` 返回相对于基准语言的翻译完成度(0-1) (v0.17.0)
 - **缺失键监听器** -- `onMissingKey(callback)` 订阅缺失翻译键事件 (`(key, locale)` 回调) (v0.18.0)
 - **模板插值** -- `interpolateTemplate(template, vars?, locale?)` 无需字典查找即可插值任意ICU模板字符串 (v0.19.0)
+- **命名空间检查** -- `hasNamespace(namespace)` 返回指定命名空间是否已加载到字典存储中 (v0.20.0)
 
 ---
 
@@ -1390,6 +1391,7 @@ pnpm --filter inline-i18n-multi-nextjs-example dev
 | `getCompletenessRatio(locale, baseLocale?, namespace?)` | 返回翻译完成度比率(0-1) |
 | `onMissingKey(callback)` | 订阅缺失翻译键事件 |
 | `interpolateTemplate(template, vars?, locale?)` | 无需字典查找即可插值任意ICU模板字符串 |
+| `hasNamespace(namespace)` | 检查指定命名空间是否已加载到字典存储中 |
 
 ### CLI命令
 

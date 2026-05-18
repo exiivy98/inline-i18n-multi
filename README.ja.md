@@ -92,6 +92,7 @@
 - **翻訳完成度比率** -- `getCompletenessRatio(locale, baseLocale?, namespace?)` 基準ロケールに対する翻訳完成度(0-1)を返す (v0.17.0)
 - **欠落キーリスナー** -- `onMissingKey(callback)` 欠落した翻訳キーイベントを購読 (`(key, locale)` コールバック) (v0.18.0)
 - **テンプレート補間** -- `interpolateTemplate(template, vars?, locale?)` 辞書検索なしで任意のICUテンプレート文字列を補間 (v0.19.0)
+- **名前空間チェック** -- `hasNamespace(namespace)` 指定した名前空間が辞書ストアにロードされているかどうかを返す (v0.20.0)
 
 ---
 
@@ -1306,6 +1307,7 @@ VSCodeマーケットプレイスから`inline-i18n-multi-vscode`をインスト
 | `getCompletenessRatio(locale, baseLocale?, namespace?)` | 翻訳完成度比率(0-1)を返す |
 | `onMissingKey(callback)` | 欠落した翻訳キーイベントを購読 |
 | `interpolateTemplate(template, vars?, locale?)` | 辞書検索なしで任意のICUテンプレート文字列を補間 |
+| `hasNamespace(namespace)` | 指定した名前空間が辞書ストアにロードされているか確認 |
 
 ### CLIコマンド
 

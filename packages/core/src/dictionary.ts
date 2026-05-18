@@ -495,6 +495,13 @@ export function getLoadedNamespaces(): string[] {
 }
 
 /**
+ * Check if a namespace is loaded (v0.20.0)
+ */
+export function hasNamespace(namespace: string): boolean {
+  return namespace in namespacedDictionaries
+}
+
+/**
  * Get translation completeness ratio of a locale relative to a base locale (v0.17.0)
  * Returns a value between 0 and 1 representing the fraction of base locale keys
  * that exist in the target locale.

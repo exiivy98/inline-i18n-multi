@@ -92,6 +92,7 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Translation Completeness Ratio** -- `getCompletenessRatio(locale, baseLocale?, namespace?)` returns the fraction of base-locale keys present in a target locale (v0.17.0)
 - **Missing Key Listener** -- `onMissingKey(callback)` subscribes to missing translation events with `(key, locale)` (v0.18.0)
 - **Template Interpolation** -- `interpolateTemplate(template, vars?, locale?)` interpolates arbitrary ICU template strings without dictionary lookup (v0.19.0)
+- **Namespace Check** -- `hasNamespace(namespace)` returns whether a given namespace is loaded in the dictionary store (v0.20.0)
 
 ---
 
@@ -1473,6 +1474,7 @@ See [Testing Documentation](./docs/test.md) for more details.
 | `getCompletenessRatio(locale, baseLocale?, namespace?)` | Get translation completeness ratio (0-1) |
 | `onMissingKey(callback)` | Subscribe to missing translation key events |
 | `interpolateTemplate(template, vars?, locale?)` | Interpolate an arbitrary ICU template string without dictionary lookup |
+| `hasNamespace(namespace)` | Check if a namespace is loaded in the dictionary store |
 
 ### React Hooks & Components
 

@@ -34,6 +34,7 @@ export {
   getMissingLocales,
   getCompletenessRatio,
   getLoadedLocales,
+  hasNamespace,
   getDictionary,
   loadAsync,
   isLoaded,

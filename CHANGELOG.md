@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.20.0] - 2026-05-18
+
+### Added
+
+- **Namespace Check** - `hasNamespace(namespace)` returns whether a namespace is loaded
+  - Simple boolean check against loaded dictionaries
+  - Returns `false` after `clearDictionaries(namespace)` removes the namespace
+
+### Changed
+
+- New core export: `hasNamespace`
+- New React/Next re-exports for v0.20.0 function
+
 ## [0.19.0] - 2026-05-11
 
 ### Added

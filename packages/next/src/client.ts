@@ -34,6 +34,7 @@ export {
   getMissingLocales,
   getCompletenessRatio,
   getLoadedLocales,
+  hasNamespace,
   getDictionary,
   // rich text (v0.5.0)
   RichText,

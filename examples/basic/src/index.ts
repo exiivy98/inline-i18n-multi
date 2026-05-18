@@ -29,6 +29,7 @@
  * - Locale Change Event (v0.12.0)
  * - Formatting Utilities (v0.13.0)
  * - Template Interpolation (v0.19.0)
+ * - Namespace Check (v0.20.0)
  */
 
 import {
@@ -87,6 +88,8 @@ import {
   onMissingKey,
   // Template interpolation (v0.19.0)
   interpolateTemplate,
+  // Namespace check (v0.20.0)
+  hasNamespace,
 } from 'inline-i18n-multi'
 
 // ============================================
@@ -1024,6 +1027,36 @@ console.log(interpolateTemplate('Welcome, {name}! You have {count, p, message|me
 // → "Welcome, Alice! You have 7 messages."
 
 // ============================================
+// 34. Namespace Check (v0.20.0)
+// ============================================
+
+console.log('\n=== Namespace Check (v0.20.0) ===\n')
+
+resetConfig()
+clearDictionaries()
+
+// No namespaces loaded yet
+console.log('hasNamespace("common"):', hasNamespace('common'))  // → false
+
+// Load namespaced dictionaries
+loadDictionaries({ en: { hello: 'Hello' } }, 'common')
+loadDictionaries({ en: { title: 'Settings' } }, 'settings')
+
+console.log('hasNamespace("common"):', hasNamespace('common'))      // → true
+console.log('hasNamespace("settings"):', hasNamespace('settings'))  // → true
+console.log('hasNamespace("unknown"):', hasNamespace('unknown'))    // → false
+console.log('Loaded:', getLoadedNamespaces())                       // → ['common', 'settings']
+
+// After clearing
+clearDictionaries('settings')
+console.log('After clearing "settings":')
+console.log('hasNamespace("settings"):', hasNamespace('settings'))  // → false
+console.log('hasNamespace("common"):', hasNamespace('common'))      // → true
+
+resetConfig()
+clearDictionaries()
+
+// ============================================
 // Summary
 // ============================================
 
@@ -1113,4 +1146,7 @@ v0.18.0 features:
 
 v0.19.0 features:
 - Template Interpolation (interpolateTemplate())
+
+v0.20.0 features:
+- Namespace Check (hasNamespace())
 `)
