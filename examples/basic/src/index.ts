@@ -30,6 +30,7 @@
  * - Formatting Utilities (v0.13.0)
  * - Template Interpolation (v0.19.0)
  * - Namespace Check (v0.20.0)
+ * - Translation Count (v0.21.0)
  */
 
 import {
@@ -90,6 +91,8 @@ import {
   interpolateTemplate,
   // Namespace check (v0.20.0)
   hasNamespace,
+  // Translation count (v0.21.0)
+  getTranslationCount,
 } from 'inline-i18n-multi'
 
 // ============================================
@@ -1057,6 +1060,39 @@ resetConfig()
 clearDictionaries()
 
 // ============================================
+// 35. Translation Count (v0.21.0)
+// ============================================
+
+console.log('\n=== Translation Count (v0.21.0) ===\n')
+
+resetConfig()
+clearDictionaries()
+setLocale('en')
+
+loadDictionaries({
+  en: { greeting: 'Hello', farewell: 'Goodbye', welcome: 'Welcome' },
+  ko: { greeting: '안녕하세요', farewell: '안녕히 가세요' },
+  ja: { greeting: 'こんにちは' },
+})
+
+console.log('en:', getTranslationCount('en'))  // → 3
+console.log('ko:', getTranslationCount('ko'))  // → 2
+console.log('ja:', getTranslationCount('ja'))  // → 1
+
+// Defaults to current locale
+console.log('current (en):', getTranslationCount())  // → 3
+
+// With namespace
+clearDictionaries()
+loadDictionaries({ en: { a: '1', b: '2' } }, 'ns1')
+loadDictionaries({ en: { x: '10', y: '20', z: '30' } }, 'ns2')
+console.log('ns1:', getTranslationCount('en', 'ns1'))  // → 2
+console.log('ns2:', getTranslationCount('en', 'ns2'))  // → 3
+
+resetConfig()
+clearDictionaries()
+
+// ============================================
 // Summary
 // ============================================
 
@@ -1149,4 +1185,7 @@ v0.19.0 features:
 
 v0.20.0 features:
 - Namespace Check (hasNamespace())
+
+v0.21.0 features:
+- Translation Count (getTranslationCount())
 `)

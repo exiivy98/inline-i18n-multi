@@ -35,6 +35,7 @@ export {
   getDictionary,
   getLoadedNamespaces,
   hasNamespace,
+  getTranslationCount,
   loadAsync,
   isLoaded,
   getLocaleDisplayName,

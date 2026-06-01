@@ -94,6 +94,7 @@
 - **누락 키 리스너** -- `onMissingKey(callback)` 누락된 번역 키 이벤트 구독 (`(key, locale)` 콜백) (v0.18.0)
 - **템플릿 보간** -- `interpolateTemplate(template, vars?, locale?)` 딕셔너리 조회 없이 임의의 ICU 템플릿 문자열 보간 (v0.19.0)
 - **네임스페이스 확인** -- `hasNamespace(namespace)` 지정된 네임스페이스가 딕셔너리 스토어에 로드되어 있는지 여부 반환 (v0.20.0)
+- **번역 개수** -- `getTranslationCount(locale?, namespace?)` 로케일에 로드된 번역 키의 개수 반환 (v0.21.0)
 
 ---
 
@@ -1414,6 +1415,7 @@ VSCode 마켓플레이스에서 `inline-i18n-multi-vscode`를 설치하세요.
 | `onMissingKey(callback)` | 누락된 번역 키 이벤트 구독 |
 | `interpolateTemplate(template, vars?, locale?)` | 딕셔너리 조회 없이 임의의 ICU 템플릿 문자열 보간 |
 | `hasNamespace(namespace)` | 지정된 네임스페이스가 딕셔너리 스토어에 로드되어 있는지 확인 |
+| `getTranslationCount(locale?, namespace?)` | 로케일에 로드된 번역 키의 개수 반환 |
 
 ### React 훅 & 컴포넌트
 

@@ -35,6 +35,7 @@ export {
   getCompletenessRatio,
   getLoadedLocales,
   hasNamespace,
+  getTranslationCount,
   getDictionary,
   loadAsync,
   isLoaded,

@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.21.0] - 2026-06-01
+
+### Added
+
+- **Translation Count** - `getTranslationCount(locale?, namespace?)` returns the number of translation keys loaded for a locale
+  - Defaults to the current locale when none specified
+  - Supports optional namespace scoping
+
+### Changed
+
+- New core export: `getTranslationCount`
+- New React/Next re-exports for v0.21.0 function
+
 ## [0.20.0] - 2026-05-18
 
 ### Added

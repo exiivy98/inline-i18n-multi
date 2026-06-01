@@ -93,6 +93,7 @@
 - **缺失键监听器** -- `onMissingKey(callback)` 订阅缺失翻译键事件 (`(key, locale)` 回调) (v0.18.0)
 - **模板插值** -- `interpolateTemplate(template, vars?, locale?)` 无需字典查找即可插值任意ICU模板字符串 (v0.19.0)
 - **命名空间检查** -- `hasNamespace(namespace)` 返回指定命名空间是否已加载到字典存储中 (v0.20.0)
+- **翻译计数** -- `getTranslationCount(locale?, namespace?)` 返回指定语言环境已加载的翻译键数量 (v0.21.0)
 
 ---
 
@@ -1392,6 +1393,7 @@ pnpm --filter inline-i18n-multi-nextjs-example dev
 | `onMissingKey(callback)` | 订阅缺失翻译键事件 |
 | `interpolateTemplate(template, vars?, locale?)` | 无需字典查找即可插值任意ICU模板字符串 |
 | `hasNamespace(namespace)` | 检查指定命名空间是否已加载到字典存储中 |
+| `getTranslationCount(locale?, namespace?)` | 返回指定语言环境已加载的翻译键数量 |
 
 ### CLI命令
 

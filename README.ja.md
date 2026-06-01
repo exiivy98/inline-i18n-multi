@@ -93,6 +93,7 @@
 - **欠落キーリスナー** -- `onMissingKey(callback)` 欠落した翻訳キーイベントを購読 (`(key, locale)` コールバック) (v0.18.0)
 - **テンプレート補間** -- `interpolateTemplate(template, vars?, locale?)` 辞書検索なしで任意のICUテンプレート文字列を補間 (v0.19.0)
 - **名前空間チェック** -- `hasNamespace(namespace)` 指定した名前空間が辞書ストアにロードされているかどうかを返す (v0.20.0)
+- **翻訳キー数** -- `getTranslationCount(locale?, namespace?)` ロケールにロードされた翻訳キーの数を返す (v0.21.0)
 
 ---
 
@@ -1308,6 +1309,7 @@ VSCodeマーケットプレイスから`inline-i18n-multi-vscode`をインスト
 | `onMissingKey(callback)` | 欠落した翻訳キーイベントを購読 |
 | `interpolateTemplate(template, vars?, locale?)` | 辞書検索なしで任意のICUテンプレート文字列を補間 |
 | `hasNamespace(namespace)` | 指定した名前空間が辞書ストアにロードされているか確認 |
+| `getTranslationCount(locale?, namespace?)` | ロケールにロードされた翻訳キーの数を返す |
 
 ### CLIコマンド
 
