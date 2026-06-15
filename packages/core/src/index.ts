@@ -48,7 +48,7 @@ export {
 } from './dictionary'
 
 // Configuration
-export { configure, getConfig, resetConfig } from './config'
+export { configure, getConfig, resetConfig, getDefaultLocale } from './config'
 
 // Custom formatters (v0.6.0) + ICU cache (v0.7.0)
 export { registerFormatter, clearFormatters, clearICUCache, type CustomFormatter } from './icu'

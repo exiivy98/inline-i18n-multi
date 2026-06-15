@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.22.0] - 2026-06-08
+
+### Added
+
+- **Default Locale Getter** - `getDefaultLocale()` returns the configured default locale
+  - Returns `'en'` by default, reflects changes from `configure({ defaultLocale: ... })`
+
+### Changed
+
+- New core export: `getDefaultLocale`
+- New React/Next re-exports for v0.22.0 function
+
 ## [0.21.0] - 2026-06-01
 
 ### Added

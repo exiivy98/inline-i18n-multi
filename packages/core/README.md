@@ -92,6 +92,7 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Template Interpolation** -- `interpolateTemplate(template, vars?, locale?)` interpolates arbitrary ICU template strings without dictionary lookup (v0.19.0)
 - **Namespace Check** -- `hasNamespace(namespace)` returns whether a given namespace is loaded in the dictionary store (v0.20.0)
 - **Translation Count** -- `getTranslationCount(locale?, namespace?)` returns the number of translation keys loaded for a locale (v0.21.0)
+- **Default Locale Getter** -- `getDefaultLocale()` returns the configured default locale (v0.22.0)
 
 ---
 
@@ -1037,6 +1038,7 @@ Available helpers:
 | `interpolateTemplate(template, vars?, locale?)` | Interpolate an arbitrary ICU template string without dictionary lookup |
 | `hasNamespace(namespace)` | Check if a namespace is loaded in the dictionary store |
 | `getTranslationCount(locale?, namespace?)` | Get the number of translation keys loaded for a locale |
+| `getDefaultLocale()` | Get the configured default locale |
 
 ### Custom Formatters
 

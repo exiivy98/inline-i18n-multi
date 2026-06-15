@@ -94,6 +94,7 @@
 - **テンプレート補間** -- `interpolateTemplate(template, vars?, locale?)` 辞書検索なしで任意のICUテンプレート文字列を補間 (v0.19.0)
 - **名前空間チェック** -- `hasNamespace(namespace)` 指定した名前空間が辞書ストアにロードされているかどうかを返す (v0.20.0)
 - **翻訳キー数** -- `getTranslationCount(locale?, namespace?)` ロケールにロードされた翻訳キーの数を返す (v0.21.0)
+- **デフォルトロケール取得** -- `getDefaultLocale()` 設定されたデフォルトロケールを返す (v0.22.0)
 
 ---
 
@@ -1310,6 +1311,7 @@ VSCodeマーケットプレイスから`inline-i18n-multi-vscode`をインスト
 | `interpolateTemplate(template, vars?, locale?)` | 辞書検索なしで任意のICUテンプレート文字列を補間 |
 | `hasNamespace(namespace)` | 指定した名前空間が辞書ストアにロードされているか確認 |
 | `getTranslationCount(locale?, namespace?)` | ロケールにロードされた翻訳キーの数を返す |
+| `getDefaultLocale()` | 設定されたデフォルトロケールを返す |
 
 ### CLIコマンド
 

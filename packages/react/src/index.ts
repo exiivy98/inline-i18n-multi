@@ -43,6 +43,7 @@ export {
   configure,
   getConfig,
   resetConfig,
+  getDefaultLocale,
   // rich text parsing
   parseRichText,
   type RichTextSegment,

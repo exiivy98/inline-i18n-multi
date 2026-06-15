@@ -31,6 +31,7 @@
  * - Template Interpolation (v0.19.0)
  * - Namespace Check (v0.20.0)
  * - Translation Count (v0.21.0)
+ * - Default Locale Getter (v0.22.0)
  */
 
 import {
@@ -93,6 +94,8 @@ import {
   hasNamespace,
   // Translation count (v0.21.0)
   getTranslationCount,
+  // Default locale getter (v0.22.0)
+  getDefaultLocale,
 } from 'inline-i18n-multi'
 
 // ============================================
@@ -1093,6 +1096,25 @@ resetConfig()
 clearDictionaries()
 
 // ============================================
+// 36. Default Locale Getter (v0.22.0)
+// ============================================
+
+console.log('\n=== Default Locale Getter (v0.22.0) ===\n')
+
+resetConfig()
+
+// Default is 'en'
+console.log('Default locale:', getDefaultLocale())  // → "en"
+
+// After configure
+configure({ defaultLocale: 'ko' })
+console.log('After configure:', getDefaultLocale())  // → "ko"
+
+// After reset
+resetConfig()
+console.log('After reset:', getDefaultLocale())  // → "en"
+
+// ============================================
 // Summary
 // ============================================
 
@@ -1188,4 +1210,7 @@ v0.20.0 features:
 
 v0.21.0 features:
 - Translation Count (getTranslationCount())
+
+v0.22.0 features:
+- Default Locale Getter (getDefaultLocale())
 `)

@@ -83,6 +83,13 @@ export function resetConfig(): void {
 }
 
 /**
+ * Get the configured default locale (v0.22.0)
+ */
+export function getDefaultLocale(): Locale {
+  return (config.defaultLocale ?? defaultConfig.defaultLocale) as Locale
+}
+
+/**
  * Derive parent locale from BCP 47 tag
  *
  * @example
