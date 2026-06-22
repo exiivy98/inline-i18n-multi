@@ -32,6 +32,7 @@
  * - Namespace Check (v0.20.0)
  * - Translation Count (v0.21.0)
  * - Default Locale Getter (v0.22.0)
+ * - Fallback Locale Getter (v0.23.0)
  */
 
 import {
@@ -96,6 +97,8 @@ import {
   getTranslationCount,
   // Default locale getter (v0.22.0)
   getDefaultLocale,
+  // Fallback locale getter (v0.23.0)
+  getFallbackLocale,
 } from 'inline-i18n-multi'
 
 // ============================================
@@ -1115,6 +1118,26 @@ resetConfig()
 console.log('After reset:', getDefaultLocale())  // → "en"
 
 // ============================================
+// 37. Fallback Locale Getter (v0.23.0)
+// ============================================
+
+console.log('\n=== Fallback Locale Getter (v0.23.0) ===\n')
+
+resetConfig()
+
+// Default is 'en'
+console.log('Fallback locale:', getFallbackLocale())  // → "en"
+
+// After configure
+configure({ fallbackLocale: 'ko' })
+console.log('After configure:', getFallbackLocale())  // → "ko"
+
+// Pairs with getDefaultLocale
+console.log('Default:', getDefaultLocale(), '/ Fallback:', getFallbackLocale())
+
+resetConfig()
+
+// ============================================
 // Summary
 // ============================================
 
@@ -1213,4 +1236,7 @@ v0.21.0 features:
 
 v0.22.0 features:
 - Default Locale Getter (getDefaultLocale())
+
+v0.23.0 features:
+- Fallback Locale Getter (getFallbackLocale())
 `)

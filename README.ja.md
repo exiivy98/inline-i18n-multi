@@ -95,6 +95,7 @@
 - **名前空間チェック** -- `hasNamespace(namespace)` 指定した名前空間が辞書ストアにロードされているかどうかを返す (v0.20.0)
 - **翻訳キー数** -- `getTranslationCount(locale?, namespace?)` ロケールにロードされた翻訳キーの数を返す (v0.21.0)
 - **デフォルトロケール取得** -- `getDefaultLocale()` 設定されたデフォルトロケールを返す (v0.22.0)
+- **フォールバックロケール取得** -- `getFallbackLocale()` 設定されたフォールバックロケールを返す (v0.23.0)
 
 ---
 
@@ -1312,6 +1313,7 @@ VSCodeマーケットプレイスから`inline-i18n-multi-vscode`をインスト
 | `hasNamespace(namespace)` | 指定した名前空間が辞書ストアにロードされているか確認 |
 | `getTranslationCount(locale?, namespace?)` | ロケールにロードされた翻訳キーの数を返す |
 | `getDefaultLocale()` | 設定されたデフォルトロケールを返す |
+| `getFallbackLocale()` | 設定されたフォールバックロケールを返す |
 
 ### CLIコマンド
 

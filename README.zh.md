@@ -95,6 +95,7 @@
 - **命名空间检查** -- `hasNamespace(namespace)` 返回指定命名空间是否已加载到字典存储中 (v0.20.0)
 - **翻译计数** -- `getTranslationCount(locale?, namespace?)` 返回指定语言环境已加载的翻译键数量 (v0.21.0)
 - **默认语言环境获取** -- `getDefaultLocale()` 返回配置的默认语言环境 (v0.22.0)
+- **回退语言环境获取** -- `getFallbackLocale()` 返回配置的回退语言环境 (v0.23.0)
 
 ---
 
@@ -1396,6 +1397,7 @@ pnpm --filter inline-i18n-multi-nextjs-example dev
 | `hasNamespace(namespace)` | 检查指定命名空间是否已加载到字典存储中 |
 | `getTranslationCount(locale?, namespace?)` | 返回指定语言环境已加载的翻译键数量 |
 | `getDefaultLocale()` | 返回配置的默认语言环境 |
+| `getFallbackLocale()` | 返回配置的回退语言环境 |
 
 ### CLI命令
 

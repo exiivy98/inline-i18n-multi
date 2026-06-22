@@ -90,6 +90,13 @@ export function getDefaultLocale(): Locale {
 }
 
 /**
+ * Get the configured fallback locale (v0.23.0)
+ */
+export function getFallbackLocale(): Locale {
+  return (config.fallbackLocale ?? defaultConfig.fallbackLocale) as Locale
+}
+
+/**
  * Derive parent locale from BCP 47 tag
  *
  * @example

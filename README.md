@@ -95,6 +95,7 @@ See "Hello" in your app? Just search for "Hello" in your codebase. **Done.**
 - **Namespace Check** -- `hasNamespace(namespace)` returns whether a given namespace is loaded in the dictionary store (v0.20.0)
 - **Translation Count** -- `getTranslationCount(locale?, namespace?)` returns the number of translation keys loaded for a locale (v0.21.0)
 - **Default Locale Getter** -- `getDefaultLocale()` returns the configured default locale (v0.22.0)
+- **Fallback Locale Getter** -- `getFallbackLocale()` returns the configured fallback locale (v0.23.0)
 
 ---
 
@@ -1479,6 +1480,7 @@ See [Testing Documentation](./docs/test.md) for more details.
 | `hasNamespace(namespace)` | Check if a namespace is loaded in the dictionary store |
 | `getTranslationCount(locale?, namespace?)` | Get the number of translation keys loaded for a locale |
 | `getDefaultLocale()` | Get the configured default locale |
+| `getFallbackLocale()` | Get the configured fallback locale |
 
 ### React Hooks & Components
 

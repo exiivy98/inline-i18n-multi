@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.23.0] - 2026-06-15
+
+### Added
+
+- **Fallback Locale Getter** - `getFallbackLocale()` returns the configured fallback locale
+  - Returns `'en'` by default, reflects changes from `configure({ fallbackLocale: ... })`
+  - Pairs with `getDefaultLocale()` (v0.22.0)
+
+### Changed
+
+- New core export: `getFallbackLocale`
+- New React/Next re-exports for v0.23.0 function
+
 ## [0.22.0] - 2026-06-08
 
 ### Added

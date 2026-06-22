@@ -44,6 +44,7 @@ export {
   getConfig,
   resetConfig,
   getDefaultLocale,
+  getFallbackLocale,
   // rich text parsing
   parseRichText,
   type RichTextSegment,

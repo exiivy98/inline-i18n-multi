@@ -37,6 +37,7 @@ export {
   hasNamespace,
   getTranslationCount,
   getDefaultLocale,
+  getFallbackLocale,
   getDictionary,
   // rich text (v0.5.0)
   RichText,
